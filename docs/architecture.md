@@ -62,6 +62,9 @@ Muxy/
     TextBackingStore.swift    Line-array backing store for editor documents
     ViewportState.swift       Viewport window computation and line mapping for editor documents
     TerminalSettings.swift    Terminal preference keys and quick-select label layout helpers
+    Snippet.swift             Saved workflow snippet model with description, tags, and {variable} placeholders
+    SnippetScope.swift        Shared or remote-space snippet persistence target, including remote starter snippets
+    RemoteSpace.swift         Named remote machine space with SSH command, tab color, and backing directory
     ProjectLifecyclePreferences.swift  Project lifecycle preferences (keep-open-when-no-tabs)
     Project.swift             Project folder metadata
     Worktree.swift            Per-project worktree slot (primary or git worktree)
@@ -112,11 +115,15 @@ Muxy/
     KeyBindingStore.swift     @Observable store for keyboard shortcuts
     KeyBindingPersistence.swift  JSON persistence for shortcuts
     CommandShortcutStore.swift  @Observable store + JSON persistence for custom command shortcuts and command-layer prefix state
+    SnippetsStore.swift       @Observable workflow snippets store scoped to shared snippets or the active remote space
+    RemoteSpacesStore.swift   @Observable remote machine spaces store, persisted to remote-spaces.json
+    RemoteSpaceLauncher.swift Creates/selects dedicated remote machine project-spaces from the macOS menu
     ProjectStore.swift        @Observable store for projects list
     ProjectPersistence.swift  JSON persistence for projects
     ApprovedDevicesStore.swift Approved mobile devices (deviceID, SHA-256 token hash), revocation
     PairingRequestCoordinator.swift Queues pending pairing requests for UI approval prompts
     MobileServerService.swift  Lifecycle wrapper around MuxyRemoteServer
+    LocalNetworkAddressProvider.swift  Local IPv4 selection and settings-facing connection URL formatting
     WorktreeStore.swift       @Observable store for per-project worktrees
     WorktreePersistence.swift JSON persistence for worktrees (one file per project)
     ProjectOpenService.swift  Shared open-project flow used by commands and sidebar
@@ -155,6 +162,8 @@ Muxy/
     ProviderIconView.swift    Renders SVG provider icons from Muxy/Resources/ProviderIcons with monochrome tinting
     ThemePicker.swift         Theme selection popover (hosted in topbar right)
     WelcomeView.swift         Empty state view
+    Snippets/
+      SnippetsPanel.swift     Right-side snippets/workflows panel with inline create, edit, and variable-run views
     Components/
       IconButton.swift        Reusable icon button
       FileDiffIcon.swift      Git diff file icon (SVG shape)
@@ -215,6 +224,7 @@ Muxy/
       NotificationSettingsView.swift  Notification preferences tab
       AIUsageSettingsView.swift  AI usage tab (global enable, display mode, auto-refresh, secondary limits, per-provider toggles)
       MobileSettingsView.swift  Mobile server and approved devices tab
+      RemoteSpacesSettingsView.swift  Remote machine space add/edit/delete tab
       ShortcutRecorderView.swift  Shortcut capture field
       ShortcutBadge.swift     Shortcut label display
 ```
@@ -270,7 +280,7 @@ User action → AppState.dispatch() → WorkspaceReducer.reduce()
   line; search highlights (temporary attributes) layer on top without losing syntax colors.
 - **GhosttyKit**: C module wrapping `ghostty.h`. Precompiled xcframework from `muxy-app/ghostty` fork. Surfaces created/destroyed via `TerminalViewRegistry`.
 - **Terminal Working Directory Preservation**: When a user navigates within a terminal (e.g., `cd src/`), libghostty emits `GHOSTTY_ACTION_PWD` events. `GhosttyRuntimeEventAdapter` receives these events and routes them via the `onWorkingDirectoryChange` callback to `TerminalPane`, which updates `TerminalPaneState.currentWorkingDirectory`. This directory is persisted to disk through `TerminalTabSnapshot` in `workspaces.json`. On restore, `TerminalTab` initializes each terminal pane with its saved working directory (or the project root if none was saved), allowing terminals to reopen at their last-used directory instead of always starting at the project root.
-- **Persistence**: All files in `~/Library/Application Support/Muxy/`. Shared directory helper: `MuxyFileStorage`. Shortcuts are stored in `keybindings.json`; custom command shortcuts are stored in `command-shortcuts.json`. Worktrees are persisted per-project at `worktrees/{projectID}.json`, including whether a secondary worktree is Muxy-managed or externally discovered. Git projects can manually refresh this list from `git worktree list --porcelain` to import existing worktrees without deleting absent entries; paths are matched after symlink resolution so a repo opened via a symlinked path still collapses onto a single primary entry. Externally discovered worktrees are never touched by Muxy's `cleanupOnDisk` paths (project removal, post-merge cleanup, manual removal) — they can only be unregistered by the user in the underlying repo. Worktree setup commands live in-repo at `{Project.path}/.muxy/worktree.json`.
+- **Persistence**: All files in `~/Library/Application Support/Muxy/`. Shared directory helper: `MuxyFileStorage`. Shortcuts are stored in `keybindings.json`; custom command shortcuts are stored in `command-shortcuts.json`; shared snippets are stored in `snippets.json`; remote machine spaces are stored in `remote-spaces.json`; remote-space snippets are stored in `remote-spaces/{slug}/snippets.json`. Snippets are backward-compatible JSON records; remote scopes seed Linux starter workflows only when their snippet file does not exist yet. Worktrees are persisted per-project at `worktrees/{projectID}.json`, including whether a secondary worktree is Muxy-managed or externally discovered. Git projects can manually refresh this list from `git worktree list --porcelain` to import existing worktrees without deleting absent entries; paths are matched after symlink resolution so a repo opened via a symlinked path still collapses onto a single primary entry. Externally discovered worktrees are never touched by Muxy's `cleanupOnDisk` paths (project removal, post-merge cleanup, manual removal) — they can only be unregistered by the user in the underlying repo. Worktree setup commands live in-repo at `{Project.path}/.muxy/worktree.json`.
 - **Ghostty Config**: Managed by `MuxyConfig`, stored at `~/Library/Application Support/Muxy/ghostty.conf`. Seeded from `~/.config/ghostty/config` on first run.
 - **Updates**: Sparkle framework via `UpdateService`. Two channels exist: `stable` (manual `release.yml`, tagged `vX.Y.Z`, accumulating appcast at `releases/latest/download/appcast-<arch>.xml`) and `beta` (auto `release-beta.yml` on every push to `main`, tagged `vX.Y.Z-beta.<buildNumber>` where `X.Y.Z` is read from the `BETA_VERSION` file at repo root, rolling appcast at `releases/download/beta-channel/appcast-beta-<arch>.xml`). Each channel's appcast accumulates only its own items (release notes are isolated). The user-selected channel is persisted in `UserDefaults` (`muxy.update.channel`) and routed at runtime via `SPUUpdaterDelegate.feedURLString(for:)` — the baked-in feed URL is just the default fallback. Stable releases are produced by **promoting a beta tag**: `release.yml` takes a `from_beta_tag` input (e.g. `v0.26.0-beta.42`), checks out that exact commit, and rebuilds with the stable version string — so stable users receive the exact bits beta testers validated, while `main` keeps accepting merges throughout. After publishing, the workflow bumps `BETA_VERSION` on `main` so subsequent betas target the next planned stable.
 - **Window Title**: `NSWindow.title` is hidden visually (`titleVisibility = .hidden`) but set
@@ -621,6 +631,10 @@ fails to start (e.g. port in use), the enable toggle is rolled off and the
 settings view displays the error. It uses Apple's Network framework
 (`NWListener` + `NWConnection`) with the WebSocket protocol. All messages use
 the `MuxyMessage` JSON envelope from `MuxyShared`.
+`LocalNetworkAddressProvider` formats the settings-facing connection URL from
+the selected port and the best available non-loopback IPv4 address, preferring
+standard Mac LAN interfaces before falling back to other local network
+interfaces.
 
 ### Protocol
 

@@ -19,4 +19,5 @@ Muxy/Resources/terminfo
 appcast*.xml
 .plans/
 .muxy/
+.omx/
 /muxy-markdown-remote-image-urlcache

@@ -12,6 +12,7 @@ struct MuxyCommands: Commands {
     let config: MuxyConfig
     let ghostty: GhosttyService
     let updateService: UpdateService
+    private let remoteSpaces = RemoteSpacesStore.shared
 
     private var isMainWindowFocused: Bool {
         ShortcutContext.isMainWindow(NSApp.keyWindow)
@@ -286,6 +287,31 @@ struct MuxyCommands: Commands {
                 performShortcutAction(.focusPaneDown)
             }
             .shortcut(for: .focusPaneDown, store: keyBindings)
+        }
+
+        CommandMenu("Remote Spaces") {
+            if remoteSpaces.spaces.isEmpty {
+                Button("No Remote Spaces") {}
+                    .disabled(true)
+            } else {
+                ForEach(remoteSpaces.spaces) { space in
+                    Button(space.displayName) {
+                        RemoteSpaceLauncher.open(
+                            space,
+                            appState: appState,
+                            projectStore: projectStore,
+                            worktreeStore: worktreeStore
+                        )
+                    }
+                    .disabled(!space.isConnectable)
+                }
+            }
+
+            Divider()
+
+            SettingsLink {
+                Text("Manage Remote Spaces...")
+            }
         }
 
         CommandGroup(after: .toolbar) {

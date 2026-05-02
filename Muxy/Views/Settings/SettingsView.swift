@@ -15,6 +15,8 @@ struct SettingsView: View {
                 .tabItem { Label("Notifications", systemImage: "bell") }
             MobileSettingsView()
                 .tabItem { Label("Mobile", systemImage: "iphone") }
+            RemoteSpacesSettingsView()
+                .tabItem { Label("Remote", systemImage: "network") }
             AIUsageSettingsView()
                 .tabItem { Label("AI Usage", systemImage: "chart.bar") }
         }

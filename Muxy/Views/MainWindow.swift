@@ -52,6 +52,8 @@ struct MainWindow: View {
     @State private var vcsPanelWidth: CGFloat = AttachedVCSLayout.defaultWidth
     @State private var vcsStates: [WorktreeKey: VCSTabState] = [:]
     @State private var fileTreePanelVisible = false
+    @State private var snippetsPanelVisible = UserDefaults.standard.bool(forKey: "muxy.snippetsPanelVisible")
+    @State private var remoteSpacesStore = RemoteSpacesStore.shared
     @AppStorage("muxy.fileTreeWidth") private var fileTreePanelWidth: Double = .init(FileTreeLayout.defaultWidth)
     @State private var fileTreeStates: [WorktreeKey: FileTreeState] = [:]
     @State private var showQuickOpen = false
@@ -166,6 +168,10 @@ struct MainWindow: View {
                         .frame(width: CGFloat(fileTreePanelWidth))
                     }
                 }
+
+                if snippetsPanelVisible {
+                    SnippetsPanel(scope: activeSnippetScope)
+                }
             }
         }
         .environment(\.overlayActive, showQuickOpen || showWorktreeSwitcher)
@@ -258,6 +264,9 @@ struct MainWindow: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .toggleFileTree)) { _ in
             toggleFileTreePanel()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleSnippetsPanel)) { _ in
+            toggleSnippetsPanel()
         }
         .onChange(of: vcsPruneSignature) {
             pruneVCSStates()
@@ -441,6 +450,11 @@ struct MainWindow: View {
                                 NotificationCenter.default.post(name: .toggleFileTree, object: nil)
                             }
                             .help("File Tree (\(KeyBindingStore.shared.combo(for: .toggleFileTree).displayString))")
+
+                            IconButton(symbol: "curlybraces", size: 12, accessibilityLabel: "Snippets") {
+                                NotificationCenter.default.post(name: .toggleSnippetsPanel, object: nil)
+                            }
+                            .help("Snippets Panel")
                         }
                     }
                     .padding(.trailing, 4)
@@ -525,6 +539,13 @@ struct MainWindow: View {
     private var activeProject: Project? {
         guard let pid = appState.activeProjectID else { return nil }
         return projectStore.projects.first { $0.id == pid }
+    }
+
+    private var activeSnippetScope: SnippetScope {
+        guard let project = activeProject,
+              let space = remoteSpacesStore.space(forProjectPath: project.path)
+        else { return .shared }
+        return .remote(space)
     }
 
     private var windowTitle: String {
@@ -684,6 +705,11 @@ struct MainWindow: View {
         } else {
             NotificationCenter.default.post(name: .refocusActiveTerminal, object: nil)
         }
+    }
+
+    private func toggleSnippetsPanel() {
+        snippetsPanelVisible.toggle()
+        UserDefaults.standard.set(snippetsPanelVisible, forKey: "muxy.snippetsPanelVisible")
     }
 
     private var activeVCSState: VCSTabState? {

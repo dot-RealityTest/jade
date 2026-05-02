@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct MobileSettingsView: View {
@@ -21,10 +22,16 @@ struct MobileSettingsView: View {
     var body: some View {
         SettingsContainer {
             SettingsSection(
-                "Mobile",
-                footer: "Muxy listens on the configured port for the iOS app over your local network or a private VPN such as Tailscale."
+                "Network",
+                footer: "Allow other devices on your local network to connect to Muxy."
             ) {
-                SettingsToggleRow(label: "Allow mobile device connections", isOn: enabledBinding)
+                SettingsToggleRow(label: "Allow remote access", isOn: enabledBinding)
+
+                if service.isEnabled {
+                    SettingsRow("How to connect") {
+                        connectionInstructions
+                    }
+                }
 
                 SettingsRow("Port") {
                     TextField("\(MobileServerService.defaultPort)", text: $portText)
@@ -152,5 +159,44 @@ struct MobileSettingsView: View {
             return "Last seen \(formatter.localizedString(for: seen, relativeTo: Date()))"
         }
         return "Approved \(formatter.localizedString(for: device.approvedAt, relativeTo: Date()))"
+    }
+
+    private var connectionInstructions: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Access Muxy from another device on your local network or private VPN.")
+                .font(.system(size: SettingsMetrics.footnoteFontSize))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if let connectionURL {
+                HStack(spacing: 8) {
+                    Text(connectionURL)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(connectionURL, forType: .string)
+                    } label: {
+                        Image(systemName: "doc.on.doc")
+                            .font(.system(size: 12))
+                    }
+                    .buttonStyle(.borderless)
+                    .help("Copy connection URL")
+                }
+                .padding(10)
+                .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
+            } else {
+                Text("No local network address is available right now.")
+                    .font(.system(size: SettingsMetrics.footnoteFontSize))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
+    private var connectionURL: String? {
+        LocalNetworkAddressProvider.connectionURL(port: service.port)
     }
 }
