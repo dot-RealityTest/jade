@@ -19,6 +19,7 @@ final class GhosttyTerminalNSView: NSView {
     var onCmdClickFile: ((String) -> Void)?
     var resolveCmdHoverFile: ((String) -> Bool)?
     var onOpenURL: ((URL) -> Bool)?
+    var onSaveSnippetCommand: ((String) -> Void)?
     private var isShowingHandCursor = false
     var hasOSC8LinkUnderCursor: Bool = false
     var isFocused: Bool = false
@@ -172,6 +173,7 @@ final class GhosttyTerminalNSView: NSView {
         onSearchEnd = nil
         onSearchTotal = nil
         onSearchSelected = nil
+        onSaveSnippetCommand = nil
         if let observer = screenChangeObserver {
             NotificationCenter.default.removeObserver(observer)
             screenChangeObserver = nil
@@ -568,9 +570,10 @@ final class GhosttyTerminalNSView: NSView {
         guard let surface else { return }
         let pt = mousePoint(from: event)
         ghostty_surface_mouse_pos(surface, pt.x, pt.y, modsFromEvent(event))
+        let snippetCommand = contextSnippetCommand(mousePoint: pt)
         let consumed = ghostty_surface_mouse_button(surface, GHOSTTY_MOUSE_PRESS, GHOSTTY_MOUSE_RIGHT, modsFromEvent(event))
         if !consumed {
-            presentContextMenu(with: event)
+            presentContextMenu(with: event, snippetCommand: snippetCommand)
         }
     }
 
@@ -584,8 +587,16 @@ final class GhosttyTerminalNSView: NSView {
         }
     }
 
-    private func presentContextMenu(with event: NSEvent) {
+    private func presentContextMenu(with event: NSEvent, snippetCommand: String?) {
         let menu = NSMenu(title: "Terminal")
+
+        if let snippetCommand {
+            let saveSnippet = NSMenuItem(title: "Save as Snippet", action: #selector(handleContextSaveSnippet(_:)), keyEquivalent: "")
+            saveSnippet.target = self
+            saveSnippet.representedObject = snippetCommand
+            menu.addItem(saveSnippet)
+            menu.addItem(.separator())
+        }
 
         let paste = NSMenuItem(title: "Paste", action: #selector(handleContextPaste(_:)), keyEquivalent: "")
         paste.target = self
@@ -600,6 +611,42 @@ final class GhosttyTerminalNSView: NSView {
         menu.addItem(contextSplitMenuItem(title: "Split Up", direction: .vertical, position: .first))
 
         NSMenu.popUpContextMenu(menu, with: event, for: self)
+    }
+
+    private func contextSnippetCommand(mousePoint: NSPoint) -> String? {
+        if let command = TerminalSnippetCapture.command(from: readSelectionText()) {
+            return command
+        }
+        return readLineUnderMouse(point: mousePoint)
+    }
+
+    private func readLineUnderMouse(point: NSPoint) -> String? {
+        guard let surface else { return nil }
+        var cells = ghostty_cells_s()
+        guard ghostty_surface_read_cells(surface, &cells) else { return nil }
+        defer { ghostty_surface_free_cells(surface, &cells) }
+        guard cells.rows > 0, cells.cols > 0, let base = cells.cells else { return nil }
+
+        let rowHeight = bounds.height / CGFloat(cells.rows)
+        guard rowHeight > 0 else { return nil }
+
+        let row = min(max(Int(point.y / rowHeight), 0), Int(cells.rows) - 1)
+        let cols = Int(cells.cols)
+        let start = row * cols
+        let end = min(start + cols, Int(cells.cells_len))
+        guard start < end else { return nil }
+
+        var scalars = String.UnicodeScalarView()
+        for offset in start ..< end {
+            let codepoint = base.advanced(by: offset).pointee.codepoint
+            if codepoint == 0 {
+                scalars.append(" ")
+            } else if let scalar = UnicodeScalar(codepoint) {
+                scalars.append(scalar)
+            }
+        }
+
+        return TerminalSnippetCapture.command(from: String(scalars))
     }
 
     private func contextSplitMenuItem(title: String, direction: SplitDirection, position: SplitPosition) -> NSMenuItem {
@@ -634,6 +681,12 @@ final class GhosttyTerminalNSView: NSView {
     @objc
     func paste(_ sender: Any?) {
         handleContextPaste(sender)
+    }
+
+    @objc
+    private func handleContextSaveSnippet(_ sender: NSMenuItem) {
+        guard let command = sender.representedObject as? String else { return }
+        onSaveSnippetCommand?(command)
     }
 
     @objc

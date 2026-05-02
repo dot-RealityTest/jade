@@ -152,6 +152,7 @@ struct TerminalBridge: NSViewRepresentable {
         }
         configureSearchCallbacks(view)
         configureFileOpenCallback(view)
+        configureSnippetSaveCallback(view)
         context.coordinator.wasFocused = focused
         if focused, !overlayActive {
             view.notifySurfaceFocused()
@@ -187,6 +188,7 @@ struct TerminalBridge: NSViewRepresentable {
         }
         configureSearchCallbacks(nsView)
         configureFileOpenCallback(nsView)
+        configureSnippetSaveCallback(nsView)
         let wasFocused = context.coordinator.wasFocused
         let wasOverlayActive = context.coordinator.wasOverlayActive
         context.coordinator.wasFocused = focused
@@ -292,5 +294,25 @@ struct TerminalBridge: NSViewRepresentable {
         view.onSearchSelected = { [weak state] selected in
             state?.searchState.selected = selected
         }
+    }
+
+    private func configureSnippetSaveCallback(_ view: GhosttyTerminalNSView) {
+        let projectPath = state.projectPath
+        view.onSaveSnippetCommand = { command in
+            Task { @MainActor in
+                let scope = Self.snippetScope(projectPath: projectPath)
+                if TerminalSnippetCapture.save(command: command, scope: scope, store: SnippetsStore.shared) != nil {
+                    ToastState.shared.show("Saved to \(scope.displayName)")
+                } else {
+                    ToastState.shared.show("Nothing to save")
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private static func snippetScope(projectPath: String) -> SnippetScope {
+        guard let space = RemoteSpacesStore.shared.space(forProjectPath: projectPath) else { return .shared }
+        return .remote(space)
     }
 }
