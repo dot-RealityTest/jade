@@ -8,14 +8,11 @@ enum CommandPaletteSection: String, CaseIterable {
     case worktree = "Worktrees"
 
     var sortOrder: Int {
-        switch self {
-        case .app: 0
-        case .remote: 1
-        case .snippet: 2
-        case .file: 3
-        case .worktree: 4
-        }
+        Self.defaultOrder.firstIndex(of: self) ?? Self.defaultOrder.count
     }
+
+    static let defaultOrder: [CommandPaletteSection] = [.app, .remote, .snippet, .file, .worktree]
+    static let remoteSpaceOrder: [CommandPaletteSection] = [.snippet, .remote, .app, .file, .worktree]
 }
 
 struct CommandPaletteItem: Identifiable, Equatable {
@@ -34,6 +31,7 @@ struct CommandPaletteItem: Identifiable, Equatable {
     let section: CommandPaletteSection
     let searchText: String
     let target: Target
+    let showsSectionHeader: Bool
 
     init(
         id: String,
@@ -42,7 +40,8 @@ struct CommandPaletteItem: Identifiable, Equatable {
         symbolName: String,
         section: CommandPaletteSection,
         searchText: String = "",
-        target: Target
+        target: Target,
+        showsSectionHeader: Bool = false
     ) {
         self.id = id
         self.title = title
@@ -51,6 +50,7 @@ struct CommandPaletteItem: Identifiable, Equatable {
         self.section = section
         self.searchText = searchText
         self.target = target
+        self.showsSectionHeader = showsSectionHeader
     }
 
     var normalizedSearchText: String {
@@ -66,14 +66,43 @@ struct CommandPaletteItem: Identifiable, Equatable {
         return terms.allSatisfy { normalizedSearchText.contains($0) }
     }
 
-    static func filter(_ items: [CommandPaletteItem], query: String) -> [CommandPaletteItem] {
-        items
+    static func filter(
+        _ items: [CommandPaletteItem],
+        query: String,
+        sectionOrder: [CommandPaletteSection] = CommandPaletteSection.defaultOrder
+    ) -> [CommandPaletteItem] {
+        let sortedItems = items
             .filter { $0.matches(query: query) }
             .sorted { lhs, rhs in
-                if lhs.section.sortOrder != rhs.section.sortOrder {
-                    return lhs.section.sortOrder < rhs.section.sortOrder
+                let lhsOrder = sectionOrder.firstIndex(of: lhs.section) ?? sectionOrder.count
+                let rhsOrder = sectionOrder.firstIndex(of: rhs.section) ?? sectionOrder.count
+                if lhsOrder != rhsOrder {
+                    return lhsOrder < rhsOrder
                 }
                 return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
             }
+        return markedSectionStarts(sortedItems)
+    }
+
+    private static func markedSectionStarts(_ items: [CommandPaletteItem]) -> [CommandPaletteItem] {
+        var seenSections: Set<CommandPaletteSection> = []
+        return items.map { item in
+            let isFirst = !seenSections.contains(item.section)
+            seenSections.insert(item.section)
+            return item.withSectionHeader(isFirst)
+        }
+    }
+
+    private func withSectionHeader(_ isVisible: Bool) -> CommandPaletteItem {
+        CommandPaletteItem(
+            id: id,
+            title: title,
+            subtitle: subtitle,
+            symbolName: symbolName,
+            section: section,
+            searchText: searchText,
+            target: target,
+            showsSectionHeader: isVisible
+        )
     }
 }

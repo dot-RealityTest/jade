@@ -37,6 +37,7 @@ struct PaneTabStrip: View {
     let onSetColorID: (UUID, String?) -> Void
     let onReorderTab: (IndexSet, Int) -> Void
     @Environment(TabDragCoordinator.self) private var dragCoordinator
+    @AppStorage(ToolbarAction.storageKey) private var toolbarActionsRaw = ToolbarAction.defaultRawValue
     @State private var dragState = TabDragState()
 
     static func snapshots(from tabs: [TerminalTab]) -> [TabSnapshot] {
@@ -64,29 +65,65 @@ struct PaneTabStrip: View {
             .frame(maxWidth: .infinity)
             .frame(height: 32)
 
-            HStack(spacing: 0) {
-                if showDevelopmentBadge {
-                    developmentBadge
-                        .padding(.trailing, 6)
+            if isWindowTitleBar {
+                HStack(spacing: 0) {
+                    if showsToolbarAction(.debug), showDevelopmentBadge {
+                        developmentBadge
+                            .padding(.trailing, 6)
+                    }
+                    if showsToolbarAction(.tools) {
+                        OpenInIDEControl(
+                            projectPath: openInIDEProjectPath,
+                            filePath: openInIDEFilePath,
+                            cursorProvider: openInIDECursorProvider
+                        )
+                    }
+                    if showsToolbarAction(.updates), let version = UpdateService.shared.availableUpdateVersion {
+                        UpdateBadge(version: version) {
+                            UpdateService.shared.checkForUpdates()
+                        }
+                        .padding(.trailing, 4)
+                    }
+                    if showsToolbarAction(.splitRight) {
+                        IconButton(symbol: "square.split.2x1", accessibilityLabel: "Split Right") { onSplit(.horizontal) }
+                            .help(shortcutTooltip("Split Right", for: .splitRight))
+                    }
+                    if showsToolbarAction(.splitDown) {
+                        IconButton(symbol: "square.split.1x2", accessibilityLabel: "Split Down") { onSplit(.vertical) }
+                            .help(shortcutTooltip("Split Down", for: .splitDown))
+                    }
+                    if showsToolbarAction(.quickOpen) {
+                        IconButton(symbol: "doc.text", size: 12, accessibilityLabel: "Quick Open") {
+                            NotificationCenter.default.post(name: .quickOpen, object: nil)
+                        }
+                        .help(shortcutTooltip("Quick Open", for: .quickOpen))
+                    }
+                    if showsToolbarAction(.sourceControl), showVCSButton {
+                        FileDiffIconButton(action: onCreateVCSTab)
+                            .help(shortcutTooltip("Source Control", for: .openVCSTab))
+                    }
+                    if showsToolbarAction(.fileTree), showVCSButton {
+                        FileTreeIconButton {
+                            NotificationCenter.default.post(name: .toggleFileTree, object: nil)
+                        }
+                        .help(shortcutTooltip("File Tree", for: .toggleFileTree))
+                    }
+                    if showsToolbarAction(.snippets) {
+                        IconButton(symbol: "curlybraces", size: 12, accessibilityLabel: "Snippets") {
+                            NotificationCenter.default.post(name: .toggleSnippetsPanel, object: nil)
+                        }
+                        .help(shortcutTooltip("Snippets", for: .toggleSnippetsPanel))
+                    }
+                    if showsToolbarAction(.newTab) {
+                        IconButton(symbol: "plus", accessibilityLabel: "New Tab") { onCreateTab() }
+                            .help(shortcutTooltip("New Tab", for: .newTab))
+                    }
                 }
-                if isWindowTitleBar {
-                    OpenInIDEControl(
-                        projectPath: openInIDEProjectPath,
-                        filePath: openInIDEFilePath,
-                        cursorProvider: openInIDECursorProvider
-                    )
-                }
-                IconButton(symbol: "curlybraces", size: 12, accessibilityLabel: "Snippets") {
-                    NotificationCenter.default.post(name: .toggleSnippetsPanel, object: nil)
-                }
-                .help(shortcutTooltip("Snippets", for: .toggleSnippetsPanel))
-                IconButton(symbol: "plus", accessibilityLabel: "New Tab") { onCreateTab() }
-                    .help(shortcutTooltip("New Tab", for: .newTab))
+                .padding(.leading, 8)
+                .padding(.trailing, 4)
+                .fixedSize(horizontal: true, vertical: false)
+                .background(WindowDragRepresentable(alwaysEnabled: true))
             }
-            .padding(.leading, 8)
-            .padding(.trailing, 4)
-            .fixedSize(horizontal: true, vertical: false)
-            .background(WindowDragRepresentable(alwaysEnabled: isWindowTitleBar))
         }
         .frame(height: 32)
         .onPreferenceChange(TabFramePreferenceKey.self) { frames in
@@ -170,6 +207,10 @@ struct PaneTabStrip: View {
 
     private func shortcutTooltip(_ name: String, for action: ShortcutAction) -> String {
         "\(name) (\(KeyBindingStore.shared.combo(for: action).displayString))"
+    }
+
+    private func showsToolbarAction(_ action: ToolbarAction) -> Bool {
+        ToolbarAction.visibleActions(from: toolbarActionsRaw).contains(action)
     }
 
     private var developmentBadge: some View {

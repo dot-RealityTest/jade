@@ -13,6 +13,8 @@ struct GeneralSettingsView: View {
     private var keepProjectsOpenWhenNoTabs = false
     @AppStorage(UpdateChannel.storageKey)
     private var updateChannelRaw = UpdateChannel.stable.rawValue
+    @AppStorage(ToolbarAction.storageKey)
+    private var toolbarActionsRaw = ToolbarAction.defaultRawValue
 
     var body: some View {
         SettingsContainer {
@@ -43,6 +45,15 @@ struct GeneralSettingsView: View {
             }
 
             SettingsSection(
+                "Toolbar",
+                footer: "Hidden actions remain available in the Command Palette."
+            ) {
+                ForEach(ToolbarAction.allCases) { action in
+                    toolbarToggleRow(for: action)
+                }
+            }
+
+            SettingsSection(
                 "Projects",
                 footer: "Keep projects in the sidebar after closing their last tab. "
                     + "To remove a project afterward, use the right-click menu."
@@ -68,6 +79,37 @@ struct GeneralSettingsView: View {
             set: { newValue in
                 updateChannelRaw = newValue.rawValue
                 UpdateService.shared.channel = newValue
+            }
+        )
+    }
+
+    private func toolbarToggleRow(for action: ToolbarAction) -> some View {
+        SettingsRow(action.displayName) {
+            HStack(spacing: 8) {
+                Text(action.settingsDescription)
+                    .font(.system(size: SettingsMetrics.footnoteFontSize))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .frame(maxWidth: 220, alignment: .trailing)
+                Toggle("", isOn: toolbarActionBinding(for: action))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+            }
+        }
+    }
+
+    private func toolbarActionBinding(for action: ToolbarAction) -> Binding<Bool> {
+        Binding(
+            get: { ToolbarAction.visibleActions(from: toolbarActionsRaw).contains(action) },
+            set: { isVisible in
+                var actions = ToolbarAction.visibleActions(from: toolbarActionsRaw)
+                if isVisible {
+                    actions.insert(action)
+                } else {
+                    actions.remove(action)
+                }
+                toolbarActionsRaw = ToolbarAction.rawValue(for: actions)
             }
         )
     }

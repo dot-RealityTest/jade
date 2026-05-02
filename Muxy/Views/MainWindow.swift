@@ -64,6 +64,7 @@ struct MainWindow: View {
     @AppStorage(SidebarCollapsedStyle.storageKey) private var sidebarCollapsedStyleRaw = SidebarCollapsedStyle.defaultValue.rawValue
     @AppStorage(SidebarExpandedStyle.storageKey) private var sidebarExpandedStyleRaw = SidebarExpandedStyle.defaultValue.rawValue
     @AppStorage("muxy.notifications.toastPosition") private var toastPositionRaw = ToastPosition.topCenter.rawValue
+    @AppStorage(ToolbarAction.storageKey) private var toolbarActionsRaw = ToolbarAction.defaultRawValue
     private let trafficLightWidth: CGFloat = 75
 
     var body: some View {
@@ -489,22 +490,33 @@ struct MainWindow: View {
                 }
                 .overlay(alignment: .trailing) {
                     HStack(spacing: 0) {
-                        if AppEnvironment.isDevelopment {
+                        if showsToolbarAction(.debug), AppEnvironment.isDevelopment {
                             devModeBadge
                                 .padding(.trailing, 6)
                         }
-                        if let project = activeProject {
+                        if showsToolbarAction(.tools), let project = activeProject {
                             OpenInIDEControl(
                                 projectPath: activeWorktreePath(for: project),
                                 filePath: activeEditorFilePath,
                                 cursorProvider: activeEditorCursor
                             )
                         }
-                        if let project = activeProject {
+                        if showsToolbarAction(.updates), let version = UpdateService.shared.availableUpdateVersion {
+                            UpdateBadge(version: version) {
+                                UpdateService.shared.checkForUpdates()
+                            }
+                            .padding(.trailing, 4)
+                        }
+                        if let project = activeProject, activeProjectHasSplitWorkspace {
+                            fallbackToolbarProjectActions(project: project)
+                        }
+                        if showsToolbarAction(.snippets), activeProject != nil {
                             IconButton(symbol: "curlybraces", size: 12, accessibilityLabel: "Snippets") {
                                 NotificationCenter.default.post(name: .toggleSnippetsPanel, object: nil)
                             }
                             .help("Snippets (\(KeyBindingStore.shared.combo(for: .toggleSnippetsPanel).displayString))")
+                        }
+                        if showsToolbarAction(.newTab), let project = activeProject {
                             IconButton(symbol: "plus", accessibilityLabel: "New Tab") {
                                 appState.dispatch(.createTab(projectID: project.id, areaID: nil))
                             }
@@ -514,6 +526,52 @@ struct MainWindow: View {
                     .padding(.trailing, 4)
                 }
         }
+    }
+
+    @ViewBuilder
+    private func fallbackToolbarProjectActions(project: Project) -> some View {
+        if showsToolbarAction(.splitRight) {
+            IconButton(symbol: "square.split.2x1", accessibilityLabel: "Split Right") {
+                splitFallbackToolbarArea(project: project, direction: .horizontal)
+            }
+            .help("Split Right (\(KeyBindingStore.shared.combo(for: .splitRight).displayString))")
+        }
+        if showsToolbarAction(.splitDown) {
+            IconButton(symbol: "square.split.1x2", accessibilityLabel: "Split Down") {
+                splitFallbackToolbarArea(project: project, direction: .vertical)
+            }
+            .help("Split Down (\(KeyBindingStore.shared.combo(for: .splitDown).displayString))")
+        }
+        if showsToolbarAction(.quickOpen) {
+            IconButton(symbol: "doc.text", size: 12, accessibilityLabel: "Quick Open") {
+                NotificationCenter.default.post(name: .quickOpen, object: nil)
+            }
+            .help("Quick Open (\(KeyBindingStore.shared.combo(for: .quickOpen).displayString))")
+        }
+        if showsToolbarAction(.sourceControl) {
+            FileDiffIconButton {
+                openVCS(for: project)
+            }
+            .help("Source Control (\(KeyBindingStore.shared.combo(for: .openVCSTab).displayString))")
+        }
+        if showsToolbarAction(.fileTree) {
+            FileTreeIconButton {
+                NotificationCenter.default.post(name: .toggleFileTree, object: nil)
+            }
+            .help("File Tree (\(KeyBindingStore.shared.combo(for: .toggleFileTree).displayString))")
+        }
+    }
+
+    private func splitFallbackToolbarArea(project: Project, direction: SplitDirection) {
+        let areaID = appState.focusedAreaID(for: project.id)
+            ?? appState.workspaceRoot(for: project.id)?.allAreas().first?.id
+        guard let areaID else { return }
+        appState.dispatch(.splitArea(.init(
+            projectID: project.id,
+            areaID: areaID,
+            direction: direction,
+            position: .second
+        )))
     }
 
     private var worktreeSwitcherItems: [WorktreeSwitcherItem] {
@@ -530,18 +588,63 @@ struct MainWindow: View {
 
     private var commandPaletteAppItems: [CommandPaletteItem] {
         [
-            commandItem(.newTab, symbolName: "plus.square", subtitle: "Create a new terminal tab"),
-            commandItem(.splitRight, symbolName: "rectangle.split.2x1", subtitle: "Split the focused pane to the right"),
-            commandItem(.splitDown, symbolName: "rectangle.split.1x2", subtitle: "Split the focused pane down"),
-            commandItem(.openVCSTab, symbolName: "point.3.connected.trianglepath.dotted", subtitle: "Open source control"),
-            commandItem(.toggleFileTree, symbolName: "sidebar.left", subtitle: "Show or hide the file tree"),
-            commandItem(.toggleSnippetsPanel, symbolName: "curlybraces", subtitle: "Show or hide snippets"),
-            commandItem(.quickOpen, symbolName: "doc.text.magnifyingglass", subtitle: "Search files in the current project"),
-            commandItem(.switchWorktree, symbolName: "arrow.triangle.branch", subtitle: "Switch project worktree"),
-            commandItem(.toggleThemePicker, symbolName: "paintpalette", subtitle: "Open the theme picker"),
-            commandItem(.toggleAIUsage, symbolName: "chart.bar", subtitle: "Open AI usage"),
-            commandItem(.openProject, symbolName: "folder", subtitle: "Open a project folder"),
-            commandItem(.reloadConfig, symbolName: "arrow.clockwise", subtitle: "Reload terminal configuration"),
+            commandItem(.newTab, symbolName: "plus.square", subtitle: "Create a new terminal tab", aliases: ["shell", "terminal"]),
+            commandItem(
+                .splitRight,
+                symbolName: "rectangle.split.2x1",
+                subtitle: "Split the focused pane to the right",
+                aliases: ["pane", "layout", "right"]
+            ),
+            commandItem(
+                .splitDown,
+                symbolName: "rectangle.split.1x2",
+                subtitle: "Split the focused pane down",
+                aliases: ["pane", "layout", "below", "bottom"]
+            ),
+            commandItem(
+                .openVCSTab,
+                symbolName: "point.3.connected.trianglepath.dotted",
+                subtitle: "Open source control",
+                aliases: ["git", "vcs", "changes", "commit", "diff"]
+            ),
+            commandItem(
+                .toggleFileTree,
+                symbolName: "sidebar.left",
+                subtitle: "Show or hide the file tree",
+                aliases: ["files", "finder", "explorer", "sidebar", "tree"]
+            ),
+            commandItem(
+                .toggleSnippetsPanel,
+                symbolName: "curlybraces",
+                subtitle: "Show or hide snippets",
+                aliases: ["commands", "vault", "scripts", "shell"]
+            ),
+            commandItem(
+                .quickOpen,
+                symbolName: "doc.text.magnifyingglass",
+                subtitle: "Search files in the current project",
+                aliases: ["files", "open", "finder", "go to file"]
+            ),
+            commandItem(
+                .switchWorktree,
+                symbolName: "arrow.triangle.branch",
+                subtitle: "Switch project worktree",
+                aliases: ["branch", "workspace", "git"]
+            ),
+            commandItem(
+                .toggleThemePicker,
+                symbolName: "paintpalette",
+                subtitle: "Open the theme picker",
+                aliases: ["appearance", "colors", "theme"]
+            ),
+            commandItem(.toggleAIUsage, symbolName: "chart.bar", subtitle: "Open AI usage", aliases: ["tokens", "usage", "cost"]),
+            commandItem(.openProject, symbolName: "folder", subtitle: "Open a project folder", aliases: ["folder", "workspace"]),
+            commandItem(
+                .reloadConfig,
+                symbolName: "arrow.clockwise",
+                subtitle: "Reload terminal configuration",
+                aliases: ["refresh", "ghostty", "config"]
+            ),
         ]
     }
 
@@ -550,16 +653,25 @@ struct MainWindow: View {
         return activeWorktreePath(for: project)
     }
 
-    private func commandItem(_ action: ShortcutAction, symbolName: String, subtitle: String) -> CommandPaletteItem {
+    private func commandItem(
+        _ action: ShortcutAction,
+        symbolName: String,
+        subtitle: String,
+        aliases: [String] = []
+    ) -> CommandPaletteItem {
         CommandPaletteItem(
             id: "shortcut-\(action.rawValue)",
             title: action.displayName,
             subtitle: subtitle,
             symbolName: symbolName,
             section: .app,
-            searchText: action.category,
+            searchText: ([action.category] + aliases).joined(separator: " "),
             target: .shortcut(action)
         )
+    }
+
+    private func showsToolbarAction(_ action: ToolbarAction) -> Bool {
+        ToolbarAction.visibleActions(from: toolbarActionsRaw).contains(action)
     }
 
     private var toastPosition: ToastPosition {

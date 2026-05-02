@@ -21,7 +21,8 @@ struct CommandPaletteOverlay: View {
             onDismiss: onDismiss,
             row: { item, isHighlighted in
                 AnyView(CommandPaletteRow(item: item, isHighlighted: isHighlighted))
-            }
+            },
+            footer: AnyView(CommandPaletteFooter())
         )
         .onAppear {
             snippetsStore.selectScope(snippetScope)
@@ -39,7 +40,11 @@ struct CommandPaletteOverlay: View {
                 + snippetItems()
                 + worktreeCommandItems()
         }
-        return await CommandPaletteItem.filter(baseItems + fileItems, query: query)
+        return await CommandPaletteItem.filter(
+            baseItems + fileItems,
+            query: query,
+            sectionOrder: sectionOrder
+        )
     }
 
     @MainActor
@@ -128,6 +133,39 @@ struct CommandPaletteOverlay: View {
         default: "doc.text"
         }
     }
+
+    private var sectionOrder: [CommandPaletteSection] {
+        snippetScope.id.hasPrefix("remote-") ? CommandPaletteSection.remoteSpaceOrder : CommandPaletteSection.defaultOrder
+    }
+}
+
+private struct CommandPaletteFooter: View {
+    var body: some View {
+        HStack(spacing: 12) {
+            hint("Enter", "Run")
+            hint("Esc", "Close")
+            Spacer()
+            Text("Actions hidden from the toolbar stay here")
+                .font(.system(size: 10))
+                .foregroundStyle(MuxyTheme.fgDim)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+
+    private func hint(_ key: String, _ label: String) -> some View {
+        HStack(spacing: 5) {
+            Text(key)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(MuxyTheme.fgMuted)
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: 4))
+            Text(label)
+                .font(.system(size: 10))
+                .foregroundStyle(MuxyTheme.fgDim)
+        }
+    }
 }
 
 private struct CommandPaletteRow: View {
@@ -136,41 +174,43 @@ private struct CommandPaletteRow: View {
     @State private var hovered = false
 
     var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: item.symbolName)
-                .font(.system(size: 12))
-                .foregroundStyle(MuxyTheme.fgMuted)
-                .frame(width: 16)
+        VStack(alignment: .leading, spacing: 0) {
+            if item.showsSectionHeader {
+                Text(item.section.rawValue)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(MuxyTheme.fgDim)
+                    .padding(.horizontal, 12)
+                    .padding(.top, 10)
+                    .padding(.bottom, 4)
+            }
 
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
+            HStack(spacing: 10) {
+                Image(systemName: item.symbolName)
+                    .font(.system(size: 12))
+                    .foregroundStyle(MuxyTheme.fgMuted)
+                    .frame(width: 16)
+
+                VStack(alignment: .leading, spacing: 2) {
                     Text(item.title)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(MuxyTheme.fg)
                         .lineLimit(1)
 
-                    Text(item.section.rawValue)
-                        .font(.system(size: 8, weight: .semibold))
-                        .foregroundStyle(MuxyTheme.fgDim)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 1)
-                        .background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: 3))
+                    if !item.subtitle.isEmpty {
+                        Text(item.subtitle)
+                            .font(.system(size: 10))
+                            .foregroundStyle(MuxyTheme.fgDim)
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                    }
                 }
 
-                if !item.subtitle.isEmpty {
-                    Text(item.subtitle)
-                        .font(.system(size: 10))
-                        .foregroundStyle(MuxyTheme.fgDim)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                }
+                Spacer(minLength: 4)
             }
-
-            Spacer(minLength: 4)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(isHighlighted ? MuxyTheme.surface : hovered ? MuxyTheme.hover : .clear)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 7)
-        .background(isHighlighted ? MuxyTheme.surface : hovered ? MuxyTheme.hover : .clear)
         .onHover { hovered = $0 }
     }
 }

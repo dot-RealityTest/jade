@@ -52,9 +52,10 @@ Muxy/
     TerminalTab.swift         Terminal, VCS, editor, or diff-viewer tab model
     TabDragCoordinator.swift  Cross-pane tab drag-and-drop, TabMoveRequest, SplitPlacement
     CommandShortcut.swift     User-defined terminal command shortcut model for layered command chords
-    CommandPaletteItem.swift  Unified command palette result model and static section filtering
+    CommandPaletteItem.swift  Unified command palette result model, section headers, aliases, and remote-space ordering
     KeyBinding.swift          ShortcutAction enum + KeyBinding defaults
     KeyCombo.swift            Key combo encoding, display, matching
+    ToolbarAction.swift       Persisted titlebar toolbar visibility actions and compact defaults
     VCSTabState.swift         Git diff viewer state + loading orchestration
     EditorTabState.swift      Code editor tab state (backing store, cursor, search, save)
     DiffViewerTabState.swift  Standalone diff-viewer tab state (single-file diff, unified/split toggle, session-only — not persisted)
@@ -214,7 +215,7 @@ Muxy/
       PaneNode.swift          Recursive split pane rendering
       SplitContainer.swift    Split pane with resize handle
       TabAreaView.swift       Tab area wrapper (tabs + content)
-      TabStrip.swift          Tab bar with drag reordering
+      TabStrip.swift          Tab bar with drag reordering and configurable titlebar actions
       DropZoneOverlay.swift   Tab split-mode drop targets
     Settings/
       SettingsView.swift      Settings window layout

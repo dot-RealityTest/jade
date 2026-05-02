@@ -41,6 +41,37 @@ struct CommandPaletteItemTests {
         ])
     }
 
+    @Test("filter marks the first visible item in each section")
+    func filterMarksSectionHeaders() {
+        let items = [
+            item(title: "New Tab", section: .app),
+            item(title: "Open Project", section: .app),
+            item(title: "Open Zen", section: .remote),
+            item(title: "Open Alienware", section: .remote),
+        ]
+
+        let result = CommandPaletteItem.filter(items, query: "")
+
+        #expect(result.map(\.title) == ["New Tab", "Open Project", "Open Alienware", "Open Zen"])
+        #expect(result.map(\.showsSectionHeader) == [true, false, true, false])
+    }
+
+    @Test("filter supports remote space ordering")
+    func filterSupportsRemoteSpaceOrdering() {
+        let items = [
+            item(title: "New Tab", section: .app),
+            item(title: "Open Alienware", section: .remote),
+            item(title: "GPU Console", section: .snippet),
+            item(title: "README.md", section: .file),
+        ]
+
+        #expect(CommandPaletteItem.filter(
+            items,
+            query: "",
+            sectionOrder: CommandPaletteSection.remoteSpaceOrder
+        ).map(\.section) == [.snippet, .remote, .app, .file])
+    }
+
     private func item(
         title: String,
         subtitle: String = "",

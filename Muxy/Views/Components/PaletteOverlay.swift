@@ -13,6 +13,7 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
     let onSelect: (Item) -> Void
     let onDismiss: () -> Void
     let row: (Item, Bool) -> AnyView
+    var footer: AnyView?
 
     @State private var query = ""
     @State private var results: [Item] = []
@@ -30,6 +31,10 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
                 searchField
                 Divider().overlay(MuxyTheme.border)
                 resultsList
+                if let footer {
+                    Divider().overlay(MuxyTheme.border)
+                    footer
+                }
             }
             .frame(width: 500, height: 380)
             .background(MuxyTheme.bg)
