@@ -51,6 +51,7 @@ struct GeneralSettingsView: View {
                 ForEach(ToolbarAction.allCases) { action in
                     toolbarToggleRow(for: action)
                 }
+                toolbarResetRow
             }
 
             SettingsSection(
@@ -97,6 +98,21 @@ struct GeneralSettingsView: View {
                     .controlSize(.small)
             }
         }
+    }
+
+    private var toolbarResetRow: some View {
+        HStack {
+            Spacer()
+            Button("Restore Compact Toolbar") {
+                toolbarActionsRaw = ToolbarAction.defaultRawValue
+            }
+            .font(.system(size: SettingsMetrics.footnoteFontSize))
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .disabled(toolbarActionsRaw == ToolbarAction.defaultRawValue)
+        }
+        .padding(.horizontal, SettingsMetrics.horizontalPadding)
+        .padding(.top, 4)
     }
 
     private func toolbarActionBinding(for action: ToolbarAction) -> Binding<Bool> {

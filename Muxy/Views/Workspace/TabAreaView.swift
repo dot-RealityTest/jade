@@ -112,6 +112,13 @@ struct TabAreaView: View {
                 }
             }
         }
+        .overlay(alignment: .top) {
+            if showTabStrip, isFocused, isActiveProject {
+                Rectangle()
+                    .fill(MuxyTheme.accent.opacity(0.7))
+                    .frame(height: 1)
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: .findInTerminal)) { _ in
             guard isFocused, isActiveProject else { return }
             guard let tabID = area.activeTabID,
