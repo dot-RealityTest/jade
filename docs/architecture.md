@@ -52,6 +52,7 @@ Muxy/
     TerminalTab.swift         Terminal, VCS, editor, or diff-viewer tab model
     TabDragCoordinator.swift  Cross-pane tab drag-and-drop, TabMoveRequest, SplitPlacement
     CommandShortcut.swift     User-defined terminal command shortcut model for layered command chords
+    CommandPaletteItem.swift  Unified command palette result model and static section filtering
     KeyBinding.swift          ShortcutAction enum + KeyBinding defaults
     KeyCombo.swift            Key combo encoding, display, matching
     VCSTabState.swift         Git diff viewer state + loading orchestration
@@ -173,6 +174,7 @@ Muxy/
       UUIDFramePreferenceKey.swift  Generic PreferenceKey for frame tracking
       NotificationBadge.swift Unread count badge for sidebar project icons
       QuickOpenOverlay.swift  Cmd+P file search overlay (name substring match via find)
+      CommandPaletteOverlay.swift  Cmd+K unified command palette for app actions, remote spaces, snippets, files, and worktrees
       AppBundleIconView.swift Renders and caches installed app bundle icons for menus and launcher controls
       OpenInIDEControl.swift  Split button for opening the active project or editor file in the remembered or selected IDE
     Terminal/

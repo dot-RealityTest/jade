@@ -1,0 +1,176 @@
+import SwiftUI
+
+struct CommandPaletteOverlay: View {
+    let appItems: [CommandPaletteItem]
+    let remoteSpaces: [RemoteSpace]
+    let snippetScope: SnippetScope
+    let projectPath: String?
+    let worktreeItems: [WorktreeSwitcherItem]
+    let onSelect: (CommandPaletteItem) -> Void
+    let onDismiss: () -> Void
+
+    @State private var snippetsStore = SnippetsStore.shared
+
+    var body: some View {
+        PaletteOverlay<CommandPaletteItem>(
+            placeholder: "Search commands, spaces, snippets, files...",
+            emptyLabel: "No commands",
+            noMatchLabel: "No matching commands",
+            search: { query in await search(query: query) },
+            onSelect: onSelect,
+            onDismiss: onDismiss,
+            row: { item, isHighlighted in
+                AnyView(CommandPaletteRow(item: item, isHighlighted: isHighlighted))
+            }
+        )
+        .onAppear {
+            snippetsStore.selectScope(snippetScope)
+        }
+        .onChange(of: snippetScope) { _, scope in
+            snippetsStore.selectScope(scope)
+        }
+    }
+
+    private func search(query: String) async -> [CommandPaletteItem] {
+        async let fileItems = fileResults(query: query)
+        let baseItems = await MainActor.run {
+            appItems
+                + remoteItems()
+                + snippetItems()
+                + worktreeCommandItems()
+        }
+        return await CommandPaletteItem.filter(baseItems + fileItems, query: query)
+    }
+
+    @MainActor
+    private func remoteItems() -> [CommandPaletteItem] {
+        remoteSpaces.map { space in
+            CommandPaletteItem(
+                id: "remote-\(space.id.uuidString)",
+                title: "Open \(space.displayName)",
+                subtitle: space.connectionSummary,
+                symbolName: "display",
+                section: .remote,
+                searchText: [space.displayName, space.connectionSummary, space.connectionCommand].joined(separator: " "),
+                target: .remote(space.id)
+            )
+        }
+    }
+
+    @MainActor
+    private func snippetItems() -> [CommandPaletteItem] {
+        snippetsStore.snippets.map { snippet in
+            CommandPaletteItem(
+                id: "snippet-\(snippet.id.uuidString)",
+                title: snippet.displayName,
+                subtitle: snippet.trimmedCommand,
+                symbolName: "curlybraces",
+                section: .snippet,
+                searchText: (snippet.tags + [snippet.trimmedDescription]).joined(separator: " "),
+                target: .snippet(snippet.id)
+            )
+        }
+    }
+
+    private func worktreeCommandItems() -> [CommandPaletteItem] {
+        worktreeItems.map { item in
+            CommandPaletteItem(
+                id: "worktree-\(item.projectID.uuidString)-\(item.worktree.id.uuidString)",
+                title: "Switch to \(item.displayName)",
+                subtitle: item.branchSubtitle.map { "\($0) · \(item.projectName)" } ?? item.projectName,
+                symbolName: "point.3.connected.trianglepath.dotted",
+                section: .worktree,
+                searchText: item.searchKey,
+                target: .worktree(projectID: item.projectID, worktreeID: item.worktree.id)
+            )
+        }
+    }
+
+    private func fileResults(query: String) async -> [CommandPaletteItem] {
+        guard let projectPath else { return [] }
+        let results = await FileSearchService.search(query: query, in: projectPath)
+        return results.map { result in
+            CommandPaletteItem(
+                id: "file-\(result.absolutePath)",
+                title: result.fileName,
+                subtitle: result.relativePath,
+                symbolName: fileIcon(for: result.absolutePath),
+                section: .file,
+                searchText: result.absolutePath,
+                target: .file(result.absolutePath)
+            )
+        }
+    }
+
+    private func fileIcon(for path: String) -> String {
+        switch URL(fileURLWithPath: path).pathExtension.lowercased() {
+        case "swift": "swift"
+        case "js",
+             "jsx",
+             "mjs": "j.square"
+        case "ts",
+             "tsx",
+             "mts": "t.square"
+        case "py": "p.square"
+        case "json": "curlybraces"
+        case "html",
+             "htm": "chevron.left.forwardslash.chevron.right"
+        case "css",
+             "scss": "paintbrush"
+        case "md",
+             "markdown": "doc.richtext"
+        case "yaml",
+             "yml",
+             "toml": "gearshape"
+        case "sh",
+             "bash",
+             "zsh": "terminal"
+        default: "doc.text"
+        }
+    }
+}
+
+private struct CommandPaletteRow: View {
+    let item: CommandPaletteItem
+    let isHighlighted: Bool
+    @State private var hovered = false
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: item.symbolName)
+                .font(.system(size: 12))
+                .foregroundStyle(MuxyTheme.fgMuted)
+                .frame(width: 16)
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 6) {
+                    Text(item.title)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(MuxyTheme.fg)
+                        .lineLimit(1)
+
+                    Text(item.section.rawValue)
+                        .font(.system(size: 8, weight: .semibold))
+                        .foregroundStyle(MuxyTheme.fgDim)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 1)
+                        .background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: 3))
+                }
+
+                if !item.subtitle.isEmpty {
+                    Text(item.subtitle)
+                        .font(.system(size: 10))
+                        .foregroundStyle(MuxyTheme.fgDim)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+            }
+
+            Spacer(minLength: 4)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(isHighlighted ? MuxyTheme.surface : hovered ? MuxyTheme.hover : .clear)
+        .onHover { hovered = $0 }
+    }
+}

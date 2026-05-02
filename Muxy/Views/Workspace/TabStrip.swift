@@ -76,30 +76,12 @@ struct PaneTabStrip: View {
                         cursorProvider: openInIDECursorProvider
                     )
                 }
-                if isWindowTitleBar, let version = UpdateService.shared.availableUpdateVersion {
-                    UpdateBadge(version: version) {
-                        UpdateService.shared.checkForUpdates()
-                    }
-                    .padding(.trailing, 4)
+                IconButton(symbol: "curlybraces", size: 12, accessibilityLabel: "Snippets") {
+                    NotificationCenter.default.post(name: .toggleSnippetsPanel, object: nil)
                 }
-                IconButton(symbol: "square.split.2x1", accessibilityLabel: "Split Right") { onSplit(.horizontal) }
-                    .help(shortcutTooltip("Split Right", for: .splitRight))
-                IconButton(symbol: "square.split.1x2", accessibilityLabel: "Split Down") { onSplit(.vertical) }
-                    .help(shortcutTooltip("Split Down", for: .splitDown))
+                .help(shortcutTooltip("Snippets", for: .toggleSnippetsPanel))
                 IconButton(symbol: "plus", accessibilityLabel: "New Tab") { onCreateTab() }
                     .help(shortcutTooltip("New Tab", for: .newTab))
-                if showVCSButton {
-                    IconButton(symbol: "doc.text", size: 12, accessibilityLabel: "Quick Open") {
-                        NotificationCenter.default.post(name: .quickOpen, object: nil)
-                    }
-                    .help(shortcutTooltip("Quick Open", for: .quickOpen))
-                    FileDiffIconButton(action: onCreateVCSTab)
-                        .help(shortcutTooltip("Source Control", for: .openVCSTab))
-                    FileTreeIconButton {
-                        NotificationCenter.default.post(name: .toggleFileTree, object: nil)
-                    }
-                    .help(shortcutTooltip("File Tree", for: .toggleFileTree))
-                }
             }
             .padding(.leading, 8)
             .padding(.trailing, 4)

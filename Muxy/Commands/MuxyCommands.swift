@@ -207,6 +207,12 @@ struct MuxyCommands: Commands {
             }
             .shortcut(for: .openVCSTab, store: keyBindings)
 
+            Button("Command Palette") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.commandPalette)
+            }
+            .shortcut(for: .commandPalette, store: keyBindings)
+
             Button("Quick Open") {
                 guard isMainWindowFocused else { return }
                 performShortcutAction(.quickOpen)

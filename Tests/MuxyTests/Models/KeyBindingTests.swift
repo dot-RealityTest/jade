@@ -89,6 +89,15 @@ struct KeyBindingTests {
         #expect(KeyBinding.defaults.first { $0.action == .toggleSnippetsPanel }?.combo == KeyCombo(key: "j", command: true))
     }
 
+    @Test("Command palette owns Cmd+K default")
+    func commandPaletteShortcut() {
+        #expect(ShortcutAction.commandPalette.displayName == "Command Palette")
+        #expect(ShortcutAction.commandPalette.category == "App")
+        #expect(ShortcutAction.commandPalette.scope == .mainWindow)
+        #expect(KeyBinding.defaults.first { $0.action == .commandPalette }?.combo == KeyCombo(key: "k", command: true))
+        #expect(KeyBinding.defaults.first { $0.action == .openVCSTab }?.combo != KeyCombo(key: "k", command: true))
+    }
+
     @Test("KeyBinding Codable round-trip")
     func codableRoundTrip() throws {
         let binding = KeyBinding(
