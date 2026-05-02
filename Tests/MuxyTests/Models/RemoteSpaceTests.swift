@@ -53,6 +53,14 @@ struct RemoteSpaceTests {
         #expect(space.displayName == "Remote")
     }
 
+    @Test("remote names resolve default themes")
+    func remoteNamesResolveDefaultThemes() {
+        #expect(RemoteSpace(name: "Zen", command: "ssh host").effectiveThemeName == "Muxy Zen")
+        #expect(RemoteSpace(name: "Alienware", command: "ssh host").effectiveThemeName == "Muxy Alienware")
+        #expect(RemoteSpace(name: "Server", command: "ssh host").effectiveThemeName == nil)
+        #expect(RemoteSpace(name: "Server", command: "ssh host", themeName: "Muxy").effectiveThemeName == "Muxy")
+    }
+
     @Test("storage slug is stable and filesystem safe")
     func storageSlugIsStableAndFilesystemSafe() {
         let space = RemoteSpace(

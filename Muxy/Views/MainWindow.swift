@@ -286,6 +286,10 @@ struct MainWindow: View {
             panelVisible: fileTreePanelVisible,
             sync: syncFileTreeSelection
         ))
+        .modifier(RemoteSpaceThemeSync(
+            projectID: appState.activeProjectID,
+            activeSpace: activeRemoteSpace
+        ))
         .onChange(of: appState.pendingLastTabClose != nil) { _, isPresented in
             guard isPresented else { return }
             presentCloseConfirmation(.lastTab)
@@ -546,6 +550,11 @@ struct MainWindow: View {
               let space = remoteSpacesStore.space(forProjectPath: project.path)
         else { return .shared }
         return .remote(space)
+    }
+
+    private var activeRemoteSpace: RemoteSpace? {
+        guard let project = activeProject else { return nil }
+        return remoteSpacesStore.space(forProjectPath: project.path)
     }
 
     private var windowTitle: String {
@@ -896,6 +905,26 @@ private struct FileTreeSelectionSync: ViewModifier {
                 guard visible else { return }
                 sync(filePath)
             }
+    }
+}
+
+private struct RemoteSpaceThemeSync: ViewModifier {
+    let projectID: UUID?
+    let activeSpace: RemoteSpace?
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: projectID) {
+                apply()
+            }
+            .onAppear {
+                apply()
+            }
+    }
+
+    private func apply() {
+        guard let activeSpace else { return }
+        RemoteSpaceLauncher.applyTheme(for: activeSpace)
     }
 }
 

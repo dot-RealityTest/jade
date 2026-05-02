@@ -11,6 +11,7 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
     var identityFile: String
     var jumpHost: String
     var startupCommands: [String]
+    var themeName: String
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -23,6 +24,7 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
         case identityFile
         case jumpHost
         case startupCommands
+        case themeName
     }
 
     init(
@@ -35,7 +37,8 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
         port: Int? = nil,
         identityFile: String = "",
         jumpHost: String = "",
-        startupCommands: [String] = []
+        startupCommands: [String] = [],
+        themeName: String = ""
     ) {
         self.id = id
         self.name = name
@@ -47,6 +50,7 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
         self.identityFile = identityFile
         self.jumpHost = jumpHost
         self.startupCommands = startupCommands
+        self.themeName = themeName
     }
 
     init(from decoder: any Decoder) throws {
@@ -61,6 +65,7 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
         identityFile = try container.decodeIfPresent(String.self, forKey: .identityFile) ?? ""
         jumpHost = try container.decodeIfPresent(String.self, forKey: .jumpHost) ?? ""
         startupCommands = try container.decodeIfPresent([String].self, forKey: .startupCommands) ?? []
+        themeName = try container.decodeIfPresent(String.self, forKey: .themeName) ?? ""
     }
 
     var trimmedName: String {
@@ -85,6 +90,10 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
 
     var trimmedJumpHost: String {
         jumpHost.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var trimmedThemeName: String {
+        themeName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var normalizedStartupCommands: [String] {
@@ -132,6 +141,12 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
             parts.append("\(normalizedStartupCommands.joined(separator: " && ")); exec ${SHELL:-/bin/sh} -l")
         }
         return parts.map(ShellEscaper.escape).joined(separator: " ")
+    }
+
+    var effectiveThemeName: String? {
+        let theme = trimmedThemeName
+        guard !theme.isEmpty else { return Self.defaultThemeName(for: displayName) }
+        return theme
     }
 
     var storageSlug: String {
@@ -217,5 +232,16 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
             identityFile: identityFile,
             jumpHost: jumpHost
         )
+    }
+
+    static func defaultThemeName(for name: String) -> String? {
+        let lowered = name.lowercased()
+        if lowered.contains("zen") {
+            return "Muxy Zen"
+        }
+        if lowered.contains("alien") || lowered.contains("nvidia") {
+            return "Muxy Alienware"
+        }
+        return nil
     }
 }

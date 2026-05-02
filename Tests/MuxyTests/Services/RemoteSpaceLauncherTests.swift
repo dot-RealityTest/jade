@@ -24,12 +24,14 @@ struct RemoteSpaceLauncherTests {
     func openCreatesDedicatedProjectSpaceAndSSHTab() throws {
         let (appState, projectStore, worktreeStore) = makeStores()
         let space = RemoteSpace(name: "Zen", command: "ssh kika@100.86.62.100", colorID: "blue")
+        var themedSpace: RemoteSpace?
 
         RemoteSpaceLauncher.open(
             space,
             appState: appState,
             projectStore: projectStore,
-            worktreeStore: worktreeStore
+            worktreeStore: worktreeStore,
+            applyTheme: { themedSpace = $0 }
         )
 
         let project = try #require(projectStore.projects.first)
@@ -43,6 +45,7 @@ struct RemoteSpaceLauncherTests {
         #expect(tab.colorID == "blue")
         #expect(tab.content.pane?.startupCommand == "ssh kika@100.86.62.100")
         #expect(worktreeStore.primary(for: project.id)?.path == project.path)
+        #expect(themedSpace?.id == space.id)
     }
 
     @Test("open existing space selects existing SSH tab without duplicating project")
@@ -54,13 +57,15 @@ struct RemoteSpaceLauncherTests {
             space,
             appState: appState,
             projectStore: projectStore,
-            worktreeStore: worktreeStore
+            worktreeStore: worktreeStore,
+            applyTheme: { _ in }
         )
         RemoteSpaceLauncher.open(
             space,
             appState: appState,
             projectStore: projectStore,
-            worktreeStore: worktreeStore
+            worktreeStore: worktreeStore,
+            applyTheme: { _ in }
         )
 
         let project = try #require(projectStore.projects.first)
@@ -84,7 +89,8 @@ struct RemoteSpaceLauncherTests {
             space,
             appState: appState,
             projectStore: projectStore,
-            worktreeStore: worktreeStore
+            worktreeStore: worktreeStore,
+            applyTheme: { _ in }
         )
 
         let project = try #require(projectStore.projects.first)

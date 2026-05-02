@@ -31,7 +31,8 @@ struct RemoteSpacesStoreTests {
             command: "ssh kika@100.86.62.100",
             colorID: "blue",
             user: "kika",
-            host: "100.86.62.100"
+            host: "100.86.62.100",
+            themeName: "Muxy Zen"
         )]
         #expect(store.spaces == expected)
         #expect(persistence.savedSpaces == expected)
@@ -56,7 +57,12 @@ struct RemoteSpacesStoreTests {
 
         #expect(persistence.savedSpaces == [saved])
 
-        store.update(RemoteSpace(id: saved.id, name: "Zen Linux", command: " ssh kika@host ", colorID: "green"))
+        let updated = try #require(store.update(RemoteSpace(
+            id: saved.id,
+            name: "Zen Linux",
+            command: " ssh kika@host ",
+            colorID: "green"
+        )))
 
         #expect(store.spaces == [
             RemoteSpace(
@@ -65,9 +71,11 @@ struct RemoteSpacesStoreTests {
                 command: "ssh kika@host",
                 colorID: "green",
                 user: "kika",
-                host: "host"
+                host: "host",
+                themeName: "Muxy Zen"
             )
         ])
+        #expect(updated == store.spaces[0])
         #expect(persistence.savedSpaces == store.spaces)
 
         store.delete(saved)

@@ -70,12 +70,14 @@ final class RemoteSpacesStore {
         return space
     }
 
-    func update(_ space: RemoteSpace) {
+    @discardableResult
+    func update(_ space: RemoteSpace) -> RemoteSpace? {
         guard let index = spaces.firstIndex(where: { $0.id == space.id }),
               let space = sanitized(space)
-        else { return }
+        else { return nil }
         spaces[index] = space
         save()
+        return space
     }
 
     func delete(_ space: RemoteSpace) {
@@ -115,6 +117,9 @@ final class RemoteSpacesStore {
         let identityFile = space.trimmedIdentityFile.isEmpty ? parsed?.trimmedIdentityFile ?? "" : space.trimmedIdentityFile
         let jumpHost = space.trimmedJumpHost.isEmpty ? parsed?.trimmedJumpHost ?? "" : space.trimmedJumpHost
         let startupCommands = space.normalizedStartupCommands
+        let themeName = space.trimmedThemeName.isEmpty
+            ? RemoteSpace.defaultThemeName(for: name)
+            : space.trimmedThemeName
         guard !host.isEmpty || !command.isEmpty else { return nil }
         return RemoteSpace(
             id: space.id,
@@ -126,7 +131,8 @@ final class RemoteSpacesStore {
             port: port,
             identityFile: identityFile,
             jumpHost: jumpHost,
-            startupCommands: startupCommands
+            startupCommands: startupCommands,
+            themeName: themeName ?? ""
         )
     }
 

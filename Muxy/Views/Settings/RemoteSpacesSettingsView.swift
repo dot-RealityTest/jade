@@ -112,6 +112,14 @@ struct RemoteSpacesSettingsView: View {
                     .controlSize(.small)
             }
 
+            SettingsRow("SSH Command") {
+                TextField("ssh user@host", text: $draft.command)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
+                    .frame(width: SettingsMetrics.controlWidth)
+                    .controlSize(.small)
+            }
+
             SettingsRow("Host") {
                 TextField("100.86.62.100", text: $draft.host)
                     .textFieldStyle(.roundedBorder)
@@ -175,7 +183,7 @@ struct RemoteSpacesSettingsView: View {
             .padding(.horizontal, SettingsMetrics.horizontalPadding)
             .padding(.vertical, SettingsMetrics.rowVerticalPadding)
 
-            SettingsRow("Command") {
+            SettingsRow("Preview") {
                 Text(draft.commandPreview)
                     .font(.system(size: SettingsMetrics.footnoteFontSize, design: .monospaced))
                     .foregroundStyle(.secondary)
@@ -183,6 +191,18 @@ struct RemoteSpacesSettingsView: View {
                     .truncationMode(.middle)
                     .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
                     .textSelection(.enabled)
+            }
+
+            SettingsRow("Theme") {
+                Picker("", selection: $draft.themeName) {
+                    Text("Automatic").tag("")
+                    Text("Muxy Zen").tag("Muxy Zen")
+                    Text("Muxy Alienware").tag("Muxy Alienware")
+                    Text("Muxy").tag("Muxy")
+                    Text("Muxy Light").tag("Muxy Light")
+                }
+                .labelsHidden()
+                .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
             }
 
             SettingsRow("Color") {
@@ -246,12 +266,25 @@ struct RemoteSpacesSettingsView: View {
     }
 
     private func save() {
+        guard draft.canSave else {
+            ToastState.shared.show("Add a name and host")
+            return
+        }
         let space = draft.remoteSpace(existingID: selectedSpaceID)
         if selectedSpaceID == nil {
-            guard let saved = store.add(space) else { return }
+            guard let saved = store.add(space) else {
+                ToastState.shared.show("Could not save space")
+                return
+            }
             beginEdit(saved)
+            ToastState.shared.show("Saved \(saved.displayName)")
         } else {
-            store.update(space)
+            guard let saved = store.update(space) else {
+                ToastState.shared.show("Could not save space")
+                return
+            }
+            beginEdit(saved)
+            ToastState.shared.show("Saved \(saved.displayName)")
         }
     }
 
@@ -275,12 +308,13 @@ private struct RemoteSpaceDraft {
     var identityFile = ""
     var jumpHost = ""
     var startupCommandsText = ""
+    var themeName = ""
 
     init() {}
 
     init(space: RemoteSpace) {
         name = space.name
-        command = space.command
+        command = space.trimmedHost.isEmpty ? space.command : ""
         colorID = space.colorID
         user = space.user
         host = space.host
@@ -288,6 +322,7 @@ private struct RemoteSpaceDraft {
         identityFile = space.identityFile
         jumpHost = space.jumpHost
         startupCommandsText = space.startupCommands.joined(separator: "\n")
+        themeName = space.trimmedThemeName
     }
 
     var isBlank: Bool {
@@ -300,6 +335,7 @@ private struct RemoteSpaceDraft {
             && identityFile.isEmpty
             && jumpHost.isEmpty
             && startupCommandsText.isEmpty
+            && themeName.isEmpty
     }
 
     var canSave: Bool {
@@ -345,7 +381,8 @@ private struct RemoteSpaceDraft {
             port: port,
             identityFile: identityFile,
             jumpHost: jumpHost,
-            startupCommands: startupCommands
+            startupCommands: startupCommands,
+            themeName: themeName
         )
     }
 }

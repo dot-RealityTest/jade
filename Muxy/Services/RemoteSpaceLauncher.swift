@@ -6,9 +6,11 @@ enum RemoteSpaceLauncher {
         _ space: RemoteSpace,
         appState: AppState,
         projectStore: ProjectStore,
-        worktreeStore: WorktreeStore
+        worktreeStore: WorktreeStore,
+        applyTheme: @MainActor (RemoteSpace) -> Void = RemoteSpaceLauncher.applyTheme
     ) {
         guard space.isConnectable else { return }
+        applyTheme(space)
         let project = project(for: space, projectStore: projectStore)
         worktreeStore.ensurePrimary(for: project)
         guard let worktree = worktreeStore.primary(for: project.id) else { return }
@@ -75,5 +77,10 @@ enum RemoteSpaceLauncher {
             return (area.id, tab.id)
         }
         return nil
+    }
+
+    static func applyTheme(for space: RemoteSpace) {
+        guard let themeName = space.effectiveThemeName else { return }
+        ThemeService.shared.applyTheme(themeName)
     }
 }
