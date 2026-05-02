@@ -50,6 +50,8 @@ final class RemoteSpacesStore {
         return spaces.filter { space in
             space.displayName.lowercased().contains(query)
                 || space.trimmedCommand.lowercased().contains(query)
+                || space.connectionSummary.lowercased().contains(query)
+                || space.connectionCommand.lowercased().contains(query)
         }
     }
 
@@ -104,14 +106,32 @@ final class RemoteSpacesStore {
     }
 
     private func sanitized(_ space: RemoteSpace) -> RemoteSpace? {
-        let command = space.trimmedCommand
-        guard !command.isEmpty else { return nil }
         let name = space.trimmedName
+        let parsed = space.trimmedHost.isEmpty ? RemoteSpace.parsedSSHCommand(space.trimmedCommand) : nil
+        let host = space.trimmedHost.isEmpty ? parsed?.trimmedHost ?? "" : space.trimmedHost
+        let command = space.trimmedCommand
+        let port = normalizedPort(space.port ?? parsed?.port)
+        let user = space.trimmedUser.isEmpty ? parsed?.trimmedUser ?? "" : space.trimmedUser
+        let identityFile = space.trimmedIdentityFile.isEmpty ? parsed?.trimmedIdentityFile ?? "" : space.trimmedIdentityFile
+        let jumpHost = space.trimmedJumpHost.isEmpty ? parsed?.trimmedJumpHost ?? "" : space.trimmedJumpHost
+        let startupCommands = space.normalizedStartupCommands
+        guard !host.isEmpty || !command.isEmpty else { return nil }
         return RemoteSpace(
             id: space.id,
             name: name.isEmpty ? "Remote" : name,
             command: command,
-            colorID: space.colorID
+            colorID: space.colorID,
+            user: user,
+            host: host,
+            port: port,
+            identityFile: identityFile,
+            jumpHost: jumpHost,
+            startupCommands: startupCommands
         )
+    }
+
+    private func normalizedPort(_ port: Int?) -> Int? {
+        guard let port, (1 ... 65535).contains(port) else { return nil }
+        return port
     }
 }

@@ -25,7 +25,14 @@ struct RemoteSpacesStoreTests {
             RemoteSpace(name: "Empty", command: " "),
         ])
 
-        let expected = [RemoteSpace(id: zenID, name: "Zen", command: "ssh kika@100.86.62.100", colorID: "blue")]
+        let expected = [RemoteSpace(
+            id: zenID,
+            name: "Zen",
+            command: "ssh kika@100.86.62.100",
+            colorID: "blue",
+            user: "kika",
+            host: "100.86.62.100"
+        )]
         #expect(store.spaces == expected)
         #expect(persistence.savedSpaces == expected)
     }
@@ -52,7 +59,14 @@ struct RemoteSpacesStoreTests {
         store.update(RemoteSpace(id: saved.id, name: "Zen Linux", command: " ssh kika@host ", colorID: "green"))
 
         #expect(store.spaces == [
-            RemoteSpace(id: saved.id, name: "Zen Linux", command: "ssh kika@host", colorID: "green")
+            RemoteSpace(
+                id: saved.id,
+                name: "Zen Linux",
+                command: "ssh kika@host",
+                colorID: "green",
+                user: "kika",
+                host: "host"
+            )
         ])
         #expect(persistence.savedSpaces == store.spaces)
 
@@ -70,6 +84,25 @@ struct RemoteSpacesStoreTests {
         let space = try #require(store.space(forProjectPath: zen.backingDirectory(create: false).path))
 
         #expect(space.displayName == "Zen")
+    }
+
+    @Test("structured profile saves generated command fields")
+    func structuredProfileSavesGeneratedCommandFields() throws {
+        let persistence = InMemoryRemoteSpacesPersistence()
+        let store = RemoteSpacesStore(persistence: persistence)
+        let saved = try #require(store.add(RemoteSpace(
+            name: "Zen",
+            colorID: "blue",
+            user: " kika ",
+            host: " 100.86.62.100 ",
+            port: 2222,
+            identityFile: " ~/.ssh/id_ed25519 ",
+            jumpHost: " bastion ",
+            startupCommands: [" cd ~/code ", " ", " tmux attach "]
+        )))
+
+        #expect(saved.connectionCommand == "ssh -t -p 2222 -i ~/.ssh/id_ed25519 -J bastion kika@100.86.62.100 'cd ~/code && tmux attach; exec ${SHELL:-/bin/sh} -l'")
+        #expect(persistence.savedSpaces == [saved])
     }
 }
 

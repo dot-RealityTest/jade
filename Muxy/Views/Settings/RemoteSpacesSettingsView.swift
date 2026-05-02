@@ -67,7 +67,7 @@ struct RemoteSpacesSettingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(space.displayName)
                     .font(.system(size: SettingsMetrics.labelFontSize))
-                Text(space.trimmedCommand)
+                Text(space.connectionSummary)
                     .font(.system(size: SettingsMetrics.footnoteFontSize, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
@@ -112,12 +112,77 @@ struct RemoteSpacesSettingsView: View {
                     .controlSize(.small)
             }
 
-            SettingsRow("SSH Command") {
-                TextField("ssh user@host", text: $draft.command)
+            SettingsRow("Host") {
+                TextField("100.86.62.100", text: $draft.host)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
                     .frame(width: SettingsMetrics.controlWidth)
                     .controlSize(.small)
+            }
+
+            SettingsRow("User") {
+                TextField(NSUserName(), text: $draft.user)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
+                    .frame(width: SettingsMetrics.controlWidth)
+                    .controlSize(.small)
+            }
+
+            SettingsRow("Port") {
+                TextField("22", text: $draft.portText)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
+                    .frame(width: SettingsMetrics.controlWidth)
+                    .controlSize(.small)
+            }
+
+            SettingsRow("Identity") {
+                TextField("~/.ssh/id_ed25519", text: $draft.identityFile)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
+                    .frame(width: SettingsMetrics.controlWidth)
+                    .controlSize(.small)
+            }
+
+            SettingsRow("Jump Host") {
+                TextField("bastion", text: $draft.jumpHost)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
+                    .frame(width: SettingsMetrics.controlWidth)
+                    .controlSize(.small)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Startup")
+                        .font(.system(size: SettingsMetrics.labelFontSize))
+                    Spacer()
+                    Text("one command per line")
+                        .font(.system(size: SettingsMetrics.footnoteFontSize))
+                        .foregroundStyle(.secondary)
+                }
+                TextEditor(text: $draft.startupCommandsText)
+                    .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
+                    .scrollContentBackground(.hidden)
+                    .frame(height: 70)
+                    .padding(4)
+                    .background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: 6))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(MuxyTheme.border)
+                    )
+            }
+            .padding(.horizontal, SettingsMetrics.horizontalPadding)
+            .padding(.vertical, SettingsMetrics.rowVerticalPadding)
+
+            SettingsRow("Command") {
+                Text(draft.commandPreview)
+                    .font(.system(size: SettingsMetrics.footnoteFontSize, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .truncationMode(.middle)
+                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .textSelection(.enabled)
             }
 
             SettingsRow("Color") {
@@ -204,6 +269,12 @@ private struct RemoteSpaceDraft {
     var name = ""
     var command = ""
     var colorID: String?
+    var user = ""
+    var host = ""
+    var portText = ""
+    var identityFile = ""
+    var jumpHost = ""
+    var startupCommandsText = ""
 
     init() {}
 
@@ -211,15 +282,56 @@ private struct RemoteSpaceDraft {
         name = space.name
         command = space.command
         colorID = space.colorID
+        user = space.user
+        host = space.host
+        portText = space.port.map(String.init) ?? ""
+        identityFile = space.identityFile
+        jumpHost = space.jumpHost
+        startupCommandsText = space.startupCommands.joined(separator: "\n")
     }
 
     var isBlank: Bool {
-        name.isEmpty && command.isEmpty && colorID == nil
+        name.isEmpty
+            && command.isEmpty
+            && colorID == nil
+            && user.isEmpty
+            && host.isEmpty
+            && portText.isEmpty
+            && identityFile.isEmpty
+            && jumpHost.isEmpty
+            && startupCommandsText.isEmpty
     }
 
     var canSave: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && !command.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && isPortValid
+            && (!host.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                || !command.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+    }
+
+    var isPortValid: Bool {
+        let text = portText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return true }
+        guard let port = Int(text) else { return false }
+        return (1 ... 65535).contains(port)
+    }
+
+    var port: Int? {
+        let text = portText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return nil }
+        return Int(text)
+    }
+
+    var startupCommands: [String] {
+        startupCommandsText
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map(String.init)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    var commandPreview: String {
+        remoteSpace(existingID: nil).connectionCommand
     }
 
     func remoteSpace(existingID: UUID?) -> RemoteSpace {
@@ -227,7 +339,13 @@ private struct RemoteSpaceDraft {
             id: existingID ?? UUID(),
             name: name,
             command: command,
-            colorID: colorID
+            colorID: colorID,
+            user: user,
+            host: host,
+            port: port,
+            identityFile: identityFile,
+            jumpHost: jumpHost,
+            startupCommands: startupCommands
         )
     }
 }

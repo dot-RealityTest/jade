@@ -11,7 +11,39 @@ struct RemoteSpaceTests {
 
         #expect(space.displayName == "Zen")
         #expect(space.trimmedCommand == "ssh kika@100.86.62.100")
+        #expect(space.connectionCommand == "ssh kika@100.86.62.100")
         #expect(space.isConnectable)
+    }
+
+    @Test("structured profile generates SSH command")
+    func structuredProfileGeneratesSSHCommand() {
+        let space = RemoteSpace(
+            name: "Zen",
+            colorID: "blue",
+            user: "kika",
+            host: "100.86.62.100",
+            port: 2222,
+            identityFile: "~/.ssh/id_ed25519",
+            jumpHost: "bastion",
+            startupCommands: ["cd ~/code", "tmux attach || tmux new"]
+        )
+
+        #expect(space.connectionSummary == "kika@100.86.62.100:2222")
+        #expect(
+            space.connectionCommand ==
+                "ssh -t -p 2222 -i ~/.ssh/id_ed25519 -J bastion kika@100.86.62.100 'cd ~/code && tmux attach || tmux new; exec ${SHELL:-/bin/sh} -l'"
+        )
+    }
+
+    @Test("simple SSH command parses into profile fields")
+    func simpleSSHCommandParsesIntoProfileFields() throws {
+        let parsed = try #require(RemoteSpace.parsedSSHCommand("ssh -p 2222 -i ~/.ssh/id_ed25519 -J bastion kika@100.86.62.100"))
+
+        #expect(parsed.user == "kika")
+        #expect(parsed.host == "100.86.62.100")
+        #expect(parsed.port == 2222)
+        #expect(parsed.identityFile == "~/.ssh/id_ed25519")
+        #expect(parsed.jumpHost == "bastion")
     }
 
     @Test("blank name falls back to Remote")

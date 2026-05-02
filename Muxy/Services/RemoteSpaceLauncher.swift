@@ -23,7 +23,7 @@ enum RemoteSpaceLauncher {
             projectID: project.id,
             areaID: nil,
             name: space.displayName,
-            command: space.trimmedCommand
+            command: space.connectionCommand
         ))
         guard let area = appState.focusedArea(for: project.id), let tabID = area.activeTabID else { return }
         area.setCustomTitle(tabID, title: space.displayName)
@@ -55,7 +55,7 @@ enum RemoteSpaceLauncher {
         projectID: UUID
     ) -> Bool {
         for area in appState.allAreas(for: projectID) {
-            guard let tab = area.tabs.first(where: { $0.content.pane?.startupCommand == space.trimmedCommand }) else {
+            guard let tab = area.tabs.first(where: { $0.content.pane?.startupCommand == space.connectionCommand }) else {
                 continue
             }
             appState.dispatch(.selectTab(projectID: projectID, areaID: area.id, tabID: tab.id))

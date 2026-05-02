@@ -68,6 +68,30 @@ struct RemoteSpaceLauncherTests {
         let tabs = appState.allAreas(for: project.id).flatMap(\.tabs)
         #expect(tabs.filter { $0.content.pane?.startupCommand == space.trimmedCommand }.count == 1)
     }
+
+    @Test("open structured profile uses generated SSH command")
+    func openStructuredProfileUsesGeneratedSSHCommand() throws {
+        let (appState, projectStore, worktreeStore) = makeStores()
+        let space = RemoteSpace(
+            name: "Zen",
+            colorID: "blue",
+            user: "kika",
+            host: "100.86.62.100",
+            startupCommands: ["tmux attach || tmux new"]
+        )
+
+        RemoteSpaceLauncher.open(
+            space,
+            appState: appState,
+            projectStore: projectStore,
+            worktreeStore: worktreeStore
+        )
+
+        let project = try #require(projectStore.projects.first)
+        let area = try #require(appState.focusedArea(for: project.id))
+        let tab = try #require(area.activeTab)
+        #expect(tab.content.pane?.startupCommand == space.connectionCommand)
+    }
 }
 
 private final class ProjectPersistenceStub: ProjectPersisting {
