@@ -9,6 +9,7 @@ struct CommandPaletteItemTests {
     func filterMatchesFields() {
         let items = [
             item(title: "Source Control", subtitle: "Open git status", section: .app, searchText: "vcs"),
+            item(title: "Update Linux", subtitle: "sudo apt update", section: .remoteCommand, searchText: "packages"),
             item(title: "Open Alienware", subtitle: "kika@192.168.1.171", section: .remote, searchText: "nvidia"),
             item(title: "GPU Console", subtitle: "nvtop", section: .snippet, searchText: "linux gpu"),
             item(title: "README.md", subtitle: "docs/README.md", section: .file, searchText: "/tmp/docs/README.md"),
@@ -16,6 +17,7 @@ struct CommandPaletteItemTests {
         ]
 
         #expect(CommandPaletteItem.filter(items, query: "vcs").map(\.title) == ["Source Control"])
+        #expect(CommandPaletteItem.filter(items, query: "packages").map(\.title) == ["Update Linux"])
         #expect(CommandPaletteItem.filter(items, query: "alien nvidia").map(\.title) == ["Open Alienware"])
         #expect(CommandPaletteItem.filter(items, query: "linux gpu").map(\.title) == ["GPU Console"])
         #expect(CommandPaletteItem.filter(items, query: "readme").map(\.title) == ["README.md"])
@@ -61,6 +63,7 @@ struct CommandPaletteItemTests {
         let items = [
             item(title: "New Tab", section: .app),
             item(title: "Open Alienware", section: .remote),
+            item(title: "Update Linux", section: .remoteCommand),
             item(title: "GPU Console", section: .snippet),
             item(title: "README.md", section: .file),
         ]
@@ -69,14 +72,30 @@ struct CommandPaletteItemTests {
             items,
             query: "",
             sectionOrder: CommandPaletteSection.remoteSpaceOrder
-        ).map(\.section) == [.snippet, .remote, .app, .file])
+        ).map(\.section) == [.remoteCommand, .snippet, .remote, .app, .file])
+    }
+
+    @Test("filter preserves priority inside a section")
+    func filterPreservesPriorityInsideSection() {
+        let items = [
+            item(title: "Reboot", section: .remoteCommand, sortPriority: 12),
+            item(title: "Open SSH Session", section: .remoteCommand, sortPriority: 0),
+            item(title: "Copy SSH Command", section: .remoteCommand, sortPriority: 1),
+        ]
+
+        #expect(CommandPaletteItem.filter(items, query: "").map(\.title) == [
+            "Open SSH Session",
+            "Copy SSH Command",
+            "Reboot",
+        ])
     }
 
     private func item(
         title: String,
         subtitle: String = "",
         section: CommandPaletteSection,
-        searchText: String = ""
+        searchText: String = "",
+        sortPriority: Int = 0
     ) -> CommandPaletteItem {
         CommandPaletteItem(
             id: "\(section.rawValue)-\(title)",
@@ -85,7 +104,8 @@ struct CommandPaletteItemTests {
             symbolName: "circle",
             section: section,
             searchText: searchText,
-            target: .shortcut(.newTab)
+            target: .shortcut(.newTab),
+            sortPriority: sortPriority
         )
     }
 }

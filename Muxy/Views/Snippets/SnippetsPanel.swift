@@ -141,6 +141,7 @@ private struct SnippetRow: View {
     let onEdit: () -> Void
     let onDelete: () -> Void
     @Environment(AppState.self) private var appState
+    @Environment(ProjectStore.self) private var projectStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -245,8 +246,16 @@ private struct SnippetRow: View {
             projectID: projectID,
             areaID: nil,
             name: snippet.displayName,
-            command: snippet.trimmedCommand
+            command: runCommand(snippet.trimmedCommand)
         ))
+    }
+
+    private func runCommand(_ command: String) -> String {
+        guard let projectID = appState.activeProjectID,
+              let project = projectStore.projects.first(where: { $0.id == projectID }),
+              let space = RemoteSpacesStore.shared.space(forProjectPath: project.path)
+        else { return command }
+        return RemoteCommandBuilder.command(command, for: space)
     }
 
     private func copyCommand() {
@@ -428,6 +437,7 @@ private struct SnippetRunnerView: View {
     let snippet: Snippet
     let onClose: () -> Void
     @Environment(AppState.self) private var appState
+    @Environment(ProjectStore.self) private var projectStore
     @State private var values: [String: String]
 
     init(scope: SnippetScope, snippet: Snippet, onClose: @escaping () -> Void) {
@@ -541,9 +551,17 @@ private struct SnippetRunnerView: View {
             projectID: projectID,
             areaID: nil,
             name: snippet.displayName,
-            command: resolvedCommand
+            command: runCommand(resolvedCommand)
         ))
         onClose()
+    }
+
+    private func runCommand(_ command: String) -> String {
+        guard let projectID = appState.activeProjectID,
+              let project = projectStore.projects.first(where: { $0.id == projectID }),
+              let space = RemoteSpacesStore.shared.space(forProjectPath: project.path)
+        else { return command }
+        return RemoteCommandBuilder.command(command, for: space)
     }
 
     private func valueBinding(for variable: String) -> Binding<String> {

@@ -335,6 +335,7 @@ struct MainWindow: View {
             CommandPaletteOverlay(
                 appItems: commandPaletteAppItems,
                 remoteSpaces: remoteSpacesStore.spaces,
+                activeRemoteSpace: activeRemoteSpace,
                 snippetScope: activeSnippetScope,
                 projectPath: activeCommandPaletteProjectPath,
                 worktreeItems: worktreeSwitcherItems,
@@ -828,6 +829,8 @@ struct MainWindow: View {
                 return
             }
             ToastState.shared.show("Unavailable")
+        case let .remoteCommand(action):
+            performRemoteCommandPaletteAction(action)
         case let .remote(spaceID):
             guard let space = remoteSpacesStore.spaces.first(where: { $0.id == spaceID }) else { return }
             RemoteSpaceLauncher.open(
@@ -853,6 +856,47 @@ struct MainWindow: View {
         }
     }
 
+    private func performRemoteCommandPaletteAction(_ action: RemoteCommandPaletteAction) {
+        guard let space = activeRemoteSpace else {
+            ToastState.shared.show("Select a remote space first")
+            return
+        }
+        switch action {
+        case .openSession:
+            RemoteSpaceLauncher.open(
+                space,
+                appState: appState,
+                projectStore: projectStore,
+                worktreeStore: worktreeStore
+            )
+        case .copySSHCommand:
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(space.connectionCommand, forType: .string)
+            ToastState.shared.show("Copied SSH command")
+        case .systemOverview,
+             .updateLinux,
+             .reboot,
+             .powerOff,
+             .gpuStatus,
+             .gpuMonitor:
+            runRemoteCommandPaletteAction(action, in: space)
+        }
+    }
+
+    private func runRemoteCommandPaletteAction(_ action: RemoteCommandPaletteAction, in space: RemoteSpace) {
+        guard let command = action.command else { return }
+        guard let projectID = appState.activeProjectID else {
+            ToastState.shared.show("Select a project first")
+            return
+        }
+        appState.dispatch(.createCommandTab(
+            projectID: projectID,
+            areaID: nil,
+            name: action.title,
+            command: RemoteCommandBuilder.command(command, for: space)
+        ))
+    }
+
     private func runSnippetFromPalette(_ snippetID: UUID) {
         SnippetsStore.shared.selectScope(activeSnippetScope)
         guard let snippet = SnippetsStore.shared.snippets.first(where: { $0.id == snippetID }) else { return }
@@ -864,7 +908,7 @@ struct MainWindow: View {
             projectID: projectID,
             areaID: nil,
             name: snippet.displayName,
-            command: snippet.trimmedCommand
+            command: activeRemoteSpace.map { RemoteCommandBuilder.command(snippet.trimmedCommand, for: $0) } ?? snippet.trimmedCommand
         ))
     }
 

@@ -3,6 +3,7 @@ import SwiftUI
 struct CommandPaletteOverlay: View {
     let appItems: [CommandPaletteItem]
     let remoteSpaces: [RemoteSpace]
+    let activeRemoteSpace: RemoteSpace?
     let snippetScope: SnippetScope
     let projectPath: String?
     let worktreeItems: [WorktreeSwitcherItem]
@@ -36,6 +37,7 @@ struct CommandPaletteOverlay: View {
         async let fileItems = fileResults(query: query)
         let baseItems = await MainActor.run {
             appItems
+                + remoteCommandItems()
                 + remoteItems()
                 + snippetItems()
                 + worktreeCommandItems()
@@ -45,6 +47,26 @@ struct CommandPaletteOverlay: View {
             query: query,
             sectionOrder: sectionOrder
         )
+    }
+
+    @MainActor
+    private func remoteCommandItems() -> [CommandPaletteItem] {
+        guard let activeRemoteSpace else { return [] }
+        return RemoteCommandPaletteAction.allCases
+            .filter { $0.isAvailable(for: activeRemoteSpace) }
+            .map { action in
+                CommandPaletteItem(
+                    id: "remote-command-\(activeRemoteSpace.id.uuidString)-\(action.rawValue)",
+                    title: action.title,
+                    subtitle: action.subtitle,
+                    symbolName: action.symbolName,
+                    section: .remoteCommand,
+                    searchText: [activeRemoteSpace.displayName, activeRemoteSpace.connectionSummary, action.searchText]
+                        .joined(separator: " "),
+                    target: .remoteCommand(action),
+                    sortPriority: action.sortPriority
+                )
+            }
     }
 
     @MainActor
