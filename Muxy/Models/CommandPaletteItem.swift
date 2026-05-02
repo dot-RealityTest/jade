@@ -52,6 +52,22 @@ enum RemoteCommandPaletteAction: String, CaseIterable {
         }
     }
 
+    var confirmationTitle: String {
+        switch self {
+        case .reboot: "Confirm Reboot"
+        case .powerOff: "Confirm Power Off"
+        default: title
+        }
+    }
+
+    var confirmationSubtitle: String {
+        switch self {
+        case .reboot: "Press Enter again to reboot the remote machine"
+        case .powerOff: "Press Enter again to power off the remote machine"
+        default: subtitle
+        }
+    }
+
     var symbolName: String {
         switch self {
         case .openSession: "terminal"
@@ -67,14 +83,14 @@ enum RemoteCommandPaletteAction: String, CaseIterable {
 
     var searchText: String {
         switch self {
-        case .openSession: "ssh connect session remote"
-        case .copySSHCommand: "copy ssh command connection"
-        case .systemOverview: "linux status health hostname uptime df free uname"
-        case .updateLinux: "linux apt update upgrade packages"
-        case .reboot: "linux restart sudo reboot"
-        case .powerOff: "linux shutdown sudo poweroff"
-        case .gpuStatus: "nvidia gpu cuda driver status smi"
-        case .gpuMonitor: "nvidia gpu monitor nvtop"
+        case .openSession: "ssh connect session remote shell open space host"
+        case .copySSHCommand: "copy ssh command connection host user clipboard"
+        case .systemOverview: "linux status health hostname uptime df free uname memory disk overview"
+        case .updateLinux: "linux apt update upgrade packages software limnux update"
+        case .reboot: "linux restart sudo reboot reset bounce"
+        case .powerOff: "linux shutdown sudo poweroff halt stop"
+        case .gpuStatus: "nvidia gpu cuda driver status smi alien alienware graphics"
+        case .gpuMonitor: "nvidia gpu monitor nvtop alien alienware graphics console"
         }
     }
 
@@ -111,6 +127,20 @@ enum RemoteCommandPaletteAction: String, CaseIterable {
         }
     }
 
+    var requiresConfirmation: Bool {
+        switch self {
+        case .reboot,
+             .powerOff:
+            true
+        default:
+            false
+        }
+    }
+
+    func tabTitle(for space: RemoteSpace) -> String {
+        "\(space.displayName) · \(title)"
+    }
+
     func isAvailable(for space: RemoteSpace) -> Bool {
         switch self {
         case .gpuStatus,
@@ -142,6 +172,7 @@ struct CommandPaletteItem: Identifiable, Equatable {
     let searchText: String
     let target: Target
     let sortPriority: Int
+    let requiresConfirmation: Bool
     let showsSectionHeader: Bool
 
     init(
@@ -153,6 +184,7 @@ struct CommandPaletteItem: Identifiable, Equatable {
         searchText: String = "",
         target: Target,
         sortPriority: Int = 0,
+        requiresConfirmation: Bool = false,
         showsSectionHeader: Bool = false
     ) {
         self.id = id
@@ -163,6 +195,7 @@ struct CommandPaletteItem: Identifiable, Equatable {
         self.searchText = searchText
         self.target = target
         self.sortPriority = sortPriority
+        self.requiresConfirmation = requiresConfirmation
         self.showsSectionHeader = showsSectionHeader
     }
 
@@ -219,6 +252,7 @@ struct CommandPaletteItem: Identifiable, Equatable {
             searchText: searchText,
             target: target,
             sortPriority: sortPriority,
+            requiresConfirmation: requiresConfirmation,
             showsSectionHeader: isVisible
         )
     }

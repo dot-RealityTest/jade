@@ -90,12 +90,40 @@ struct CommandPaletteItemTests {
         ])
     }
 
+    @Test("remote command actions expose safety and aliases")
+    func remoteCommandActionsExposeSafetyAndAliases() {
+        #expect(RemoteCommandPaletteAction.reboot.requiresConfirmation)
+        #expect(RemoteCommandPaletteAction.powerOff.requiresConfirmation)
+        #expect(!RemoteCommandPaletteAction.updateLinux.requiresConfirmation)
+        #expect(RemoteCommandPaletteAction.reboot.searchText.contains("restart"))
+        #expect(RemoteCommandPaletteAction.powerOff.searchText.contains("shutdown"))
+        #expect(RemoteCommandPaletteAction.updateLinux.searchText.contains("limnux"))
+        #expect(RemoteCommandPaletteAction.gpuStatus.searchText.contains("alienware"))
+    }
+
+    @Test("remote command tab title includes the active space")
+    func remoteCommandTabTitleIncludesActiveSpace() {
+        let space = RemoteSpace(name: "Zen", user: "kika", host: "100.86.62.100")
+
+        #expect(RemoteCommandPaletteAction.updateLinux.tabTitle(for: space) == "Zen · Update Linux")
+    }
+
+    @Test("filter keeps confirmation flag when marking sections")
+    func filterKeepsConfirmationFlagWhenMarkingSections() {
+        let items = [
+            item(title: "Reboot", section: .remoteCommand, requiresConfirmation: true),
+        ]
+
+        #expect(CommandPaletteItem.filter(items, query: "").first?.requiresConfirmation == true)
+    }
+
     private func item(
         title: String,
         subtitle: String = "",
         section: CommandPaletteSection,
         searchText: String = "",
-        sortPriority: Int = 0
+        sortPriority: Int = 0,
+        requiresConfirmation: Bool = false
     ) -> CommandPaletteItem {
         CommandPaletteItem(
             id: "\(section.rawValue)-\(title)",
@@ -105,7 +133,8 @@ struct CommandPaletteItemTests {
             section: section,
             searchText: searchText,
             target: .shortcut(.newTab),
-            sortPriority: sortPriority
+            sortPriority: sortPriority,
+            requiresConfirmation: requiresConfirmation
         )
     }
 }

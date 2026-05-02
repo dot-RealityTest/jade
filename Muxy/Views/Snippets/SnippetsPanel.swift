@@ -245,17 +245,27 @@ private struct SnippetRow: View {
         appState.dispatch(.createCommandTab(
             projectID: projectID,
             areaID: nil,
-            name: snippet.displayName,
+            name: runTitle(),
             command: runCommand(snippet.trimmedCommand)
         ))
     }
 
+    private func runTitle() -> String {
+        guard let space = activeRemoteSpace() else { return snippet.displayName }
+        return "\(space.displayName) · \(snippet.displayName)"
+    }
+
     private func runCommand(_ command: String) -> String {
-        guard let projectID = appState.activeProjectID,
-              let project = projectStore.projects.first(where: { $0.id == projectID }),
-              let space = RemoteSpacesStore.shared.space(forProjectPath: project.path)
+        guard let space = activeRemoteSpace()
         else { return command }
         return RemoteCommandBuilder.command(command, for: space)
+    }
+
+    private func activeRemoteSpace() -> RemoteSpace? {
+        guard let projectID = appState.activeProjectID,
+              let project = projectStore.projects.first(where: { $0.id == projectID })
+        else { return nil }
+        return RemoteSpacesStore.shared.space(forProjectPath: project.path)
     }
 
     private func copyCommand() {
@@ -550,18 +560,28 @@ private struct SnippetRunnerView: View {
         appState.dispatch(.createCommandTab(
             projectID: projectID,
             areaID: nil,
-            name: snippet.displayName,
+            name: runTitle(),
             command: runCommand(resolvedCommand)
         ))
         onClose()
     }
 
+    private func runTitle() -> String {
+        guard let space = activeRemoteSpace() else { return snippet.displayName }
+        return "\(space.displayName) · \(snippet.displayName)"
+    }
+
     private func runCommand(_ command: String) -> String {
-        guard let projectID = appState.activeProjectID,
-              let project = projectStore.projects.first(where: { $0.id == projectID }),
-              let space = RemoteSpacesStore.shared.space(forProjectPath: project.path)
+        guard let space = activeRemoteSpace()
         else { return command }
         return RemoteCommandBuilder.command(command, for: space)
+    }
+
+    private func activeRemoteSpace() -> RemoteSpace? {
+        guard let projectID = appState.activeProjectID,
+              let project = projectStore.projects.first(where: { $0.id == projectID })
+        else { return nil }
+        return RemoteSpacesStore.shared.space(forProjectPath: project.path)
     }
 
     private func valueBinding(for variable: String) -> Binding<String> {

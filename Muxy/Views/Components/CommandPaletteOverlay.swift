@@ -11,6 +11,7 @@ struct CommandPaletteOverlay: View {
     let onDismiss: () -> Void
 
     @State private var snippetsStore = SnippetsStore.shared
+    @State private var pendingConfirmationID: String?
 
     var body: some View {
         PaletteOverlay<CommandPaletteItem>(
@@ -18,12 +19,19 @@ struct CommandPaletteOverlay: View {
             emptyLabel: "No commands",
             noMatchLabel: "No matching commands",
             search: { query in await search(query: query) },
-            onSelect: onSelect,
-            onDismiss: onDismiss,
-            row: { item, isHighlighted in
-                AnyView(CommandPaletteRow(item: item, isHighlighted: isHighlighted))
+            onSelect: handleSelect,
+            onDismiss: {
+                pendingConfirmationID = nil
+                onDismiss()
             },
-            footer: AnyView(CommandPaletteFooter())
+            row: { item, isHighlighted in
+                AnyView(CommandPaletteRow(
+                    item: item,
+                    isHighlighted: isHighlighted,
+                    isConfirming: pendingConfirmationID == item.id
+                ))
+            },
+            footer: AnyView(CommandPaletteFooter(isConfirming: pendingConfirmationID != nil))
         )
         .onAppear {
             snippetsStore.selectScope(snippetScope)
@@ -31,6 +39,20 @@ struct CommandPaletteOverlay: View {
         .onChange(of: snippetScope) { _, scope in
             snippetsStore.selectScope(scope)
         }
+    }
+
+    private func handleSelect(_ item: CommandPaletteItem) {
+        guard item.requiresConfirmation else {
+            pendingConfirmationID = nil
+            onSelect(item)
+            return
+        }
+        guard pendingConfirmationID == item.id else {
+            pendingConfirmationID = item.id
+            return
+        }
+        pendingConfirmationID = nil
+        onSelect(item)
     }
 
     private func search(query: String) async -> [CommandPaletteItem] {
@@ -64,7 +86,8 @@ struct CommandPaletteOverlay: View {
                     searchText: [activeRemoteSpace.displayName, activeRemoteSpace.connectionSummary, action.searchText]
                         .joined(separator: " "),
                     target: .remoteCommand(action),
-                    sortPriority: action.sortPriority
+                    sortPriority: action.sortPriority,
+                    requiresConfirmation: action.requiresConfirmation
                 )
             }
     }
@@ -162,9 +185,11 @@ struct CommandPaletteOverlay: View {
 }
 
 private struct CommandPaletteFooter: View {
+    let isConfirming: Bool
+
     var body: some View {
         HStack(spacing: 12) {
-            hint("Enter", "Run")
+            hint("Enter", isConfirming ? "Confirm" : "Run")
             hint("Esc", "Close")
             Spacer()
             Text("Actions hidden from the toolbar stay here")
@@ -193,35 +218,41 @@ private struct CommandPaletteFooter: View {
 private struct CommandPaletteRow: View {
     let item: CommandPaletteItem
     let isHighlighted: Bool
+    let isConfirming: Bool
     @State private var hovered = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if item.showsSectionHeader {
-                Text(item.section.rawValue)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(MuxyTheme.fgDim)
-                    .padding(.horizontal, 12)
-                    .padding(.top, 10)
-                    .padding(.bottom, 4)
+                HStack(spacing: 8) {
+                    Text(item.section.rawValue.uppercased())
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(sectionColor)
+                    Rectangle()
+                        .fill(MuxyTheme.border)
+                        .frame(height: 1)
+                }
+                .padding(.horizontal, 12)
+                .padding(.top, 9)
+                .padding(.bottom, 3)
             }
 
             HStack(spacing: 10) {
                 Image(systemName: item.symbolName)
                     .font(.system(size: 12))
-                    .foregroundStyle(MuxyTheme.fgMuted)
+                    .foregroundStyle(iconColor)
                     .frame(width: 16)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(item.title)
+                    Text(isConfirming ? confirmationTitle : item.title)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(MuxyTheme.fg)
                         .lineLimit(1)
 
-                    if !item.subtitle.isEmpty {
-                        Text(item.subtitle)
+                    if !subtitle.isEmpty {
+                        Text(subtitle)
                             .font(.system(size: 10))
-                            .foregroundStyle(MuxyTheme.fgDim)
+                            .foregroundStyle(isConfirming ? MuxyTheme.warning : MuxyTheme.fgDim)
                             .lineLimit(1)
                             .truncationMode(.middle)
                     }
@@ -230,9 +261,40 @@ private struct CommandPaletteRow: View {
                 Spacer(minLength: 4)
             }
             .padding(.horizontal, 12)
-            .padding(.vertical, 7)
-            .background(isHighlighted ? MuxyTheme.surface : hovered ? MuxyTheme.hover : .clear)
+            .padding(.vertical, 6)
+            .background(rowBackground)
         }
         .onHover { hovered = $0 }
+    }
+
+    private var confirmationTitle: String {
+        guard case let .remoteCommand(action) = item.target else { return item.title }
+        return action.confirmationTitle
+    }
+
+    private var subtitle: String {
+        guard case let .remoteCommand(action) = item.target, isConfirming else { return item.subtitle }
+        return action.confirmationSubtitle
+    }
+
+    private var sectionColor: Color {
+        item.section == .remoteCommand ? MuxyTheme.accent : MuxyTheme.fgDim
+    }
+
+    private var iconColor: Color {
+        isConfirming ? MuxyTheme.warning : item.section == .remoteCommand ? MuxyTheme.accent : MuxyTheme.fgMuted
+    }
+
+    private var rowBackground: some ShapeStyle {
+        if isConfirming {
+            return AnyShapeStyle(MuxyTheme.warning.opacity(0.12))
+        }
+        if isHighlighted {
+            return AnyShapeStyle(MuxyTheme.surface)
+        }
+        if hovered {
+            return AnyShapeStyle(MuxyTheme.hover)
+        }
+        return AnyShapeStyle(Color.clear)
     }
 }

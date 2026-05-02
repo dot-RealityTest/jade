@@ -892,7 +892,7 @@ struct MainWindow: View {
         appState.dispatch(.createCommandTab(
             projectID: projectID,
             areaID: nil,
-            name: action.title,
+            name: action.tabTitle(for: space),
             command: RemoteCommandBuilder.command(command, for: space)
         ))
     }
@@ -907,9 +907,14 @@ struct MainWindow: View {
         appState.dispatch(.createCommandTab(
             projectID: projectID,
             areaID: nil,
-            name: snippet.displayName,
+            name: commandPaletteSnippetTitle(snippet, remoteSpace: activeRemoteSpace),
             command: activeRemoteSpace.map { RemoteCommandBuilder.command(snippet.trimmedCommand, for: $0) } ?? snippet.trimmedCommand
         ))
+    }
+
+    private func commandPaletteSnippetTitle(_ snippet: Snippet, remoteSpace: RemoteSpace?) -> String {
+        guard let remoteSpace else { return snippet.displayName }
+        return "\(remoteSpace.displayName) · \(snippet.displayName)"
     }
 
     private var activeProjectHasSplitWorkspace: Bool {
