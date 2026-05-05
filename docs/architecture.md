@@ -172,7 +172,7 @@ Muxy/
     ThemePicker.swift         Theme selection popover (hosted in topbar right)
     WelcomeView.swift         Empty state view
     Inspector/
-      ProjectInspectorPanel.swift Right-side inspector shell with Notes and Todo tabs
+      ProjectInspectorPanel.swift Right-side inspector shell with combined Notes and Todo project workspace
     Snippets/
       SnippetsPanel.swift     Snippets/workflows panel with inline create, edit, and variable-run views
     Components/

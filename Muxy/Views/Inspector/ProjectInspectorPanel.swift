@@ -1,41 +1,14 @@
 import SwiftUI
 
-private enum ProjectInspectorTab: String, CaseIterable, Identifiable {
-    case notes
-    case todo
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .notes: "Notes"
-        case .todo: "Todo"
-        }
-    }
-
-    var symbolName: String {
-        switch self {
-        case .notes: "note.text"
-        case .todo: "checklist"
-        }
-    }
-}
-
 struct ProjectInspectorPanel: View {
     let project: Project?
     @State private var store = ProjectInspectorStore.shared
-    @AppStorage("muxy.inspector.selectedTab") private var selectedTabRaw = ProjectInspectorTab.notes.rawValue
-
-    private var selectedTab: ProjectInspectorTab {
-        get { ProjectInspectorTab(rawValue: selectedTabRaw) ?? .notes }
-        nonmutating set { selectedTabRaw = newValue.rawValue }
-    }
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider().overlay(MuxyTheme.border)
-            tabContent
+            ProjectInspectorContent(project: project, store: store)
         }
         .frame(width: 320)
         .background(MuxyTheme.bg)
@@ -53,85 +26,74 @@ struct ProjectInspectorPanel: View {
     }
 
     private var header: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 8) {
-                Image(systemName: "sidebar.right")
+        HStack(spacing: 8) {
+            Image(systemName: "sidebar.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 18)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Inspector")
                     .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text(project?.name ?? "No project")
+                    .font(.system(size: 10))
                     .foregroundStyle(.secondary)
-                    .frame(width: 18)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Inspector")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.primary)
-                    Text(project?.name ?? "No project")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                Spacer()
+                    .lineLimit(1)
             }
-
-            Picker("Inspector", selection: Binding(
-                get: { selectedTab },
-                set: { selectedTab = $0 }
-            )) {
-                ForEach(ProjectInspectorTab.allCases) { tab in
-                    Label(tab.title, systemImage: tab.symbolName)
-                        .tag(tab)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .controlSize(.small)
+            Spacer()
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
     }
+}
 
-    @ViewBuilder
-    private var tabContent: some View {
-        switch selectedTab {
-        case .notes:
-            ProjectNotesView(project: project, store: store)
-        case .todo:
-            ProjectTodoListView(project: project, store: store)
+private struct ProjectInspectorContent: View {
+    let project: Project?
+    let store: ProjectInspectorStore
+
+    var body: some View {
+        if project == nil {
+            inspectorEmptyState(symbolName: "sidebar.right", title: "Select a project")
+        } else {
+            VStack(spacing: 0) {
+                ProjectNotesView(store: store)
+                    .frame(minHeight: 140, idealHeight: 180, maxHeight: 240)
+                Divider().overlay(MuxyTheme.border)
+                ProjectTodoListView(store: store)
+            }
         }
     }
 }
 
 private struct ProjectNotesView: View {
-    let project: Project?
     let store: ProjectInspectorStore
 
     var body: some View {
-        VStack(spacing: 0) {
-            if project == nil {
-                inspectorEmptyState(symbolName: "note.text", title: "Select a project")
-            } else {
-                ZStack(alignment: .topLeading) {
-                    if store.document.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        Text("Project notes...")
-                            .font(.system(size: 12))
-                            .foregroundStyle(MuxyTheme.fgDim)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 12)
-                            .allowsHitTesting(false)
-                    }
-                    TextEditor(text: Binding(
-                        get: { store.document.notes },
-                        set: { store.updateNotes($0) }
-                    ))
-                    .font(.system(size: 12))
-                    .scrollContentBackground(.hidden)
-                    .padding(8)
+        VStack(spacing: 6) {
+            sectionHeader(title: "Notes", symbolName: "note.text")
+            ZStack(alignment: .topLeading) {
+                if store.document.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text("Project notes...")
+                        .font(.system(size: 12))
+                        .foregroundStyle(MuxyTheme.fgDim)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                        .allowsHitTesting(false)
                 }
+                TextEditor(text: Binding(
+                    get: { store.document.notes },
+                    set: { store.updateNotes($0) }
+                ))
+                .font(.system(size: 12))
+                .scrollContentBackground(.hidden)
+                .padding(8)
             }
         }
+        .padding(.top, 10)
     }
 }
 
 private struct ProjectTodoListView: View {
-    let project: Project?
     let store: ProjectInspectorStore
     @State private var newTodoTitle = ""
 
@@ -141,11 +103,10 @@ private struct ProjectTodoListView: View {
         }
     }
 
-    @ViewBuilder
     private var guardContent: some View {
-        if project == nil {
-            inspectorEmptyState(symbolName: "checklist", title: "Select a project")
-        } else {
+        VStack(spacing: 0) {
+            sectionHeader(title: "Todo", symbolName: "checklist")
+                .padding(.top, 10)
             todoHeader
             Divider().overlay(MuxyTheme.border)
             if store.filteredTodos.isEmpty {
@@ -297,6 +258,20 @@ private struct ProjectTodoRow: View {
     private func commitRename() {
         onRename(draftTitle)
     }
+}
+
+private func sectionHeader(title: String, symbolName: String) -> some View {
+    HStack(spacing: 6) {
+        Image(systemName: symbolName)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .frame(width: 16)
+        Text(title)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.secondary)
+        Spacer()
+    }
+    .padding(.horizontal, 10)
 }
 
 private func inspectorEmptyState(symbolName: String, title: String) -> some View {
