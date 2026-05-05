@@ -10,14 +10,30 @@ private enum SnippetsPanelMode: Equatable {
 
 struct SnippetsPanel: View {
     let scope: SnippetScope
+    var showsPanelChrome = true
     @State private var snippetsStore = SnippetsStore.shared
     @State private var mode: SnippetsPanelMode = .list
 
     var body: some View {
+        if showsPanelChrome {
+            content
+                .frame(width: 280)
+                .background(MuxyTheme.bg)
+                .overlay(alignment: .leading) {
+                    Rectangle()
+                        .fill(MuxyTheme.border)
+                        .frame(width: 1)
+                }
+        } else {
+            content
+        }
+    }
+
+    private var content: some View {
         @Bindable var snippetsStore = snippetsStore
         let snippets = snippetsStore.filteredSnippets
 
-        Group {
+        return Group {
             switch mode {
             case .list:
                 listView(snippets, searchQuery: $snippetsStore.searchQuery)
@@ -42,13 +58,6 @@ struct SnippetsPanel: View {
                     onClose: { mode = .list }
                 )
             }
-        }
-        .frame(width: 280)
-        .background(MuxyTheme.bg)
-        .overlay(alignment: .leading) {
-            Rectangle()
-                .fill(MuxyTheme.border)
-                .frame(width: 1)
         }
         .onAppear {
             snippetsStore.selectScope(scope)

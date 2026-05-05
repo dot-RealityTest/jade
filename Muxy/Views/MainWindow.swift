@@ -315,7 +315,7 @@ struct MainWindow: View {
     @ViewBuilder
     private var snippetsSidePanel: some View {
         if snippetsPanelVisible {
-            SnippetsPanel(scope: activeSnippetScope)
+            ProjectInspectorPanel(project: activeProject, snippetScope: activeSnippetScope)
         }
     }
 
@@ -562,10 +562,10 @@ struct MainWindow: View {
                             fallbackToolbarProjectActions(project: project)
                         }
                         if showsToolbarAction(.snippets), activeProject != nil {
-                            IconButton(symbol: "curlybraces", size: 12, accessibilityLabel: "Snippets") {
+                            IconButton(symbol: "sidebar.right", size: 12, accessibilityLabel: "Inspector") {
                                 NotificationCenter.default.post(name: .toggleSnippetsPanel, object: nil)
                             }
-                            .help("Snippets (\(KeyBindingStore.shared.combo(for: .toggleSnippetsPanel).displayString))")
+                            .help("Inspector (\(KeyBindingStore.shared.combo(for: .toggleSnippetsPanel).displayString))")
                         }
                         if showsToolbarAction(.newTab), let project = activeProject {
                             IconButton(symbol: "plus", accessibilityLabel: "New Tab") {
@@ -666,9 +666,9 @@ struct MainWindow: View {
             ),
             commandItem(
                 .toggleSnippetsPanel,
-                symbolName: "curlybraces",
-                subtitle: "Show or hide snippets",
-                aliases: ["commands", "vault", "scripts", "shell"]
+                symbolName: "sidebar.right",
+                subtitle: "Show or hide snippets, notes, and todos",
+                aliases: ["commands", "vault", "scripts", "shell", "notes", "todo", "inspector"]
             ),
             commandItem(
                 .quickOpen,

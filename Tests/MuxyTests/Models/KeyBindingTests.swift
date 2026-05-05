@@ -81,9 +81,9 @@ struct KeyBindingTests {
         #expect(combos.count == unique.count)
     }
 
-    @Test("Snippets panel shortcut metadata and default combo")
+    @Test("Inspector shortcut metadata and default combo")
     func snippetsPanelShortcut() {
-        #expect(ShortcutAction.toggleSnippetsPanel.displayName == "Toggle Snippets Panel")
+        #expect(ShortcutAction.toggleSnippetsPanel.displayName == "Toggle Inspector")
         #expect(ShortcutAction.toggleSnippetsPanel.category == "App")
         #expect(ShortcutAction.toggleSnippetsPanel.scope == .mainWindow)
         #expect(KeyBinding.defaults.first { $0.action == .toggleSnippetsPanel }?.combo == KeyCombo(key: "j", command: true))

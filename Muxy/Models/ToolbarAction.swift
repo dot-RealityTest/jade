@@ -22,7 +22,7 @@ enum ToolbarAction: String, CaseIterable, Identifiable {
         switch self {
         case .debug: "Debug"
         case .tools: "Tools menu"
-        case .snippets: "Snippets"
+        case .snippets: "Inspector"
         case .newTab: "New tab"
         case .quickOpen: "Quick Open"
         case .sourceControl: "Source Control"
@@ -37,7 +37,7 @@ enum ToolbarAction: String, CaseIterable, Identifiable {
         switch self {
         case .debug: "Development diagnostics badge."
         case .tools: "Open the project or focused file in external tools."
-        case .snippets: "Show or hide the snippets inspector."
+        case .snippets: "Show or hide snippets, notes, and todos."
         case .newTab: "Create a terminal tab."
         case .quickOpen: "Open file search from the toolbar."
         case .sourceControl: "Open Source Control from the toolbar."

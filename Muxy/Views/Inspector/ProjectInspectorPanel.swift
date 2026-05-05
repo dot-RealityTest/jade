@@ -1,0 +1,320 @@
+import SwiftUI
+
+private enum ProjectInspectorTab: String, CaseIterable, Identifiable {
+    case snippets
+    case notes
+    case todo
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .snippets: "Snippets"
+        case .notes: "Notes"
+        case .todo: "Todo"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .snippets: "curlybraces"
+        case .notes: "note.text"
+        case .todo: "checklist"
+        }
+    }
+}
+
+struct ProjectInspectorPanel: View {
+    let project: Project?
+    let snippetScope: SnippetScope
+    @State private var store = ProjectInspectorStore.shared
+    @AppStorage("muxy.inspector.selectedTab") private var selectedTabRaw = ProjectInspectorTab.snippets.rawValue
+
+    private var selectedTab: ProjectInspectorTab {
+        get { ProjectInspectorTab(rawValue: selectedTabRaw) ?? .snippets }
+        nonmutating set { selectedTabRaw = newValue.rawValue }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            Divider().overlay(MuxyTheme.border)
+            tabContent
+        }
+        .frame(width: 320)
+        .background(MuxyTheme.bg)
+        .overlay(alignment: .leading) {
+            Rectangle()
+                .fill(MuxyTheme.border)
+                .frame(width: 1)
+        }
+        .onAppear {
+            store.selectProject(project?.id)
+        }
+        .onChange(of: project?.id) { _, projectID in
+            store.selectProject(projectID)
+        }
+    }
+
+    private var header: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "sidebar.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 18)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Inspector")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.primary)
+                    Text(project?.name ?? "No project")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer()
+            }
+
+            Picker("Inspector", selection: Binding(
+                get: { selectedTab },
+                set: { selectedTab = $0 }
+            )) {
+                ForEach(ProjectInspectorTab.allCases) { tab in
+                    Label(tab.title, systemImage: tab.symbolName)
+                        .tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .controlSize(.small)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+    }
+
+    @ViewBuilder
+    private var tabContent: some View {
+        switch selectedTab {
+        case .snippets:
+            SnippetsPanel(scope: snippetScope, showsPanelChrome: false)
+        case .notes:
+            ProjectNotesView(project: project, store: store)
+        case .todo:
+            ProjectTodoListView(project: project, store: store)
+        }
+    }
+}
+
+private struct ProjectNotesView: View {
+    let project: Project?
+    let store: ProjectInspectorStore
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if project == nil {
+                inspectorEmptyState(symbolName: "note.text", title: "Select a project")
+            } else {
+                ZStack(alignment: .topLeading) {
+                    if store.document.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text("Project notes...")
+                            .font(.system(size: 12))
+                            .foregroundStyle(MuxyTheme.fgDim)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .allowsHitTesting(false)
+                    }
+                    TextEditor(text: Binding(
+                        get: { store.document.notes },
+                        set: { store.updateNotes($0) }
+                    ))
+                    .font(.system(size: 12))
+                    .scrollContentBackground(.hidden)
+                    .padding(8)
+                }
+            }
+        }
+    }
+}
+
+private struct ProjectTodoListView: View {
+    let project: Project?
+    let store: ProjectInspectorStore
+    @State private var newTodoTitle = ""
+
+    var body: some View {
+        VStack(spacing: 0) {
+            guardContent
+        }
+    }
+
+    @ViewBuilder
+    private var guardContent: some View {
+        if project == nil {
+            inspectorEmptyState(symbolName: "checklist", title: "Select a project")
+        } else {
+            todoHeader
+            Divider().overlay(MuxyTheme.border)
+            if store.filteredTodos.isEmpty {
+                inspectorEmptyState(symbolName: "checklist", title: emptyTitle)
+            } else {
+                todoList
+            }
+        }
+    }
+
+    private var todoHeader: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 6) {
+                TextField("New todo", text: $newTodoTitle)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: 11))
+                    .controlSize(.small)
+                    .onSubmit(addTodo)
+
+                Button {
+                    addTodo()
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .buttonStyle(.borderless)
+                .disabled(newTodoTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .help("Add Todo")
+            }
+
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                TextField("Search todos", text: Binding(
+                    get: { store.todoSearchQuery },
+                    set: { store.todoSearchQuery = $0 }
+                ))
+                .textFieldStyle(.plain)
+                .font(.system(size: 11))
+                if store.document.todos.contains(where: \.isDone) {
+                    Button("Clear Done") {
+                        store.clearCompleted()
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.system(size: 10))
+                    .controlSize(.small)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: 6))
+        }
+        .padding(10)
+    }
+
+    private var todoList: some View {
+        ScrollView {
+            LazyVStack(spacing: 0) {
+                ForEach(store.filteredTodos) { item in
+                    ProjectTodoRow(
+                        item: item,
+                        onToggle: { store.toggleTodo(item.id) },
+                        onRename: { store.updateTodoTitle(item.id, title: $0) },
+                        onDelete: { store.deleteTodo(item.id) }
+                    )
+                    if item.id != store.filteredTodos.last?.id {
+                        Divider().padding(.leading, 44)
+                    }
+                }
+            }
+            .padding(.vertical, 4)
+        }
+    }
+
+    private var emptyTitle: String {
+        store.todoSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "No todos yet" : "No matching todos"
+    }
+
+    private func addTodo() {
+        guard store.addTodo(title: newTodoTitle) != nil else { return }
+        newTodoTitle = ""
+    }
+}
+
+private struct ProjectTodoRow: View {
+    let item: ProjectTodoItem
+    let onToggle: () -> Void
+    let onRename: (String) -> Void
+    let onDelete: () -> Void
+    @State private var draftTitle: String
+    @FocusState private var focused: Bool
+
+    init(
+        item: ProjectTodoItem,
+        onToggle: @escaping () -> Void,
+        onRename: @escaping (String) -> Void,
+        onDelete: @escaping () -> Void
+    ) {
+        self.item = item
+        self.onToggle = onToggle
+        self.onRename = onRename
+        self.onDelete = onDelete
+        _draftTitle = State(initialValue: item.title)
+    }
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 8) {
+            Button {
+                onToggle()
+            } label: {
+                Image(systemName: item.isDone ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(item.isDone ? MuxyTheme.diffAddFg : MuxyTheme.fgMuted)
+                    .frame(width: 20, height: 20)
+            }
+            .buttonStyle(.plain)
+            .help(item.isDone ? "Mark Open" : "Mark Done")
+
+            TextField("Todo", text: $draftTitle)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12))
+                .foregroundStyle(item.isDone ? MuxyTheme.fgMuted : MuxyTheme.fg)
+                .strikethrough(item.isDone)
+                .focused($focused)
+                .onSubmit(commitRename)
+                .onChange(of: focused) { _, isFocused in
+                    if !isFocused { commitRename() }
+                }
+
+            Button {
+                onDelete()
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(MuxyTheme.fgMuted)
+                    .frame(width: 20, height: 20)
+            }
+            .buttonStyle(.plain)
+            .help("Delete Todo")
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .onChange(of: item.title) { _, title in
+            draftTitle = title
+        }
+    }
+
+    private func commitRename() {
+        onRename(draftTitle)
+    }
+}
+
+private func inspectorEmptyState(symbolName: String, title: String) -> some View {
+    VStack(spacing: 10) {
+        Spacer()
+        Image(systemName: symbolName)
+            .font(.system(size: 28))
+            .foregroundStyle(.secondary)
+        Text(title)
+            .font(.system(size: 12))
+            .foregroundStyle(.secondary)
+        Spacer()
+    }
+    .frame(maxWidth: .infinity, maxHeight: .infinity)
+}

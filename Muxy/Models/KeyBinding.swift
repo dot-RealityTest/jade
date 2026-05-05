@@ -160,7 +160,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         case .saveFile: ShortcutMetadata(displayName: "Save File", category: "Editor", scope: .mainWindow)
         case .toggleSidebar: ShortcutMetadata(displayName: "Toggle Sidebar", category: "App", scope: .mainWindow)
         case .toggleFileTree: ShortcutMetadata(displayName: "Toggle File Tree", category: "App", scope: .mainWindow)
-        case .toggleSnippetsPanel: ShortcutMetadata(displayName: "Toggle Snippets Panel", category: "App", scope: .mainWindow)
+        case .toggleSnippetsPanel: ShortcutMetadata(displayName: "Toggle Inspector", category: "App", scope: .mainWindow)
         case .toggleAIUsage: ShortcutMetadata(displayName: "Toggle AI Usage", category: "App", scope: .mainWindow)
         case .navigateBack: ShortcutMetadata(displayName: "Navigate Back", category: "Navigation", scope: .mainWindow)
         case .navigateForward: ShortcutMetadata(displayName: "Navigate Forward", category: "Navigation", scope: .mainWindow)
