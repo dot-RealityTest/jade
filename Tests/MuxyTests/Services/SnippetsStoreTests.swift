@@ -88,13 +88,15 @@ struct SnippetsStoreTests {
             id: "shared-test",
             displayName: "Snippets",
             fileURL: URL(fileURLWithPath: "/tmp/shared-snippets.json"),
-            starterSnippets: []
+            starterSnippets: [],
+            starterSeedPolicy: .missingStorage
         )
         let remoteScope = SnippetScope(
             id: "remote-test",
             displayName: "Zen Snippets",
             fileURL: URL(fileURLWithPath: "/tmp/zen-snippets.json"),
-            starterSnippets: []
+            starterSnippets: [],
+            starterSeedPolicy: .missingStorage
         )
         let sharedPersistence = InMemorySnippetsPersistence(snippets: [
             Snippet(name: "Build", command: "swift build", tags: ["mac"])
@@ -128,7 +130,8 @@ struct SnippetsStoreTests {
             fileURL: URL(fileURLWithPath: "/tmp/zen-snippets.json"),
             starterSnippets: [
                 Snippet(name: "Uptime", command: "uptime", tags: ["linux"])
-            ]
+            ],
+            starterSeedPolicy: .missingStorage
         )
         let missingPersistence = InMemorySnippetsPersistence(hasSavedSnippets: false)
         let missingStore = SnippetsStore(scope: remoteScope) { _ in missingPersistence }
@@ -143,12 +146,31 @@ struct SnippetsStoreTests {
         #expect(emptyPersistence.savedSnippets == nil)
     }
 
+    @Test("shared scope seeds starters when storage is empty")
+    func sharedScopeSeedsStartersWhenStorageIsEmpty() {
+        let sharedScope = SnippetScope(
+            id: "shared-test",
+            displayName: "Snippets",
+            fileURL: URL(fileURLWithPath: "/tmp/shared-snippets.json"),
+            starterSnippets: [
+                Snippet(name: "Status", command: "git status", tags: ["git"])
+            ],
+            starterSeedPolicy: .missingOrEmptyStorage
+        )
+        let persistence = InMemorySnippetsPersistence(hasSavedSnippets: true)
+        let store = SnippetsStore(scope: sharedScope) { _ in persistence }
+
+        #expect(store.snippets.map(\.command) == ["git status"])
+        #expect(persistence.savedSnippets == store.snippets)
+    }
+
     private func testStore(persistence: InMemorySnippetsPersistence) -> SnippetsStore {
         let scope = SnippetScope(
             id: "test",
             displayName: "Test Snippets",
             fileURL: URL(fileURLWithPath: "/tmp/test-snippets.json"),
-            starterSnippets: []
+            starterSnippets: [],
+            starterSeedPolicy: .missingStorage
         )
         return SnippetsStore(scope: scope) { _ in persistence }
     }

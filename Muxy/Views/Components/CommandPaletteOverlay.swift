@@ -168,7 +168,7 @@ struct CommandPaletteOverlay: View {
     }
 
     private func fileResults(query: String) async -> [CommandPaletteItem] {
-        guard let projectPath else { return [] }
+        guard let projectPath, CommandPaletteFileSearchPolicy.shouldSearchFiles(query: query) else { return [] }
         let results = await FileSearchService.search(query: query, in: projectPath)
         return results.map { result in
             CommandPaletteItem(

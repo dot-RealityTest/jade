@@ -119,6 +119,13 @@ struct CommandPaletteItemTests {
         #expect(CommandPaletteItem.filter(items, query: "").first?.requiresConfirmation == true)
     }
 
+    @Test("file search stays closed until there is a query")
+    func fileSearchStaysClosedUntilThereIsAQuery() {
+        #expect(!CommandPaletteFileSearchPolicy.shouldSearchFiles(query: ""))
+        #expect(!CommandPaletteFileSearchPolicy.shouldSearchFiles(query: "   "))
+        #expect(CommandPaletteFileSearchPolicy.shouldSearchFiles(query: "readme"))
+    }
+
     private func item(
         title: String,
         subtitle: String = "",

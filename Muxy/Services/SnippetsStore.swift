@@ -108,7 +108,7 @@ final class SnippetsStore {
         do {
             let hasSavedSnippets = persistence.hasSavedSnippets()
             let loaded = try persistence.loadSnippets().compactMap(sanitized)
-            if loaded.isEmpty, !hasSavedSnippets, !scope.starterSnippets.isEmpty {
+            if shouldSeedStarters(loaded: loaded, hasSavedSnippets: hasSavedSnippets) {
                 snippets = scope.starterSnippets.compactMap(sanitized)
                 save()
                 return
@@ -125,6 +125,16 @@ final class SnippetsStore {
             try persistence.saveSnippets(snippets)
         } catch {
             snippetsLogger.error("Failed to save snippets: \(error.localizedDescription)")
+        }
+    }
+
+    private func shouldSeedStarters(loaded: [Snippet], hasSavedSnippets: Bool) -> Bool {
+        guard loaded.isEmpty, !scope.starterSnippets.isEmpty else { return false }
+        switch scope.starterSeedPolicy {
+        case .missingStorage:
+            return !hasSavedSnippets
+        case .missingOrEmptyStorage:
+            return true
         }
     }
 

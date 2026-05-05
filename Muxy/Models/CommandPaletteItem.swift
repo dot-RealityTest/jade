@@ -17,6 +17,12 @@ enum CommandPaletteSection: String, CaseIterable {
     static let remoteSpaceOrder: [CommandPaletteSection] = [.remoteCommand, .snippet, .remote, .app, .todo, .file, .worktree]
 }
 
+enum CommandPaletteFileSearchPolicy {
+    static func shouldSearchFiles(query: String) -> Bool {
+        !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
 enum RemoteCommandPaletteAction: String, CaseIterable {
     case openSession
     case copySSHCommand

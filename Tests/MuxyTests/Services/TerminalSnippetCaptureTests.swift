@@ -27,13 +27,15 @@ struct TerminalSnippetCaptureTests {
             id: "shared-test",
             displayName: "Snippets",
             fileURL: URL(fileURLWithPath: "/tmp/shared-terminal-snippets.json"),
-            starterSnippets: []
+            starterSnippets: [],
+            starterSeedPolicy: .missingStorage
         )
         let remoteScope = SnippetScope(
             id: "remote-test",
             displayName: "Zen Snippets",
             fileURL: URL(fileURLWithPath: "/tmp/remote-terminal-snippets.json"),
-            starterSnippets: []
+            starterSnippets: [],
+            starterSeedPolicy: .missingStorage
         )
         let sharedPersistence = TerminalSnippetPersistence()
         let remotePersistence = TerminalSnippetPersistence()
