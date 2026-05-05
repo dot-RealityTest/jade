@@ -48,11 +48,13 @@ struct ProjectInspectorPanel: View {
                     .lineLimit(1)
             }
             Spacer()
-            if showsNotes {
+            if showsNotes, showsTodo {
                 inspectorStatusChip("Notes")
-            }
-            if showsTodo {
                 inspectorStatusChip("Todo")
+            } else {
+                Text(headerDetail)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(MuxyTheme.fgDim)
             }
         }
         .padding(.horizontal, 10)
@@ -69,6 +71,26 @@ struct ProjectInspectorPanel: View {
         if showsNotes, showsTodo { return "sidebar.right" }
         if showsNotes { return "note.text" }
         return "checklist"
+    }
+
+    private var headerDetail: String {
+        if showsNotes { return notesDetail }
+        return todoDetail
+    }
+
+    private var notesDetail: String {
+        let text = store.document.notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return "Empty" }
+        let words = text.split(whereSeparator: \.isWhitespace).count
+        return words == 1 ? "1 word" : "\(words) words"
+    }
+
+    private var todoDetail: String {
+        let openCount = store.document.todos.count(where: { !$0.isDone })
+        let doneCount = store.document.todos.count - openCount
+        if store.document.todos.isEmpty { return "Empty" }
+        if doneCount == 0 { return "\(openCount) open" }
+        return "\(openCount) open, \(doneCount) done"
     }
 }
 
@@ -95,7 +117,7 @@ private struct ProjectInspectorContent: View {
                     Divider().overlay(MuxyTheme.border)
                 }
                 if showsTodo {
-                    ProjectTodoListView(store: store)
+                    ProjectTodoListView(store: store, showsSectionHeader: showsNotes)
                 }
             }
         }
@@ -143,6 +165,7 @@ private struct ProjectNotesView: View {
 
 private struct ProjectTodoListView: View {
     let store: ProjectInspectorStore
+    let showsSectionHeader: Bool
     @State private var newTodoTitle = ""
 
     var body: some View {
@@ -153,12 +176,14 @@ private struct ProjectTodoListView: View {
 
     private var guardContent: some View {
         VStack(spacing: 0) {
-            sectionHeader(
-                title: "Todo",
-                symbolName: "checklist",
-                detail: todoDetail
-            )
-            .padding(.top, 10)
+            if showsSectionHeader {
+                sectionHeader(
+                    title: "Todo",
+                    symbolName: "checklist",
+                    detail: todoDetail
+                )
+                .padding(.top, 10)
+            }
             todoHeader
             Divider().overlay(MuxyTheme.border)
             if store.filteredTodos.isEmpty {
@@ -171,11 +196,10 @@ private struct ProjectTodoListView: View {
 
     private var todoHeader: some View {
         VStack(spacing: 8) {
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 TextField("New todo", text: $newTodoTitle)
-                    .textFieldStyle(.roundedBorder)
+                    .textFieldStyle(.plain)
                     .font(.system(size: 11))
-                    .controlSize(.small)
                     .onSubmit(addTodo)
 
                 Button {
@@ -184,10 +208,15 @@ private struct ProjectTodoListView: View {
                     Image(systemName: "plus")
                         .font(.system(size: 12, weight: .semibold))
                 }
-                .buttonStyle(.borderless)
+                .buttonStyle(.plain)
+                .frame(width: 24, height: 24)
+                .background(addButtonBackground, in: RoundedRectangle(cornerRadius: 5))
                 .disabled(newTodoTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .help("Add Todo")
             }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: 7))
 
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass")
@@ -212,7 +241,9 @@ private struct ProjectTodoListView: View {
             .padding(.vertical, 5)
             .background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: 6))
         }
-        .padding(10)
+        .padding(.horizontal, 10)
+        .padding(.top, showsSectionHeader ? 10 : 12)
+        .padding(.bottom, 10)
     }
 
     private var todoList: some View {
@@ -244,6 +275,11 @@ private struct ProjectTodoListView: View {
         if store.document.todos.isEmpty { return "Empty" }
         if doneCount == 0 { return "\(openCount) open" }
         return "\(openCount) open, \(doneCount) done"
+    }
+
+    @MainActor
+    private var addButtonBackground: Color {
+        newTodoTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? MuxyTheme.hover : MuxyTheme.surface
     }
 
     private func addTodo() {
