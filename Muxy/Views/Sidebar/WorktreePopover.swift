@@ -182,13 +182,7 @@ private struct WorktreePopoverRow: View {
                             .lineLimit(1)
                             .truncationMode(.middle)
                         if worktree.isPrimary {
-                            Text("PRIMARY")
-                                .font(.system(size: 8, weight: .bold))
-                                .tracking(0.5)
-                                .foregroundStyle(MuxyTheme.fgDim)
-                                .padding(.horizontal, 4)
-                                .padding(.vertical, 1)
-                                .background(MuxyTheme.surface, in: Capsule())
+                            PrimaryWorktreeMarker()
                         }
                     }
                 }

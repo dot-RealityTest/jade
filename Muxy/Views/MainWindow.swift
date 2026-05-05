@@ -59,6 +59,8 @@ struct MainWindow: View {
     @State private var fileTreeStates: [WorktreeKey: FileTreeState] = [:]
     @State private var showQuickOpen = false
     @State private var showWorktreeSwitcher = false
+    @State private var showThemePicker = false
+    @State private var showNotificationPanel = false
     @State private var isFullScreen = false
     @State private var sidebarExpanded = UserDefaults.standard.bool(forKey: "muxy.sidebarExpanded")
     @AppStorage(SidebarCollapsedStyle.storageKey) private var sidebarCollapsedStyleRaw = SidebarCollapsedStyle.defaultValue.rawValue
@@ -137,14 +139,25 @@ struct MainWindow: View {
             .onReceive(NotificationCenter.default.publisher(for: .toggleSnippetsPanel)) { _ in
                 toggleSnippetsPanel()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleThemePicker)) { _ in
+                showThemePicker.toggle()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleNotificationPanel)) { _ in
+                showNotificationPanel.toggle()
+            }
     }
 
     private var chromeLayer: some View {
         AnyView(windowLayer)
-            .environment(\.overlayActive, showQuickOpen || showWorktreeSwitcher || showCommandPalette)
+            .environment(
+                \.overlayActive,
+                showQuickOpen || showWorktreeSwitcher || showCommandPalette || showThemePicker || showNotificationPanel
+            )
             .animation(.easeInOut(duration: 0.15), value: showCommandPalette)
             .animation(.easeInOut(duration: 0.15), value: showQuickOpen)
             .animation(.easeInOut(duration: 0.15), value: showWorktreeSwitcher)
+            .animation(.easeInOut(duration: 0.15), value: showThemePicker)
+            .animation(.easeInOut(duration: 0.15), value: showNotificationPanel)
             .animation(.easeInOut(duration: 0.2), value: ToastState.shared.message != nil)
             .coordinateSpace(name: DragCoordinateSpace.mainWindow)
             .environment(dragCoordinator)
@@ -327,6 +340,7 @@ struct MainWindow: View {
         commandPaletteLayer
         quickOpenLayer
         worktreeSwitcherLayer
+        utilityOverlayLayer
     }
 
     @ViewBuilder
@@ -370,6 +384,25 @@ struct MainWindow: View {
                 onSelect: selectWorktreeSwitcherItem,
                 onDismiss: { showWorktreeSwitcher = false }
             )
+            .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        }
+    }
+
+    @ViewBuilder
+    private var utilityOverlayLayer: some View {
+        if showThemePicker {
+            UtilityOverlay(onDismiss: { showThemePicker = false }, content: {
+                ThemePicker(mode: .sidebar)
+                    .frame(width: 360, height: 430)
+            })
+            .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        }
+
+        if showNotificationPanel {
+            UtilityOverlay(onDismiss: { showNotificationPanel = false }, content: {
+                NotificationPanel(onDismiss: { showNotificationPanel = false })
+                    .frame(width: 360, height: 420)
+            })
             .transition(.opacity.combined(with: .scale(scale: 0.98)))
         }
     }
@@ -1279,6 +1312,28 @@ private struct NavigationArrowButton: View {
     private var foregroundColor: Color {
         guard isEnabled else { return MuxyTheme.fgMuted.opacity(0.35) }
         return hovered ? MuxyTheme.fg : MuxyTheme.fgMuted
+    }
+}
+
+private struct UtilityOverlay<Content: View>: View {
+    let onDismiss: () -> Void
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.001)
+                .ignoresSafeArea()
+                .onTapGesture(perform: onDismiss)
+
+            content()
+                .background(MuxyTheme.bg, in: RoundedRectangle(cornerRadius: 14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(MuxyTheme.border, lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.28), radius: 24, x: 0, y: 18)
+        }
+        .onExitCommand(perform: onDismiss)
     }
 }
 

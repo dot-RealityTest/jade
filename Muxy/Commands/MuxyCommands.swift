@@ -418,6 +418,11 @@ struct MuxyCommands: Commands {
             }
             .shortcut(for: .toggleThemePicker, store: keyBindings)
 
+            Button("Notifications") {
+                guard isMainWindowFocused else { return }
+                NotificationCenter.default.post(name: .toggleNotificationPanel, object: nil)
+            }
+
             Button("AI Usage") {
                 guard isMainWindowFocused else { return }
                 performShortcutAction(.toggleAIUsage)

@@ -276,8 +276,6 @@ struct SidebarFooter: View {
     @AppStorage(AIUsageSettingsStore.usageDisplayModeKey) private var usageDisplayModeRaw = AIUsageSettingsStore.defaultUsageDisplayMode
         .rawValue
     @AppStorage(AIUsageSettingsStore.sidebarPreviewProviderIDKey) private var pinnedPreviewProviderID: String = ""
-    @State private var showThemePicker = false
-    @State private var showNotifications = false
     @State private var showAIUsagePopover = false
     private let usageService = AIUsageService.shared
 
@@ -286,8 +284,6 @@ struct SidebarFooter: View {
     }
 
     private let usageRefreshTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
-
-    private var notificationStore: NotificationStore { NotificationStore.shared }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -304,12 +300,6 @@ struct SidebarFooter: View {
             Task {
                 await usageService.refreshIfNeeded()
             }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .toggleThemePicker)) { _ in
-            showThemePicker.toggle()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .toggleNotificationPanel)) { _ in
-            showNotifications.toggle()
         }
         .onReceive(NotificationCenter.default.publisher(for: .toggleAIUsage)) { _ in
             guard usageEnabled else { return }
@@ -332,10 +322,6 @@ struct SidebarFooter: View {
 
     private var sidebarToggleIcon: String {
         "sidebar.left"
-    }
-
-    private var notificationBellIcon: String {
-        notificationStore.unreadCount > 0 ? "bell.badge" : "bell"
     }
 
     private var previewProviderDisplay: (percent: Int, iconName: String)? {
@@ -384,14 +370,6 @@ struct SidebarFooter: View {
             if usageEnabled {
                 aiUsageButton
             }
-            IconButton(symbol: notificationBellIcon, accessibilityLabel: "Notifications") { showNotifications.toggle() }
-                .help("Notifications")
-                .popover(isPresented: $showNotifications) {
-                    NotificationPanel(onDismiss: { showNotifications = false })
-                }
-            IconButton(symbol: "paintpalette", accessibilityLabel: "Theme Picker") { showThemePicker.toggle() }
-                .help("Theme Picker (\(KeyBindingStore.shared.combo(for: .toggleThemePicker).displayString))")
-                .popover(isPresented: $showThemePicker) { ThemePicker(mode: .sidebar) }
             IconButton(symbol: sidebarToggleIcon, accessibilityLabel: sidebarToggleLabel) { postToggleSidebar() }
                 .help("\(sidebarToggleLabel) (\(KeyBindingStore.shared.combo(for: .toggleSidebar).displayString))")
         }
@@ -408,14 +386,6 @@ struct SidebarFooter: View {
             if usageEnabled {
                 aiUsageButton
             }
-            IconButton(symbol: notificationBellIcon, accessibilityLabel: "Notifications") { showNotifications.toggle() }
-                .help("Notifications")
-                .popover(isPresented: $showNotifications) {
-                    NotificationPanel(onDismiss: { showNotifications = false })
-                }
-            IconButton(symbol: "paintpalette", accessibilityLabel: "Theme Picker") { showThemePicker.toggle() }
-                .help("Theme Picker (\(KeyBindingStore.shared.combo(for: .toggleThemePicker).displayString))")
-                .popover(isPresented: $showThemePicker) { ThemePicker(mode: .sidebar) }
         }
         .padding(.horizontal, 10)
         .padding(.bottom, 8)

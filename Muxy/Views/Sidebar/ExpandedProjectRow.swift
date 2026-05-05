@@ -126,14 +126,20 @@ struct ExpandedProjectRow: View {
             projectIcon
 
             VStack(alignment: .leading, spacing: 1) {
-                Text(project.name)
-                    .font(.system(size: 13, weight: isActive ? .semibold : .medium))
-                    .foregroundStyle(MuxyTheme.fg)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                HStack(spacing: 5) {
+                    Text(project.name)
+                        .font(.system(size: 13, weight: isActive ? .semibold : .medium))
+                        .foregroundStyle(MuxyTheme.fg)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
 
-                if isGitRepo, let worktree = activeWorktree {
-                    Text(worktree.isPrimary ? "primary" : worktree.name)
+                    if activeWorktree?.isPrimary == true {
+                        PrimaryWorktreeMarker()
+                    }
+                }
+
+                if isGitRepo, let worktree = activeWorktree, !worktree.isPrimary {
+                    Text(worktree.name)
                         .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(MuxyTheme.fg)
                         .lineLimit(1)
@@ -462,7 +468,7 @@ private struct ExpandedWorktreeRow: View {
                             .truncationMode(.tail)
 
                         if worktree.isPrimary {
-                            PrimaryBadge()
+                            PrimaryWorktreeMarker()
                         }
                     }
 
@@ -573,18 +579,6 @@ private struct ExpandedNewWorktreeButton: View {
         .buttonStyle(.plain)
         .onHover { hovered = $0 }
         .accessibilityLabel("New Worktree")
-    }
-}
-
-private struct PrimaryBadge: View {
-    var body: some View {
-        Text("PRIMARY")
-            .font(.system(size: 8, weight: .bold))
-            .tracking(0.4)
-            .foregroundStyle(MuxyTheme.fg)
-            .padding(.horizontal, 4)
-            .padding(.vertical, 1)
-            .background(MuxyTheme.surface, in: Capsule())
     }
 }
 
