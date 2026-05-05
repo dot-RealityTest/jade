@@ -12,17 +12,32 @@ enum SettingsMetrics {
     static let labelFontSize: CGFloat = 12
     static let footnoteFontSize: CGFloat = 11
     static let controlWidth: CGFloat = 210
+    static let contentMaxWidth: CGFloat = 760
+    static let narrowLayoutThreshold: CGFloat = 560
+    static let rowSpacing: CGFloat = 16
+    static let compactRowSpacing: CGFloat = 8
 }
 
 struct SettingsContainer<Content: View>: View {
     @ViewBuilder var content: Content
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                content
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(spacing: 0) {
+                    content
+                }
+                .frame(
+                    maxWidth: min(
+                        SettingsMetrics.contentMaxWidth,
+                        max(proxy.size.width - (SettingsMetrics.horizontalPadding * 2), 0)
+                    ),
+                    alignment: .topLeading
+                )
+                .padding(.horizontal, SettingsMetrics.horizontalPadding)
+                .padding(.vertical, SettingsMetrics.verticalPadding)
             }
-            .frame(maxWidth: .infinity, alignment: .top)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
     }
 }
@@ -50,6 +65,7 @@ struct SettingsSection<Content: View>: View {
             Text(title)
                 .font(.system(size: SettingsMetrics.footnoteFontSize, weight: .semibold))
                 .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, SettingsMetrics.horizontalPadding)
                 .padding(.top, SettingsMetrics.sectionHeaderTopPadding)
                 .padding(.bottom, SettingsMetrics.sectionHeaderBottomPadding)
@@ -83,11 +99,23 @@ struct SettingsRow<Content: View>: View {
     }
 
     var body: some View {
-        HStack {
-            Text(label)
-                .font(.system(size: SettingsMetrics.labelFontSize))
-            Spacer()
-            content
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: SettingsMetrics.rowSpacing) {
+                Text(label)
+                    .font(.system(size: SettingsMetrics.labelFontSize))
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: SettingsMetrics.horizontalPadding)
+                content
+                    .frame(maxWidth: SettingsMetrics.controlWidth, alignment: .trailing)
+            }
+
+            VStack(alignment: .leading, spacing: SettingsMetrics.compactRowSpacing) {
+                Text(label)
+                    .font(.system(size: SettingsMetrics.labelFontSize))
+                    .fixedSize(horizontal: false, vertical: true)
+                content
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .padding(.horizontal, SettingsMetrics.horizontalPadding)
         .padding(.vertical, SettingsMetrics.rowVerticalPadding)
@@ -123,7 +151,7 @@ struct SettingsPickerRow<Option: CaseIterable & Identifiable & RawRepresentable>
                 }
             }
             .labelsHidden()
-            .frame(width: width, alignment: .trailing)
+            .frame(maxWidth: width, alignment: .trailing)
         }
     }
 }

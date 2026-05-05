@@ -108,7 +108,7 @@ struct RemoteSpacesSettingsView: View {
             SettingsRow("Name") {
                 TextField("Zen", text: $draft.name)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .frame(maxWidth: SettingsMetrics.controlWidth)
                     .controlSize(.small)
             }
 
@@ -116,7 +116,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField("ssh user@host", text: $draft.command)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .frame(maxWidth: SettingsMetrics.controlWidth)
                     .controlSize(.small)
             }
 
@@ -124,7 +124,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField("100.86.62.100", text: $draft.host)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .frame(maxWidth: SettingsMetrics.controlWidth)
                     .controlSize(.small)
             }
 
@@ -132,7 +132,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField(NSUserName(), text: $draft.user)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .frame(maxWidth: SettingsMetrics.controlWidth)
                     .controlSize(.small)
             }
 
@@ -140,7 +140,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField("22", text: $draft.portText)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .frame(maxWidth: SettingsMetrics.controlWidth)
                     .controlSize(.small)
             }
 
@@ -148,7 +148,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField("~/.ssh/id_ed25519", text: $draft.identityFile)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .frame(maxWidth: SettingsMetrics.controlWidth)
                     .controlSize(.small)
             }
 
@@ -156,7 +156,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField("bastion", text: $draft.jumpHost)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .frame(maxWidth: SettingsMetrics.controlWidth)
                     .controlSize(.small)
             }
 
@@ -189,7 +189,7 @@ struct RemoteSpacesSettingsView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .truncationMode(.middle)
-                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .frame(maxWidth: SettingsMetrics.controlWidth, alignment: .trailing)
                     .textSelection(.enabled)
             }
 
@@ -202,7 +202,7 @@ struct RemoteSpacesSettingsView: View {
                     Text("Muxy Light").tag("Muxy Light")
                 }
                 .labelsHidden()
-                .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                .frame(maxWidth: SettingsMetrics.controlWidth, alignment: .trailing)
             }
 
             SettingsRow("Color") {
@@ -214,8 +214,10 @@ struct RemoteSpacesSettingsView: View {
                             .fill(ProjectIconColor.color(for: draft.colorID) ?? MuxyTheme.accent)
                             .frame(width: 12, height: 12)
                         Text(colorName)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                     }
-                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .frame(maxWidth: SettingsMetrics.controlWidth, alignment: .trailing)
                 }
                 .controlSize(.small)
                 .popover(isPresented: $showColorPicker, arrowEdge: .trailing) {
