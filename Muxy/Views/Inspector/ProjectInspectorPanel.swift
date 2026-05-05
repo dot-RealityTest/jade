@@ -2,13 +2,20 @@ import SwiftUI
 
 struct ProjectInspectorPanel: View {
     let project: Project?
+    let showsNotes: Bool
+    let showsTodo: Bool
     @State private var store = ProjectInspectorStore.shared
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider().overlay(MuxyTheme.border)
-            ProjectInspectorContent(project: project, store: store)
+            ProjectInspectorContent(
+                project: project,
+                store: store,
+                showsNotes: showsNotes,
+                showsTodo: showsTodo
+            )
         }
         .frame(width: 320)
         .background(MuxyTheme.bg)
@@ -32,7 +39,7 @@ struct ProjectInspectorPanel: View {
                 .foregroundStyle(.secondary)
                 .frame(width: 18)
             VStack(alignment: .leading, spacing: 1) {
-                Text("Inspector")
+                Text(title)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.primary)
                 Text(project?.name ?? "No project")
@@ -45,21 +52,35 @@ struct ProjectInspectorPanel: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
     }
+
+    private var title: String {
+        if showsNotes, showsTodo { return "Inspector" }
+        if showsNotes { return "Notes" }
+        return "Todo"
+    }
 }
 
 private struct ProjectInspectorContent: View {
     let project: Project?
     let store: ProjectInspectorStore
+    let showsNotes: Bool
+    let showsTodo: Bool
 
     var body: some View {
         if project == nil {
             inspectorEmptyState(symbolName: "sidebar.right", title: "Select a project")
         } else {
             VStack(spacing: 0) {
-                ProjectNotesView(store: store)
-                    .frame(minHeight: 140, idealHeight: 180, maxHeight: 240)
-                Divider().overlay(MuxyTheme.border)
-                ProjectTodoListView(store: store)
+                if showsNotes {
+                    ProjectNotesView(store: store)
+                        .frame(minHeight: 140, idealHeight: showsTodo ? 180 : 360, maxHeight: showsTodo ? 240 : .infinity)
+                }
+                if showsNotes, showsTodo {
+                    Divider().overlay(MuxyTheme.border)
+                }
+                if showsTodo {
+                    ProjectTodoListView(store: store)
+                }
             }
         }
     }

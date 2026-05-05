@@ -114,11 +114,17 @@ struct PaneTabStrip: View {
                         }
                         .help(shortcutTooltip("Snippets", for: .toggleSnippetsPanel))
                     }
-                    if showsToolbarAction(.inspector) {
-                        IconButton(symbol: "sidebar.right", size: 12, accessibilityLabel: "Inspector") {
-                            NotificationCenter.default.post(name: .toggleInspectorPanel, object: nil)
+                    if showsToolbarAction(.notes) {
+                        IconButton(symbol: "note.text", size: 12, accessibilityLabel: "Notes") {
+                            NotificationCenter.default.post(name: .toggleProjectNotesPanel, object: nil)
                         }
-                        .help(shortcutTooltip("Inspector", for: .toggleInspectorPanel))
+                        .help(shortcutTooltip("Notes", for: .toggleProjectNotesPanel))
+                    }
+                    if showsToolbarAction(.todo) {
+                        IconButton(symbol: "checklist", size: 12, accessibilityLabel: "Todo") {
+                            NotificationCenter.default.post(name: .toggleProjectTodoPanel, object: nil)
+                        }
+                        .help(shortcutTooltip("Todo", for: .toggleProjectTodoPanel))
                     }
                     if showsToolbarAction(.newTab) {
                         IconButton(symbol: "plus", accessibilityLabel: "New Tab") { onCreateTab() }

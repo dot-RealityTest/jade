@@ -157,8 +157,14 @@ struct ShortcutActionDispatcher {
         case .toggleSnippetsPanel:
             notificationCenter.post(name: .toggleSnippetsPanel, object: nil)
             return true
+        case .toggleProjectNotesPanel:
+            notificationCenter.post(name: .toggleProjectNotesPanel, object: nil)
+            return true
+        case .toggleProjectTodoPanel:
+            notificationCenter.post(name: .toggleProjectTodoPanel, object: nil)
+            return true
         case .toggleInspectorPanel:
-            notificationCenter.post(name: .toggleInspectorPanel, object: nil)
+            notificationCenter.post(name: .toggleProjectNotesPanel, object: nil)
             return true
         case .toggleAIUsage:
             guard AIUsageSettingsStore.isUsageEnabled() else { return false }

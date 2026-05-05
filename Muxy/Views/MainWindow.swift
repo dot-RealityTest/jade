@@ -53,7 +53,10 @@ struct MainWindow: View {
     @State private var vcsStates: [WorktreeKey: VCSTabState] = [:]
     @State private var fileTreePanelVisible = false
     @State private var snippetsPanelVisible = UserDefaults.standard.bool(forKey: "muxy.snippetsPanelVisible")
-    @State private var inspectorPanelVisible = UserDefaults.standard.bool(forKey: "muxy.inspectorPanelVisible")
+    @State private var notesPanelVisible = UserDefaults.standard.bool(forKey: "muxy.notesPanelVisible")
+        || UserDefaults.standard.bool(forKey: "muxy.inspectorPanelVisible")
+    @State private var todoPanelVisible = UserDefaults.standard.bool(forKey: "muxy.todoPanelVisible")
+        || UserDefaults.standard.bool(forKey: "muxy.inspectorPanelVisible")
     @State private var remoteSpacesStore = RemoteSpacesStore.shared
     @State private var showCommandPalette = false
     @AppStorage("muxy.fileTreeWidth") private var fileTreePanelWidth: Double = .init(FileTreeLayout.defaultWidth)
@@ -142,7 +145,13 @@ struct MainWindow: View {
                 toggleSnippetsPanel()
             }
             .onReceive(NotificationCenter.default.publisher(for: .toggleInspectorPanel)) { _ in
-                toggleInspectorPanel()
+                toggleNotesPanel()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleProjectNotesPanel)) { _ in
+                toggleNotesPanel()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleProjectTodoPanel)) { _ in
+                toggleTodoPanel()
             }
             .onReceive(NotificationCenter.default.publisher(for: .toggleThemePicker)) { _ in
                 showThemePicker.toggle()
@@ -326,8 +335,12 @@ struct MainWindow: View {
 
     @ViewBuilder
     private var inspectorSidePanel: some View {
-        if inspectorPanelVisible {
-            ProjectInspectorPanel(project: activeProject)
+        if notesPanelVisible || todoPanelVisible {
+            ProjectInspectorPanel(
+                project: activeProject,
+                showsNotes: notesPanelVisible,
+                showsTodo: todoPanelVisible
+            )
         }
     }
 
@@ -579,11 +592,17 @@ struct MainWindow: View {
                             }
                             .help("Snippets (\(KeyBindingStore.shared.combo(for: .toggleSnippetsPanel).displayString))")
                         }
-                        if showsToolbarAction(.inspector), activeProject != nil {
-                            IconButton(symbol: "sidebar.right", size: 12, accessibilityLabel: "Inspector") {
-                                NotificationCenter.default.post(name: .toggleInspectorPanel, object: nil)
+                        if showsToolbarAction(.notes), activeProject != nil {
+                            IconButton(symbol: "note.text", size: 12, accessibilityLabel: "Notes") {
+                                NotificationCenter.default.post(name: .toggleProjectNotesPanel, object: nil)
                             }
-                            .help("Inspector (\(KeyBindingStore.shared.combo(for: .toggleInspectorPanel).displayString))")
+                            .help("Notes (\(KeyBindingStore.shared.combo(for: .toggleProjectNotesPanel).displayString))")
+                        }
+                        if showsToolbarAction(.todo), activeProject != nil {
+                            IconButton(symbol: "checklist", size: 12, accessibilityLabel: "Todo") {
+                                NotificationCenter.default.post(name: .toggleProjectTodoPanel, object: nil)
+                            }
+                            .help("Todo (\(KeyBindingStore.shared.combo(for: .toggleProjectTodoPanel).displayString))")
                         }
                         if showsToolbarAction(.newTab), let project = activeProject {
                             IconButton(symbol: "plus", accessibilityLabel: "New Tab") {
@@ -689,10 +708,16 @@ struct MainWindow: View {
                 aliases: ["commands", "vault", "scripts", "shell", "snippets"]
             ),
             commandItem(
-                .toggleInspectorPanel,
-                symbolName: "sidebar.right",
-                subtitle: "Show or hide project notes and todos",
-                aliases: ["notes", "todo", "inspector", "tasks"]
+                .toggleProjectNotesPanel,
+                symbolName: "note.text",
+                subtitle: "Show or hide project notes",
+                aliases: ["notes", "inspector", "scratchpad"]
+            ),
+            commandItem(
+                .toggleProjectTodoPanel,
+                symbolName: "checklist",
+                subtitle: "Show or hide the project todo list",
+                aliases: ["todo", "tasks", "inspector"]
             ),
             commandItem(
                 .quickOpen,
@@ -1176,9 +1201,14 @@ struct MainWindow: View {
         UserDefaults.standard.set(snippetsPanelVisible, forKey: "muxy.snippetsPanelVisible")
     }
 
-    private func toggleInspectorPanel() {
-        inspectorPanelVisible.toggle()
-        UserDefaults.standard.set(inspectorPanelVisible, forKey: "muxy.inspectorPanelVisible")
+    private func toggleNotesPanel() {
+        notesPanelVisible.toggle()
+        UserDefaults.standard.set(notesPanelVisible, forKey: "muxy.notesPanelVisible")
+    }
+
+    private func toggleTodoPanel() {
+        todoPanelVisible.toggle()
+        UserDefaults.standard.set(todoPanelVisible, forKey: "muxy.todoPanelVisible")
     }
 
     private var activeVCSState: VCSTabState? {

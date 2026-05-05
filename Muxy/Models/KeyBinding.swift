@@ -56,6 +56,8 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
     case toggleSidebar
     case toggleFileTree
     case toggleSnippetsPanel
+    case toggleProjectNotesPanel
+    case toggleProjectTodoPanel
     case toggleInspectorPanel
     case toggleAIUsage
     case navigateBack
@@ -109,7 +111,8 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         .toggleSidebar,
         .toggleFileTree,
         .toggleSnippetsPanel,
-        .toggleInspectorPanel,
+        .toggleProjectNotesPanel,
+        .toggleProjectTodoPanel,
         .toggleAIUsage,
         .navigateBack,
         .navigateForward,
@@ -163,7 +166,9 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         case .toggleSidebar: ShortcutMetadata(displayName: "Toggle Sidebar", category: "App", scope: .mainWindow)
         case .toggleFileTree: ShortcutMetadata(displayName: "Toggle File Tree", category: "App", scope: .mainWindow)
         case .toggleSnippetsPanel: ShortcutMetadata(displayName: "Toggle Snippets", category: "App", scope: .mainWindow)
-        case .toggleInspectorPanel: ShortcutMetadata(displayName: "Toggle Inspector", category: "App", scope: .mainWindow)
+        case .toggleProjectNotesPanel: ShortcutMetadata(displayName: "Toggle Notes", category: "App", scope: .mainWindow)
+        case .toggleProjectTodoPanel: ShortcutMetadata(displayName: "Toggle Todo", category: "App", scope: .mainWindow)
+        case .toggleInspectorPanel: ShortcutMetadata(displayName: "Toggle Notes", category: "App", scope: .mainWindow)
         case .toggleAIUsage: ShortcutMetadata(displayName: "Toggle AI Usage", category: "App", scope: .mainWindow)
         case .navigateBack: ShortcutMetadata(displayName: "Navigate Back", category: "Navigation", scope: .mainWindow)
         case .navigateForward: ShortcutMetadata(displayName: "Navigate Forward", category: "Navigation", scope: .mainWindow)
@@ -285,7 +290,8 @@ struct KeyBinding: Codable, Identifiable {
         Self(action: .toggleSidebar, combo: KeyCombo(key: "b", command: true)),
         Self(action: .toggleFileTree, combo: KeyCombo(key: "e", command: true)),
         Self(action: .toggleSnippetsPanel, combo: KeyCombo(key: "j", command: true)),
-        Self(action: .toggleInspectorPanel, combo: KeyCombo(key: "j", command: true, shift: true)),
+        Self(action: .toggleProjectNotesPanel, combo: KeyCombo(key: "j", command: true, shift: true)),
+        Self(action: .toggleProjectTodoPanel, combo: KeyCombo(key: "j", command: true, option: true)),
         Self(action: .toggleAIUsage, combo: KeyCombo(key: "l", command: true)),
         Self(action: .navigateBack, combo: KeyCombo(key: KeyCombo.leftArrowKey, command: true, control: true)),
         Self(action: .navigateForward, combo: KeyCombo(key: KeyCombo.rightArrowKey, command: true, control: true)),

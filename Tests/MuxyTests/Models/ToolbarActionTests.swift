@@ -10,10 +10,14 @@ struct ToolbarActionTests {
             .debug,
             .tools,
             .snippets,
-            .inspector,
+            .notes,
+            .todo,
             .newTab,
         ])
-        #expect(ToolbarAction.visibleActions(from: "debug,tools,snippets,newTab").contains(.inspector))
+        #expect(ToolbarAction.visibleActions(from: "debug,tools,snippets,newTab").contains(.notes))
+        #expect(ToolbarAction.visibleActions(from: "debug,tools,snippets,newTab").contains(.todo))
+        #expect(ToolbarAction.visibleActions(from: "debug,tools,snippets,inspector,newTab").contains(.notes))
+        #expect(ToolbarAction.visibleActions(from: "debug,tools,snippets,inspector,newTab").contains(.todo))
     }
 
     @Test("raw value preserves case order and supports empty selection")

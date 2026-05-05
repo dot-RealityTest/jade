@@ -81,14 +81,16 @@ struct KeyBindingTests {
         #expect(combos.count == unique.count)
     }
 
-    @Test("Snippets and inspector shortcut metadata and default combos")
+    @Test("Snippets notes and todo shortcut metadata and default combos")
     func snippetsPanelShortcut() {
         #expect(ShortcutAction.toggleSnippetsPanel.displayName == "Toggle Snippets")
         #expect(ShortcutAction.toggleSnippetsPanel.category == "App")
         #expect(ShortcutAction.toggleSnippetsPanel.scope == .mainWindow)
         #expect(KeyBinding.defaults.first { $0.action == .toggleSnippetsPanel }?.combo == KeyCombo(key: "j", command: true))
-        #expect(ShortcutAction.toggleInspectorPanel.displayName == "Toggle Inspector")
-        #expect(KeyBinding.defaults.first { $0.action == .toggleInspectorPanel }?.combo == KeyCombo(key: "j", command: true, shift: true))
+        #expect(ShortcutAction.toggleProjectNotesPanel.displayName == "Toggle Notes")
+        #expect(KeyBinding.defaults.first { $0.action == .toggleProjectNotesPanel }?.combo == KeyCombo(key: "j", command: true, shift: true))
+        #expect(ShortcutAction.toggleProjectTodoPanel.displayName == "Toggle Todo")
+        #expect(KeyBinding.defaults.first { $0.action == .toggleProjectTodoPanel }?.combo == KeyCombo(key: "j", command: true, option: true))
     }
 
     @Test("Command palette owns Cmd+K default")
