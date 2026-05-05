@@ -18,7 +18,7 @@ struct EditorSettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    .frame(maxWidth: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
                 }
 
                 if settings.defaultEditor == .terminalCommand {
@@ -26,7 +26,7 @@ struct EditorSettingsView: View {
                         TextField("vim", text: $settings.externalEditorCommand)
                             .textFieldStyle(.roundedBorder)
                             .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                            .frame(maxWidth: SettingsMetrics.controlWidth)
+                            .frame(width: SettingsMetrics.controlWidth)
                     }
                 }
             }
@@ -54,7 +54,7 @@ struct EditorSettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    .frame(maxWidth: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
                 }
 
                 SettingsRow("Zoom") {
@@ -95,7 +95,7 @@ struct EditorSettingsView: View {
                             }
                         }
                         .labelsHidden()
-                        .frame(maxWidth: SettingsMetrics.controlWidth, alignment: .trailing)
+                        .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
                     }
 
                     SettingsRow("Font Size") {

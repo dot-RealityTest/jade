@@ -22,7 +22,7 @@ struct SettingsView: View {
             AIUsageSettingsView()
                 .tabItem { Label("AI Usage", systemImage: "chart.bar") }
         }
-        .frame(minWidth: 420, idealWidth: 620, minHeight: 520, idealHeight: 680)
+        .frame(width: 500, height: 500)
         .resetsSettingsFocusOnOutsideClick()
     }
 }

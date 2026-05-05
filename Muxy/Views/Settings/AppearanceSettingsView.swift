@@ -40,8 +40,9 @@ struct AppearanceSettingsView: View {
                         }
                         .labelsHidden()
                         .pickerStyle(.segmented)
+                        .fixedSize()
                     }
-                    .frame(maxWidth: SettingsMetrics.controlWidth)
+                    .frame(width: SettingsMetrics.controlWidth)
                 }
 
                 SettingsRow("Expanded Style") {
@@ -54,8 +55,9 @@ struct AppearanceSettingsView: View {
                         }
                         .labelsHidden()
                         .pickerStyle(.segmented)
+                        .fixedSize()
                     }
-                    .frame(maxWidth: SettingsMetrics.controlWidth)
+                    .frame(width: SettingsMetrics.controlWidth)
                 }
             }
 
@@ -68,7 +70,7 @@ struct AppearanceSettingsView: View {
                     }
                     .labelsHidden()
                     .pickerStyle(.segmented)
-                    .frame(maxWidth: SettingsMetrics.controlWidth)
+                    .frame(width: SettingsMetrics.controlWidth)
                 }
             }
         }
@@ -97,7 +99,6 @@ struct AppearanceSettingsView: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
-            .frame(maxWidth: .infinity, alignment: .leading)
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
         }
         .buttonStyle(.plain)

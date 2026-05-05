@@ -12,36 +12,37 @@ struct AIUsageSettingsView: View {
         AIUsageProviderCatalog.providers
     }
 
+    private let gridColumns: [GridItem] = [
+        GridItem(.flexible(minimum: 140), spacing: 12),
+        GridItem(.flexible(minimum: 140), spacing: 12),
+    ]
+
     var body: some View {
-        GeometryReader { proxy in
-            let isCompact = proxy.size.width < SettingsMetrics.narrowLayoutThreshold
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Text("AI Usage")
+                    .font(.system(size: 12, weight: .medium))
 
-            VStack(spacing: 0) {
-                HStack(spacing: 8) {
-                    Text("AI Usage")
-                        .font(.system(size: 12, weight: .medium))
+                Spacer()
 
-                    Spacer()
-
-                    Toggle("", isOn: $usageEnabled)
-                        .labelsHidden()
-                        .toggleStyle(.switch)
-                        .scaleEffect(0.9)
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-                .padding(.bottom, 6)
-
-                Divider().padding(.horizontal, 12)
-
-                if usageEnabled {
-                    enabledSettings(isCompact: isCompact)
-                } else {
-                    disabledSettings
-                }
-
-                Spacer(minLength: 0)
+                Toggle("", isOn: $usageEnabled)
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .scaleEffect(0.9)
             }
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+            .padding(.bottom, 6)
+
+            Divider().padding(.horizontal, 12)
+
+            if usageEnabled {
+                enabledSettings
+            } else {
+                disabledSettings
+            }
+
+            Spacer(minLength: 0)
         }
         .onChange(of: usageEnabled) { _, enabled in
             AIUsageSettingsStore.setUsageEnabled(enabled)
@@ -70,19 +71,21 @@ struct AIUsageSettingsView: View {
         }
     }
 
-    private func enabledSettings(isCompact: Bool) -> some View {
+    private var enabledSettings: some View {
         VStack(spacing: 0) {
-            settingsLine(isCompact: isCompact) {
+            HStack(spacing: 8) {
                 Text("Show")
                     .font(.system(size: 12, weight: .medium))
-            } control: {
+
+                Spacer()
+
                 Picker("Show", selection: $usageDisplayMode) {
                     ForEach(AIUsageDisplayMode.allCases) { mode in
                         Text(mode.label).tag(mode)
                     }
                 }
                 .pickerStyle(.segmented)
-                .frame(maxWidth: 220)
+                .frame(width: 180)
             }
             .padding(.horizontal, 12)
             .padding(.top, 8)
@@ -90,10 +93,12 @@ struct AIUsageSettingsView: View {
 
             Divider().padding(.horizontal, 12)
 
-            settingsLine(isCompact: isCompact) {
+            HStack(spacing: 8) {
                 Text("Auto Refresh")
                     .font(.system(size: 12, weight: .medium))
-            } control: {
+
+                Spacer()
+
                 Picker("Auto Refresh", selection: $autoRefreshInterval) {
                     ForEach(AIUsageAutoRefreshInterval.allCases) { interval in
                         Text(interval.label).tag(interval)
@@ -101,7 +106,7 @@ struct AIUsageSettingsView: View {
                 }
                 .pickerStyle(.menu)
                 .labelsHidden()
-                .frame(maxWidth: 120, alignment: .trailing)
+                .frame(width: 100)
             }
             .padding(.horizontal, 12)
             .padding(.top, 8)
@@ -109,16 +114,17 @@ struct AIUsageSettingsView: View {
 
             Divider().padding(.horizontal, 12)
 
-            settingsLine(isCompact: isCompact, alignment: .top) {
+            HStack(spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Show Secondary Limits")
                         .font(.system(size: 12, weight: .medium))
                     Text("Display weekly and monthly quotas alongside the primary session usage.")
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
-            } control: {
+
+                Spacer()
+
                 Toggle("", isOn: $showSecondaryLimits)
                     .labelsHidden()
                     .toggleStyle(.switch)
@@ -130,27 +136,25 @@ struct AIUsageSettingsView: View {
 
             Divider().padding(.horizontal, 12)
 
-            settingsLine(isCompact: isCompact, alignment: .top) {
+            HStack(spacing: 8) {
                 Text("Choose which providers appear on the usage board.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            } control: {
-                HStack(spacing: 0) {
-                    Spacer(minLength: 0)
-                    Button {
-                        refreshUsage()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 10, weight: .semibold))
-                            Text("Refresh")
-                                .font(.system(size: 11, weight: .medium))
-                        }
+
+                Spacer()
+
+                Button {
+                    refreshUsage()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text("Refresh")
+                            .font(.system(size: 11, weight: .medium))
                     }
-                    .buttonStyle(.borderless)
-                    .disabled(usageService.isRefreshing)
                 }
+                .buttonStyle(.borderless)
+                .disabled(usageService.isRefreshing)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -158,7 +162,7 @@ struct AIUsageSettingsView: View {
             Divider().padding(.horizontal, 12)
 
             ScrollView {
-                LazyVGrid(columns: gridColumns(isCompact: isCompact), spacing: 8) {
+                LazyVGrid(columns: gridColumns, spacing: 8) {
                     ForEach(providers) { provider in
                         providerCell(provider)
                     }
@@ -176,8 +180,7 @@ struct AIUsageSettingsView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(provider.displayName)
                     .font(.system(size: 12))
-                    .lineLimit(2)
-                    .minimumScaleFactor(0.9)
+                    .lineLimit(1)
 
                 if provider.hasNotificationIntegration {
                     Text("Integrated")
@@ -196,39 +199,6 @@ struct AIUsageSettingsView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
-    }
-
-    private func gridColumns(isCompact: Bool) -> [GridItem] {
-        if isCompact {
-            return [GridItem(.flexible(minimum: 0), spacing: 12)]
-        }
-        return [
-            GridItem(.flexible(minimum: 140), spacing: 12),
-            GridItem(.flexible(minimum: 140), spacing: 12),
-        ]
-    }
-
-    private func settingsLine(
-        isCompact: Bool,
-        alignment: VerticalAlignment = .center,
-        @ViewBuilder label: () -> some View,
-        @ViewBuilder control: () -> some View
-    ) -> some View {
-        Group {
-            if isCompact {
-                VStack(alignment: .leading, spacing: 8) {
-                    label()
-                    control()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            } else {
-                HStack(alignment: alignment, spacing: 8) {
-                    label()
-                    Spacer(minLength: 12)
-                    control()
-                }
-            }
-        }
     }
 
     private func providerToggleBinding(for provider: AIUsageProviderCatalogEntry) -> Binding<Bool> {

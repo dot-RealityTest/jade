@@ -37,7 +37,7 @@ struct MobileSettingsView: View {
                     TextField("\(MobileServerService.defaultPort)", text: $portText)
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                        .frame(maxWidth: SettingsMetrics.controlWidth)
+                        .frame(width: SettingsMetrics.controlWidth)
                         .onChange(of: portText) { _, _ in
                             guard portText != String(service.port) else { return }
                             portValidationError = nil
@@ -169,23 +169,20 @@ struct MobileSettingsView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             if let connectionURL {
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 8) {
-                        Text(connectionURL)
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.primary)
-                            .textSelection(.enabled)
-                        Spacer()
-                        copyConnectionButton(connectionURL)
+                HStack(spacing: 8) {
+                    Text(connectionURL)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(connectionURL, forType: .string)
+                    } label: {
+                        Image(systemName: "doc.on.doc")
+                            .font(.system(size: 12))
                     }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(connectionURL)
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(.primary)
-                            .textSelection(.enabled)
-                        copyConnectionButton(connectionURL)
-                    }
+                    .buttonStyle(.borderless)
+                    .help("Copy connection URL")
                 }
                 .padding(10)
                 .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
@@ -201,18 +198,5 @@ struct MobileSettingsView: View {
 
     private var connectionURL: String? {
         LocalNetworkAddressProvider.connectionURL(port: service.port)
-    }
-
-    private func copyConnectionButton(_ connectionURL: String) -> some View {
-        Button {
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(connectionURL, forType: .string)
-        } label: {
-            Image(systemName: "doc.on.doc")
-                .font(.system(size: 12))
-                .imageScale(.medium)
-        }
-        .buttonStyle(.borderless)
-        .help("Copy connection URL")
     }
 }

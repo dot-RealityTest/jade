@@ -30,7 +30,7 @@ struct GeneralSettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    .frame(maxWidth: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
                 }
             }
 
@@ -90,7 +90,7 @@ struct GeneralSettingsView: View {
                 Text(action.settingsDescription)
                     .font(.system(size: SettingsMetrics.footnoteFontSize))
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.trailing)
+                    .lineLimit(1)
                     .frame(maxWidth: 220, alignment: .trailing)
                 Toggle("", isOn: toolbarActionBinding(for: action))
                     .labelsHidden()
