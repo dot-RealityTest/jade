@@ -2,17 +2,13 @@ import AppKit
 import SwiftUI
 
 struct MuxyCommands: Commands {
-    @ObservedObject private var ideService = IDEIntegrationService.shared
-
     let appState: AppState
     let projectStore: ProjectStore
     let worktreeStore: WorktreeStore
     let keyBindings: KeyBindingStore
-    let commandShortcuts: CommandShortcutStore
     let config: MuxyConfig
     let ghostty: GhosttyService
     let updateService: UpdateService
-    private let remoteSpaces = RemoteSpacesStore.shared
 
     private var isMainWindowFocused: Bool {
         ShortcutContext.isMainWindow(NSApp.keyWindow)
@@ -21,29 +17,6 @@ struct MuxyCommands: Commands {
     private var activeProject: Project? {
         guard let projectID = appState.activeProjectID else { return nil }
         return projectStore.projects.first { $0.id == projectID }
-    }
-
-    private var activeProjectPath: String? {
-        guard let project = activeProject else { return nil }
-        return worktreeStore.preferred(for: project.id, matching: appState.activeWorktreeID[project.id])?.path
-            ?? project.path
-    }
-
-    private var activeEditorState: EditorTabState? {
-        guard let project = activeProject else { return nil }
-        return appState.activeTab(for: project.id)?.content.editorState
-    }
-
-    private var activeEditorFilePath: String? {
-        activeEditorState?.filePath
-    }
-
-    private var activeEditorCursorLine: Int? {
-        activeEditorState?.cursorLine
-    }
-
-    private var activeEditorCursorColumn: Int? {
-        activeEditorState?.cursorColumn
     }
 
     private var shortcutDispatcher: ShortcutActionDispatcher {
@@ -63,24 +36,6 @@ struct MuxyCommands: Commands {
                 attached: { NotificationCenter.default.post(name: .toggleAttachedVCS, object: nil) }
             )
         }
-    }
-
-    private var isMarkdownPreviewActive: Bool {
-        guard let state = activeEditorState, state.isMarkdownFile else { return false }
-        return state.markdownViewMode == .preview || state.markdownViewMode == .split
-    }
-
-    private func adjustMarkdownPreviewZoom(by delta: CGFloat) {
-        EditorSettings.shared.adjustMarkdownPreviewFontScale(by: delta)
-    }
-
-    private func performCommandShortcut(_ shortcut: CommandShortcut) {
-        guard isMainWindowFocused,
-              let projectID = appState.activeProjectID,
-              appState.workspaceRoot(for: projectID) != nil,
-              !shortcut.trimmedCommand.isEmpty
-        else { return }
-        appState.createCommandTab(projectID: projectID, shortcut: shortcut)
     }
 
     var body: some Commands {
@@ -143,69 +98,13 @@ struct MuxyCommands: Commands {
             }
             .shortcut(for: .openProject, store: keyBindings)
 
-            Menu("Open in IDE") {
-                Button {
-                    guard let activeProjectPath else { return }
-                    _ = ideService.openProject(at: activeProjectPath, in: IDEIntegrationService.finderApplication)
-                } label: {
-                    HStack(spacing: 8) {
-                        AppBundleIconView(appURL: IDEIntegrationService.finderAppURL, fallbackSystemName: "folder", size: 20)
-                        Text("Finder")
-                    }
-                }
-
-                Divider()
-
-                if ideService.installedApps.isEmpty {
-                    Button("No supported IDEs found") {}
-                        .disabled(true)
-                } else {
-                    ForEach(ideService.installedApps) { ide in
-                        Button {
-                            guard let activeProjectPath else { return }
-                            _ = ideService.openProject(
-                                at: activeProjectPath,
-                                highlightingFileAt: activeEditorFilePath,
-                                line: activeEditorCursorLine,
-                                column: activeEditorCursorColumn,
-                                in: ide
-                            )
-                        } label: {
-                            HStack(spacing: 8) {
-                                AppBundleIconView(appURL: ide.appURL, fallbackSystemName: ide.symbolName, size: 20)
-                                Text(ide.displayName)
-                            }
-                        }
-                    }
-                }
-            }
-            .disabled(activeProjectPath == nil)
+            Divider()
 
             Button("New Tab") {
                 guard isMainWindowFocused else { return }
                 performShortcutAction(.newTab)
             }
             .shortcut(for: .newTab, store: keyBindings)
-
-            Menu("Custom Commands") {
-                if commandShortcuts.shortcuts.isEmpty {
-                    Button("No Custom Commands") {}
-                        .disabled(true)
-                } else {
-                    ForEach(commandShortcuts.shortcuts) { shortcut in
-                        Button(shortcut.displayName) {
-                            performCommandShortcut(shortcut)
-                        }
-                        .disabled(shortcut.trimmedCommand.isEmpty)
-                    }
-                }
-            }
-
-            Button("Source Control") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.openVCSTab)
-            }
-            .shortcut(for: .openVCSTab, store: keyBindings)
 
             Button("Command Palette") {
                 guard isMainWindowFocused else { return }
@@ -235,112 +134,6 @@ struct MuxyCommands: Commands {
                 performShortcutAction(.closeTab)
             }
             .shortcut(for: .closeTab, store: keyBindings)
-
-            Divider()
-
-            Button("Rename Tab") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.renameTab)
-            }
-            .shortcut(for: .renameTab, store: keyBindings)
-
-            Button("Pin/Unpin Tab") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.pinUnpinTab)
-            }
-            .shortcut(for: .pinUnpinTab, store: keyBindings)
-
-            Divider()
-
-            Button("Split Right") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.splitRight)
-            }
-            .shortcut(for: .splitRight, store: keyBindings)
-
-            Button("Split Down") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.splitDown)
-            }
-            .shortcut(for: .splitDown, store: keyBindings)
-
-            Button("Close Pane") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.closePane)
-            }
-            .shortcut(for: .closePane, store: keyBindings)
-
-            Button("Focus Pane Left") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.focusPaneLeft)
-            }
-            .shortcut(for: .focusPaneLeft, store: keyBindings)
-
-            Button("Focus Pane Right") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.focusPaneRight)
-            }
-            .shortcut(for: .focusPaneRight, store: keyBindings)
-
-            Button("Focus Pane Up") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.focusPaneUp)
-            }
-            .shortcut(for: .focusPaneUp, store: keyBindings)
-
-            Button("Focus Pane Down") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.focusPaneDown)
-            }
-            .shortcut(for: .focusPaneDown, store: keyBindings)
-        }
-
-        CommandMenu("Remote Spaces") {
-            if remoteSpaces.spaces.isEmpty {
-                Button("No Remote Spaces") {}
-                    .disabled(true)
-            } else {
-                ForEach(remoteSpaces.spaces) { space in
-                    Button(space.displayName) {
-                        RemoteSpaceLauncher.open(
-                            space,
-                            appState: appState,
-                            projectStore: projectStore,
-                            worktreeStore: worktreeStore
-                        )
-                    }
-                    .disabled(!space.isConnectable)
-                }
-            }
-
-            Divider()
-
-            SettingsLink {
-                Text("Manage Remote Spaces...")
-            }
-        }
-
-        CommandGroup(after: .toolbar) {
-            Button("Zoom In Markdown Preview") {
-                guard isMainWindowFocused, isMarkdownPreviewActive else { return }
-                adjustMarkdownPreviewZoom(by: EditorSettings.markdownPreviewZoomStep)
-            }
-            .keyboardShortcut("=", modifiers: .command)
-            .disabled(!isMarkdownPreviewActive)
-
-            Button("Zoom Out Markdown Preview") {
-                guard isMainWindowFocused, isMarkdownPreviewActive else { return }
-                adjustMarkdownPreviewZoom(by: -EditorSettings.markdownPreviewZoomStep)
-            }
-            .keyboardShortcut("-", modifiers: .command)
-            .disabled(!isMarkdownPreviewActive)
-
-            Button("Reset Markdown Preview Zoom") {
-                guard isMainWindowFocused, isMarkdownPreviewActive else { return }
-                EditorSettings.shared.markdownPreviewFontScale = EditorSettings.defaultMarkdownPreviewFontScale
-            }
-            .keyboardShortcut("0", modifiers: .command)
-            .disabled(!isMarkdownPreviewActive)
         }
 
         CommandGroup(after: .windowList) {
@@ -355,18 +148,6 @@ struct MuxyCommands: Commands {
                 performShortcutAction(.previousTab)
             }
             .shortcut(for: .previousTab, store: keyBindings)
-
-            Divider()
-
-            ForEach(1 ... 9, id: \.self) { index in
-                if let action = ShortcutAction.tabAction(for: index) {
-                    Button("Tab \(index)") {
-                        guard isMainWindowFocused else { return }
-                        performShortcutAction(action)
-                    }
-                    .shortcut(for: action, store: keyBindings)
-                }
-            }
         }
 
         CommandGroup(after: .sidebar) {
@@ -375,59 +156,6 @@ struct MuxyCommands: Commands {
                 performShortcutAction(.toggleSidebar)
             }
             .shortcut(for: .toggleSidebar, store: keyBindings)
-
-            Divider()
-
-            Button("Switch Worktree...") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.switchWorktree)
-            }
-            .shortcut(for: .switchWorktree, store: keyBindings)
-
-            Divider()
-
-            Button("Next Project") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.nextProject)
-            }
-            .shortcut(for: .nextProject, store: keyBindings)
-
-            Button("Previous Project") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.previousProject)
-            }
-            .shortcut(for: .previousProject, store: keyBindings)
-
-            Divider()
-
-            ForEach(1 ... 9, id: \.self) { index in
-                if let action = ShortcutAction.projectAction(for: index) {
-                    Button("Project \(index)") {
-                        guard isMainWindowFocused else { return }
-                        performShortcutAction(action)
-                    }
-                    .shortcut(for: action, store: keyBindings)
-                }
-            }
-
-            Divider()
-
-            Button("Theme Picker") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.toggleThemePicker)
-            }
-            .shortcut(for: .toggleThemePicker, store: keyBindings)
-
-            Button("Notifications") {
-                guard isMainWindowFocused else { return }
-                NotificationCenter.default.post(name: .toggleNotificationPanel, object: nil)
-            }
-
-            Button("AI Usage") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.toggleAIUsage)
-            }
-            .shortcut(for: .toggleAIUsage, store: keyBindings)
         }
     }
 }

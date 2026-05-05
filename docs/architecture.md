@@ -36,7 +36,7 @@ MuxyMobile/                    iOS companion app
 Muxy/
   MuxyApp.swift              App entry point, delegate, window setup
   Commands/
-    MuxyCommands.swift        macOS menu bar commands
+    MuxyCommands.swift        Minimal macOS menu bar commands
   Extensions/
     BundleExtension.swift     Bundle helper
     Notification+Names.swift  Custom notification names
@@ -277,8 +277,8 @@ User action → AppState.dispatch() → WorkspaceReducer.reduce()
   `TextBackingStore` and render through `CodeEditorRepresentable`; terminal editor tabs create a normal
   terminal pane with the configured Ghostty startup command. The size thresholds in
   `EditorTabState` apply only to the built-in editor path.
-- **IDE Launching**: `MainWindow` and `MuxyCommands` surface project-level IDE launch actions through
-  `OpenInIDEControl` and the app menu. `IDEIntegrationService` scans installed applications, classifies
+- **IDE Launching**: `MainWindow` surfaces project-level IDE launch actions through
+  `OpenInIDEControl`. `IDEIntegrationService` scans installed applications, classifies
   editor-like apps by bundle metadata, remembers the last launched bundle identifier in user defaults,
   and prefers CLI-based launch commands for VS Code-like and Zed-like apps so the current file, line,
   and column can be highlighted when available. The same launcher surface also provides a native Finder

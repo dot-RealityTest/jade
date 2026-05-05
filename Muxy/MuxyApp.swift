@@ -101,7 +101,6 @@ struct MuxyApp: App {
                 projectStore: projectStore,
                 worktreeStore: worktreeStore,
                 keyBindings: .shared,
-                commandShortcuts: .shared,
                 config: .shared,
                 ghostty: .shared,
                 updateService: .shared
