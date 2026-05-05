@@ -12,7 +12,10 @@ struct AppearanceSettingsView: View {
 
     var body: some View {
         SettingsContainer {
-            SettingsSection("Terminal") {
+            SettingsSection(
+                "Terminal",
+                footer: "Selecting a theme also saves it as a local palette in HEX."
+            ) {
                 SettingsRow("Light Theme") {
                     themeButton(
                         title: currentLightTheme ?? "Default",

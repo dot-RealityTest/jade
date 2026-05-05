@@ -1,5 +1,11 @@
 import SwiftUI
 
+enum KeyboardShortcutsSettingsMode: Equatable {
+    case all
+    case app
+    case custom
+}
+
 struct KeyboardShortcutsSettingsView: View {
     private enum ListSection: String, CaseIterable, Identifiable {
         case app
@@ -22,6 +28,8 @@ struct KeyboardShortcutsSettingsView: View {
         }
     }
 
+    let mode: KeyboardShortcutsSettingsMode
+
     @State private var section: ListSection = .app
     @State private var recordingAction: ShortcutAction?
     @State private var recordingCommandPrefix = false
@@ -37,16 +45,29 @@ struct KeyboardShortcutsSettingsView: View {
     private var store: KeyBindingStore { KeyBindingStore.shared }
     private var commandStore: CommandShortcutStore { CommandShortcutStore.shared }
 
+    init(mode: KeyboardShortcutsSettingsMode = .all) {
+        self.mode = mode
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            sectionPicker
-            Divider()
+            if mode == .all {
+                sectionPicker
+            }
             header
             Divider()
-            switch section {
+            switch selectedSection {
             case .app: appShortcutsList
             case .custom: customShortcutsList
             }
+        }
+    }
+
+    private var selectedSection: ListSection {
+        switch mode {
+        case .all: section
+        case .app: .app
+        case .custom: .custom
         }
     }
 
@@ -79,7 +100,7 @@ struct KeyboardShortcutsSettingsView: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
                     .font(.system(size: SettingsMetrics.labelFontSize))
-                TextField(section.searchPlaceholder, text: $searchText)
+                TextField(selectedSection.searchPlaceholder, text: $searchText)
                     .textFieldStyle(.plain)
                     .font(.system(size: SettingsMetrics.labelFontSize))
             }
@@ -87,7 +108,7 @@ struct KeyboardShortcutsSettingsView: View {
             .padding(.vertical, 6)
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
 
-            switch section {
+            switch selectedSection {
             case .app:
                 Button("Reset All") {
                     store.resetToDefaults()

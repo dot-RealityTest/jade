@@ -23,11 +23,11 @@ enum ToolbarAction: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .debug: "Debug"
-        case .tools: "Tools menu"
+        case .tools: "Tools"
         case .snippets: "Snippets"
         case .notes: "Notes"
         case .todo: "Todo"
-        case .newTab: "New tab"
+        case .newTab: "New Tab"
         case .quickOpen: "Quick Open"
         case .sourceControl: "Source Control"
         case .fileTree: "File Tree"

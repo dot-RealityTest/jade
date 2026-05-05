@@ -229,12 +229,14 @@ Muxy/
       TabStrip.swift          Tab bar with drag reordering and configurable titlebar actions
       DropZoneOverlay.swift   Tab split-mode drop targets
     Settings/
-      SettingsView.swift      Settings window layout
+      SettingsView.swift      Settings window shell with compact sidebar navigation and detail pane
       SettingsComponents.swift  Shared section/row primitives used across all tabs
       AppearanceSettingsView.swift  Theme settings tab
       EditorSettingsView.swift  Editor preferences tab (default editor, font)
       TerminalSettingsView.swift  Terminal preferences tab, including quick-select label layout
-      KeyboardShortcutsSettingsView.swift  Shortcut config tab, including layered custom terminal command shortcuts
+      CommandsSettingsView.swift  Commands tab container for shortcuts, custom commands, and natural command settings
+      KeyboardShortcutsSettingsView.swift  Shortcut config surface, including layered custom terminal command shortcuts
+      ConnectionsSettingsView.swift  Connections tab container for remote spaces, mobile access, and AI usage
       NotificationSettingsView.swift  Notification preferences tab
       AIUsageSettingsView.swift  AI usage tab (global enable, display mode, auto-refresh, secondary limits, per-provider toggles)
       MobileSettingsView.swift  Mobile server and approved devices tab

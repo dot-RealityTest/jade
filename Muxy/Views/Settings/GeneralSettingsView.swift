@@ -45,8 +45,8 @@ struct GeneralSettingsView: View {
             }
 
             SettingsSection(
-                "Toolbar",
-                footer: "Hidden actions remain available in the Command Palette."
+                "Visible Features",
+                footer: "Choose what appears in the title bar. Hidden actions remain available in Cmd+K."
             ) {
                 ForEach(ToolbarAction.allCases) { action in
                     toolbarToggleRow(for: action)
@@ -103,7 +103,7 @@ struct GeneralSettingsView: View {
     private var toolbarResetRow: some View {
         HStack {
             Spacer()
-            Button("Restore Compact Toolbar") {
+            Button("Restore Defaults") {
                 toolbarActionsRaw = ToolbarAction.defaultRawValue
             }
             .font(.system(size: SettingsMetrics.footnoteFontSize))
