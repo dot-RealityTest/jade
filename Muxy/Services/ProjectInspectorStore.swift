@@ -45,7 +45,6 @@ final class ProjectInspectorStore {
 
     private(set) var projectID: UUID?
     private(set) var document = ProjectInspectorDocument()
-    var todoSearchQuery = ""
     private var persistence: (any ProjectInspectorPersisting)?
     private let persistenceFactory: (UUID) -> any ProjectInspectorPersisting
 
@@ -55,20 +54,16 @@ final class ProjectInspectorStore {
         self.persistenceFactory = persistenceFactory
     }
 
-    var filteredTodos: [ProjectTodoItem] {
-        let query = todoSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let sorted = document.todos.sorted { lhs, rhs in
+    var sortedTodos: [ProjectTodoItem] {
+        document.todos.sorted { lhs, rhs in
             if lhs.isDone != rhs.isDone { return !lhs.isDone }
             return lhs.updatedAt > rhs.updatedAt
         }
-        guard !query.isEmpty else { return sorted }
-        return sorted.filter { $0.trimmedTitle.lowercased().contains(query) }
     }
 
     func selectProject(_ projectID: UUID?) {
         guard self.projectID != projectID else { return }
         self.projectID = projectID
-        todoSearchQuery = ""
         guard let projectID else {
             persistence = nil
             document = ProjectInspectorDocument()

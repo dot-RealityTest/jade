@@ -189,7 +189,7 @@ private struct ProjectTodoListView: View {
             }
             todoHeader
             Divider().overlay(MuxyTheme.border)
-            if store.filteredTodos.isEmpty {
+            if store.sortedTodos.isEmpty {
                 inspectorEmptyState(symbolName: "checklist", title: emptyTitle)
             } else {
                 todoList
@@ -220,29 +220,6 @@ private struct ProjectTodoListView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 7)
             .background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: 7))
-
-            HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-                TextField("Search todos", text: Binding(
-                    get: { store.todoSearchQuery },
-                    set: { store.todoSearchQuery = $0 }
-                ))
-                .textFieldStyle(.plain)
-                .font(.system(size: 11))
-                if store.document.todos.contains(where: \.isDone) {
-                    Button("Clear Done") {
-                        store.clearCompleted()
-                    }
-                    .buttonStyle(.borderless)
-                    .font(.system(size: 10))
-                    .controlSize(.small)
-                }
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: 6))
         }
         .padding(.horizontal, 10)
         .padding(.top, showsSectionHeader ? 10 : 12)
@@ -252,14 +229,14 @@ private struct ProjectTodoListView: View {
     private var todoList: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                ForEach(store.filteredTodos) { item in
+                ForEach(store.sortedTodos) { item in
                     ProjectTodoRow(
                         item: item,
                         onToggle: { store.toggleTodo(item.id) },
                         onRename: { store.updateTodoTitle(item.id, title: $0) },
                         onDelete: { store.deleteTodo(item.id) }
                     )
-                    if item.id != store.filteredTodos.last?.id {
+                    if item.id != store.sortedTodos.last?.id {
                         Divider().padding(.leading, 44)
                     }
                 }
@@ -269,7 +246,7 @@ private struct ProjectTodoListView: View {
     }
 
     private var emptyTitle: String {
-        store.todoSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "No todos yet" : "No matching todos"
+        "No todos yet"
     }
 
     private var todoDetail: String {

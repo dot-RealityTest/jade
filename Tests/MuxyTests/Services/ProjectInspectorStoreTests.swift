@@ -60,17 +60,16 @@ struct ProjectInspectorStoreTests {
         #expect(persistence.savedDocument?.todos.isEmpty == true)
     }
 
-    @Test("search returns matching todos with open items first")
-    func searchReturnsMatchingTodosWithOpenItemsFirst() {
+    @Test("sorted todos returns open items first")
+    func sortedTodosReturnsOpenItemsFirst() {
         let first = ProjectTodoItem(title: "Open task", isDone: false, updatedAt: Date(timeIntervalSince1970: 10))
         let second = ProjectTodoItem(title: "Done task", isDone: true, updatedAt: Date(timeIntervalSince1970: 20))
         let persistence = InMemoryProjectInspectorPersistence(document: ProjectInspectorDocument(todos: [second, first]))
         let store = ProjectInspectorStore { _ in persistence }
 
         store.selectProject(UUID())
-        store.todoSearchQuery = "task"
 
-        #expect(store.filteredTodos.map(\.title) == ["Open task", "Done task"])
+        #expect(store.sortedTodos.map(\.title) == ["Open task", "Done task"])
     }
 }
 

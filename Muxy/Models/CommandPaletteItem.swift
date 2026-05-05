@@ -5,6 +5,7 @@ enum CommandPaletteSection: String, CaseIterable {
     case remoteCommand = "Remote Commands"
     case remote = "Remote Spaces"
     case snippet = "Snippets"
+    case todo = "Todos"
     case file = "Files"
     case worktree = "Worktrees"
 
@@ -12,8 +13,8 @@ enum CommandPaletteSection: String, CaseIterable {
         Self.defaultOrder.firstIndex(of: self) ?? Self.defaultOrder.count
     }
 
-    static let defaultOrder: [CommandPaletteSection] = [.app, .remote, .remoteCommand, .snippet, .file, .worktree]
-    static let remoteSpaceOrder: [CommandPaletteSection] = [.remoteCommand, .snippet, .remote, .app, .file, .worktree]
+    static let defaultOrder: [CommandPaletteSection] = [.app, .todo, .remote, .remoteCommand, .snippet, .file, .worktree]
+    static let remoteSpaceOrder: [CommandPaletteSection] = [.remoteCommand, .snippet, .remote, .app, .todo, .file, .worktree]
 }
 
 enum RemoteCommandPaletteAction: String, CaseIterable {
@@ -164,6 +165,7 @@ struct CommandPaletteItem: Identifiable, Equatable {
         case worktree(projectID: UUID, worktreeID: UUID)
         case naturalCommand(String)
         case localPorts
+        case projectTodo(UUID)
     }
 
     let id: String

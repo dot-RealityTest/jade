@@ -57,6 +57,7 @@ struct MainWindow: View {
         || UserDefaults.standard.bool(forKey: "muxy.inspectorPanelVisible")
     @State private var todoPanelVisible = UserDefaults.standard.bool(forKey: "muxy.todoPanelVisible")
         || UserDefaults.standard.bool(forKey: "muxy.inspectorPanelVisible")
+    @State private var projectInspectorStore = ProjectInspectorStore.shared
     @State private var remoteSpacesStore = RemoteSpacesStore.shared
     @State private var showCommandPalette = false
     @AppStorage("muxy.fileTreeWidth") private var fileTreePanelWidth: Double = .init(FileTreeLayout.defaultWidth)
@@ -110,6 +111,12 @@ struct MainWindow: View {
             .onChange(of: appState.pendingSaveErrorMessage != nil) { _, isPresented in
                 guard isPresented, let message = appState.pendingSaveErrorMessage else { return }
                 presentSaveErrorAlert(message: message)
+            }
+            .onAppear {
+                syncProjectInspectorStore()
+            }
+            .onChange(of: appState.activeProjectID) {
+                syncProjectInspectorStore()
             }
     }
 
@@ -764,7 +771,23 @@ struct MainWindow: View {
                 subtitle: "Reload terminal configuration",
                 aliases: ["refresh", "ghostty", "config"]
             ),
-        ]
+        ] + commandPaletteTodoItems
+    }
+
+    private var commandPaletteTodoItems: [CommandPaletteItem] {
+        guard let activeProject else { return [] }
+        return projectInspectorStore.sortedTodos.enumerated().map { index, item in
+            CommandPaletteItem(
+                id: "project-todo-\(item.id.uuidString)",
+                title: item.title,
+                subtitle: item.isDone ? "Done todo in \(activeProject.name)" : "Open todo in \(activeProject.name)",
+                symbolName: item.isDone ? "checkmark.circle" : "circle",
+                section: .todo,
+                searchText: "todo task project \(activeProject.name)",
+                target: .projectTodo(item.id),
+                sortPriority: index
+            )
+        }
     }
 
     private var activeCommandPaletteProjectPath: String? {
@@ -982,6 +1005,8 @@ struct MainWindow: View {
             return
         case .localPorts:
             showLocalPorts = true
+        case .projectTodo:
+            showTodoPanel()
         }
     }
 
@@ -1219,6 +1244,15 @@ struct MainWindow: View {
     private func toggleTodoPanel() {
         todoPanelVisible.toggle()
         UserDefaults.standard.set(todoPanelVisible, forKey: "muxy.todoPanelVisible")
+    }
+
+    private func showTodoPanel() {
+        todoPanelVisible = true
+        UserDefaults.standard.set(true, forKey: "muxy.todoPanelVisible")
+    }
+
+    private func syncProjectInspectorStore() {
+        projectInspectorStore.selectProject(appState.activeProjectID)
     }
 
     private var activeVCSState: VCSTabState? {
