@@ -116,6 +116,7 @@ Muxy/
     FileSystemOperations.swift Off-main create / rename / move / copy / trash primitives
     FileClipboard.swift       NSPasteboard wrapper for file cut/copy/paste with cut-marker type
     ThemeService.swift        Theme discovery + application
+    HexPaletteBridge.swift    Local bridge that syncs selected themes into HEX palettes
     MuxyConfig.swift          Ghostty config file read/write
     KeyBindingStore.swift     @Observable store for keyboard shortcuts
     KeyBindingPersistence.swift  JSON persistence for shortcuts
@@ -169,7 +170,7 @@ Muxy/
       CreateWorktreeSheet.swift Sheet for creating a new git worktree
       AIUsagePanel.swift        AI usage popover: preview button, panel header/list, provider and metric rows, used/remaining conversion
     ProviderIconView.swift    Renders SVG provider icons from Muxy/Resources/ProviderIcons with monochrome tinting
-    ThemePicker.swift         Theme selection popover (hosted in topbar right)
+    ThemePicker.swift         Theme selection popover (hosted in topbar right, syncs selection to HEX)
     WelcomeView.swift         Empty state view
     Inspector/
       ProjectInspectorPanel.swift Right-side inspector shell that can show Notes, Todo, or both project tools
@@ -368,6 +369,12 @@ Cut / copy / paste is backed by `FileClipboard`, which writes file URLs to
 (`app.muxy.fileCut`). This lets Muxy round-trip cut state while remaining
 interoperable with Finder (which only sees the file URLs). Paste into a
 file selects that file's parent directory as the destination.
+
+The theme picker applies Ghostty themes through `ThemeService` and mirrors
+the selected theme into the local HEX app (`com.kika.colorbar`) through
+`HexPaletteBridge`. The bridge writes the palette to HEX's defaults and
+posts a distributed notification so a running HEX instance can import it
+without a relaunch.
 
 Drag-and-drop accepts `.fileURL` providers on every directory row and on
 the empty space below the tree. Holding Option turns a move into a copy;

@@ -55,6 +55,13 @@ struct ThemePicker: View {
         } else {
             themeService.applyLightTheme(theme.name)
         }
+
+        do {
+            try HexPaletteBridge.sync(theme: theme)
+            ToastState.shared.show("Saved to HEX")
+        } catch {
+            ToastState.shared.show("HEX sync failed")
+        }
     }
 }
 
