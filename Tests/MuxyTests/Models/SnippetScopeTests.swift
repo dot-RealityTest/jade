@@ -5,6 +5,15 @@ import Testing
 
 @Suite("SnippetScope")
 struct SnippetScopeTests {
+    @Test("shared scope includes local port starter snippet")
+    func sharedScopeIncludesLocalPortStarterSnippet() {
+        let scope = SnippetScope.shared
+
+        #expect(scope.starterSnippets.contains {
+            $0.name == "Listening Ports" && $0.command == "lsof -nP -iTCP -sTCP:LISTEN"
+        })
+    }
+
     @Test("remote scope uses remote snippets file")
     func remoteScopeUsesRemoteSnippetsFile() {
         let space = RemoteSpace(

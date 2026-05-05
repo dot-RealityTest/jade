@@ -61,6 +61,7 @@ struct MainWindow: View {
     @State private var showWorktreeSwitcher = false
     @State private var showThemePicker = false
     @State private var showNotificationPanel = false
+    @State private var showLocalPorts = false
     @State private var isFullScreen = false
     @State private var sidebarExpanded = UserDefaults.standard.bool(forKey: "muxy.sidebarExpanded")
     @AppStorage(SidebarCollapsedStyle.storageKey) private var sidebarCollapsedStyleRaw = SidebarCollapsedStyle.defaultValue.rawValue
@@ -151,13 +152,19 @@ struct MainWindow: View {
         AnyView(windowLayer)
             .environment(
                 \.overlayActive,
-                showQuickOpen || showWorktreeSwitcher || showCommandPalette || showThemePicker || showNotificationPanel
+                showQuickOpen
+                    || showWorktreeSwitcher
+                    || showCommandPalette
+                    || showThemePicker
+                    || showNotificationPanel
+                    || showLocalPorts
             )
             .animation(.easeInOut(duration: 0.15), value: showCommandPalette)
             .animation(.easeInOut(duration: 0.15), value: showQuickOpen)
             .animation(.easeInOut(duration: 0.15), value: showWorktreeSwitcher)
             .animation(.easeInOut(duration: 0.15), value: showThemePicker)
             .animation(.easeInOut(duration: 0.15), value: showNotificationPanel)
+            .animation(.easeInOut(duration: 0.15), value: showLocalPorts)
             .animation(.easeInOut(duration: 0.2), value: ToastState.shared.message != nil)
             .coordinateSpace(name: DragCoordinateSpace.mainWindow)
             .environment(dragCoordinator)
@@ -405,6 +412,13 @@ struct MainWindow: View {
             UtilityOverlay(onDismiss: { showNotificationPanel = false }, content: {
                 NotificationPanel(onDismiss: { showNotificationPanel = false })
                     .frame(width: 360, height: 420)
+            })
+            .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        }
+
+        if showLocalPorts {
+            UtilityOverlay(onDismiss: { showLocalPorts = false }, content: {
+                LocalPortsPanel(onDismiss: { showLocalPorts = false })
             })
             .transition(.opacity.combined(with: .scale(scale: 0.98)))
         }
@@ -675,6 +689,15 @@ struct MainWindow: View {
                 aliases: ["appearance", "colors", "theme"]
             ),
             commandItem(.toggleAIUsage, symbolName: "chart.bar", subtitle: "Open AI usage", aliases: ["tokens", "usage", "cost"]),
+            CommandPaletteItem(
+                id: "app-local-ports",
+                title: "Local Ports",
+                subtitle: "Show active listeners and dead ports from this session",
+                symbolName: "network",
+                section: .app,
+                searchText: "active ports dead ports listening localhost tcp services processes lsof",
+                target: .localPorts
+            ),
             commandItem(.openProject, symbolName: "folder", subtitle: "Open a project folder", aliases: ["folder", "workspace"]),
             commandItem(
                 .reloadConfig,
@@ -898,6 +921,8 @@ struct MainWindow: View {
             }
         case .naturalCommand:
             return
+        case .localPorts:
+            showLocalPorts = true
         }
     }
 

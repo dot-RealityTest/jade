@@ -163,6 +163,7 @@ struct CommandPaletteItem: Identifiable, Equatable {
         case file(String)
         case worktree(projectID: UUID, worktreeID: UUID)
         case naturalCommand(String)
+        case localPorts
     }
 
     let id: String

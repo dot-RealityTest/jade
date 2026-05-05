@@ -10,7 +10,7 @@ struct SnippetScope: Equatable {
         id: "shared",
         displayName: "Snippets",
         fileURL: MuxyFileStorage.fileURL(filename: "snippets.json"),
-        starterSnippets: []
+        starterSnippets: sharedStarterSnippets
     )
 
     static func remote(_ space: RemoteSpace) -> SnippetScope {
@@ -21,6 +21,15 @@ struct SnippetScope: Equatable {
             starterSnippets: remoteStarterSnippets
         )
     }
+
+    private static let sharedStarterSnippets: [Snippet] = [
+        Snippet(
+            name: "Listening Ports",
+            description: "Show listening TCP ports with owning processes.",
+            command: "lsof -nP -iTCP -sTCP:LISTEN",
+            tags: ["macos", "network"]
+        ),
+    ]
 
     private static let remoteStarterSnippets: [Snippet] = [
         Snippet(

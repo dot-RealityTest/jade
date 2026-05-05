@@ -8,7 +8,7 @@ import Testing
 struct SnippetsStoreTests {
     @Test("missing persistence starts empty")
     func missingPersistenceStartsEmpty() {
-        let store = SnippetsStore(persistence: InMemorySnippetsPersistence())
+        let store = testStore(persistence: InMemorySnippetsPersistence())
 
         #expect(store.snippets.isEmpty)
         #expect(store.filteredSnippets.isEmpty)
@@ -17,7 +17,7 @@ struct SnippetsStoreTests {
     @Test("add trims normalizes and persists snippet")
     func addTrimsNormalizesAndPersistsSnippet() {
         let persistence = InMemorySnippetsPersistence()
-        let store = SnippetsStore(persistence: persistence)
+        let store = testStore(persistence: persistence)
 
         let snippet = store.add(Snippet(
             name: " Tests ",
@@ -40,7 +40,7 @@ struct SnippetsStoreTests {
     @Test("add ignores empty command")
     func addIgnoresEmptyCommand() {
         let persistence = InMemorySnippetsPersistence()
-        let store = SnippetsStore(persistence: persistence)
+        let store = testStore(persistence: persistence)
 
         let snippet = store.add(Snippet(name: "Empty", command: " "))
 
@@ -53,7 +53,7 @@ struct SnippetsStoreTests {
     func updatePersistsExistingSnippet() {
         let original = Snippet(name: "Status", command: "git status", tags: ["git"])
         let persistence = InMemorySnippetsPersistence(snippets: [original])
-        let store = SnippetsStore(persistence: persistence)
+        let store = testStore(persistence: persistence)
         var updated = original
         updated.name = "Tests"
         updated.command = " swift test "
@@ -67,7 +67,7 @@ struct SnippetsStoreTests {
 
     @Test("filter matches name command and tags")
     func filterMatchesNameCommandAndTags() {
-        let store = SnippetsStore(persistence: InMemorySnippetsPersistence(snippets: [
+        let store = testStore(persistence: InMemorySnippetsPersistence(snippets: [
             Snippet(name: "Status", command: "git status", tags: ["git"]),
             Snippet(name: "Tests", command: "swift test", tags: ["build"]),
         ]))
@@ -141,6 +141,16 @@ struct SnippetsStoreTests {
 
         #expect(emptyStore.snippets.isEmpty)
         #expect(emptyPersistence.savedSnippets == nil)
+    }
+
+    private func testStore(persistence: InMemorySnippetsPersistence) -> SnippetsStore {
+        let scope = SnippetScope(
+            id: "test",
+            displayName: "Test Snippets",
+            fileURL: URL(fileURLWithPath: "/tmp/test-snippets.json"),
+            starterSnippets: []
+        )
+        return SnippetsStore(scope: scope) { _ in persistence }
     }
 }
 
