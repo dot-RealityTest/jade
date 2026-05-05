@@ -162,6 +162,7 @@ struct CommandPaletteItem: Identifiable, Equatable {
         case snippet(UUID)
         case file(String)
         case worktree(projectID: UUID, worktreeID: UUID)
+        case naturalCommand(String)
     }
 
     let id: String

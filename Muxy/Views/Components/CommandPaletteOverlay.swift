@@ -7,32 +7,53 @@ struct CommandPaletteOverlay: View {
     let snippetScope: SnippetScope
     let projectPath: String?
     let worktreeItems: [WorktreeSwitcherItem]
+    let naturalCommandContext: NaturalCommandContext
     let onSelect: (CommandPaletteItem) -> Void
+    let onRunNaturalCommand: (NaturalCommandPlan) -> Void
+    let onSaveNaturalCommand: (NaturalCommandPlan) -> Void
     let onDismiss: () -> Void
 
     @State private var snippetsStore = SnippetsStore.shared
     @State private var pendingConfirmationID: String?
+    @State private var naturalCommandRequest: NaturalCommandRequest?
+    private let naturalCommandGenerator = NaturalCommandCoordinator.live()
 
     var body: some View {
-        PaletteOverlay<CommandPaletteItem>(
-            placeholder: "Search commands, spaces, snippets, files...",
-            emptyLabel: "No commands",
-            noMatchLabel: "No matching commands",
-            search: { query in await search(query: query) },
-            onSelect: handleSelect,
-            onDismiss: {
-                pendingConfirmationID = nil
-                onDismiss()
-            },
-            row: { item, isHighlighted in
-                AnyView(CommandPaletteRow(
-                    item: item,
-                    isHighlighted: isHighlighted,
-                    isConfirming: pendingConfirmationID == item.id
-                ))
-            },
-            footer: AnyView(CommandPaletteFooter(isConfirming: pendingConfirmationID != nil))
-        )
+        Group {
+            if let naturalCommandRequest {
+                NaturalCommandReviewView(
+                    request: naturalCommandRequest,
+                    generator: naturalCommandGenerator,
+                    onRun: onRunNaturalCommand,
+                    onSave: onSaveNaturalCommand,
+                    onBack: { self.naturalCommandRequest = nil },
+                    onDismiss: {
+                        self.naturalCommandRequest = nil
+                        onDismiss()
+                    }
+                )
+            } else {
+                PaletteOverlay<CommandPaletteItem>(
+                    placeholder: "Search commands, spaces, snippets, files...",
+                    emptyLabel: "No commands",
+                    noMatchLabel: "No matching commands",
+                    search: { query in await search(query: query) },
+                    onSelect: handleSelect,
+                    onDismiss: {
+                        pendingConfirmationID = nil
+                        onDismiss()
+                    },
+                    row: { item, isHighlighted in
+                        AnyView(CommandPaletteRow(
+                            item: item,
+                            isHighlighted: isHighlighted,
+                            isConfirming: pendingConfirmationID == item.id
+                        ))
+                    },
+                    footer: AnyView(CommandPaletteFooter(isConfirming: pendingConfirmationID != nil))
+                )
+            }
+        }
         .onAppear {
             snippetsStore.selectScope(snippetScope)
         }
@@ -42,6 +63,14 @@ struct CommandPaletteOverlay: View {
     }
 
     private func handleSelect(_ item: CommandPaletteItem) {
+        if case let .naturalCommand(prompt) = item.target {
+            pendingConfirmationID = nil
+            naturalCommandRequest = NaturalCommandRequest(
+                prompt: prompt,
+                context: naturalCommandContext
+            )
+            return
+        }
         guard item.requiresConfirmation else {
             pendingConfirmationID = nil
             onSelect(item)
@@ -64,8 +93,10 @@ struct CommandPaletteOverlay: View {
                 + snippetItems()
                 + worktreeCommandItems()
         }
+        let shouldShowGenerator = await shouldShowNaturalCommandItem(query: query, baseItems: baseItems)
+        let naturalItems = shouldShowGenerator ? [naturalCommandItem(query: query)] : []
         return await CommandPaletteItem.filter(
-            baseItems + fileItems,
+            naturalItems + baseItems + fileItems,
             query: query,
             sectionOrder: sectionOrder
         )
@@ -181,6 +212,30 @@ struct CommandPaletteOverlay: View {
 
     private var sectionOrder: [CommandPaletteSection] {
         snippetScope.id.hasPrefix("remote-") ? CommandPaletteSection.remoteSpaceOrder : CommandPaletteSection.defaultOrder
+    }
+
+    private func shouldShowNaturalCommandItem(query: String, baseItems: [CommandPaletteItem]) async -> Bool {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
+        let enabled = await MainActor.run { NaturalCommandSettings.shared.isEnabled }
+        guard enabled else { return false }
+        let terms = trimmed.split(separator: " ")
+        guard terms.count >= 2 || ShellCommandSafetyClassifier.containsDestructiveIntent(trimmed.lowercased()) else { return false }
+        return !baseItems.contains { $0.matches(query: trimmed) }
+    }
+
+    private func naturalCommandItem(query: String) -> CommandPaletteItem {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return CommandPaletteItem(
+            id: "natural-command-\(trimmed)",
+            title: "Generate shell command",
+            subtitle: "Review a safe command for \"\(trimmed)\"",
+            symbolName: "sparkles",
+            section: .app,
+            searchText: trimmed,
+            target: .naturalCommand(trimmed),
+            sortPriority: -100
+        )
     }
 }
 

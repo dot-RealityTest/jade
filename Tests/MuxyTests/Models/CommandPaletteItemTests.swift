@@ -12,6 +12,7 @@ struct CommandPaletteItemTests {
             item(title: "Update Linux", subtitle: "sudo apt update", section: .remoteCommand, searchText: "packages"),
             item(title: "Open Alienware", subtitle: "kika@192.168.1.171", section: .remote, searchText: "nvidia"),
             item(title: "GPU Console", subtitle: "nvtop", section: .snippet, searchText: "linux gpu"),
+            item(title: "Generate shell command", subtitle: "Review a safe command", section: .app, searchText: "find large files"),
             item(title: "README.md", subtitle: "docs/README.md", section: .file, searchText: "/tmp/docs/README.md"),
             item(title: "Switch to feature", subtitle: "muxy", section: .worktree, searchText: "feature branch"),
         ]
@@ -20,6 +21,7 @@ struct CommandPaletteItemTests {
         #expect(CommandPaletteItem.filter(items, query: "packages").map(\.title) == ["Update Linux"])
         #expect(CommandPaletteItem.filter(items, query: "alien nvidia").map(\.title) == ["Open Alienware"])
         #expect(CommandPaletteItem.filter(items, query: "linux gpu").map(\.title) == ["GPU Console"])
+        #expect(CommandPaletteItem.filter(items, query: "large files").map(\.title) == ["Generate shell command"])
         #expect(CommandPaletteItem.filter(items, query: "readme").map(\.title) == ["README.md"])
         #expect(CommandPaletteItem.filter(items, query: "feature").map(\.title) == ["Switch to feature"])
     }

@@ -353,7 +353,10 @@ struct MainWindow: View {
                 snippetScope: activeSnippetScope,
                 projectPath: activeCommandPaletteProjectPath,
                 worktreeItems: worktreeSwitcherItems,
+                naturalCommandContext: activeNaturalCommandContext,
                 onSelect: selectCommandPaletteItem,
+                onRunNaturalCommand: runNaturalCommandPlan,
+                onSaveNaturalCommand: saveNaturalCommandPlan,
                 onDismiss: dismissCommandPalette
             )
             .transition(.opacity.combined(with: .scale(scale: 0.98)))
@@ -687,6 +690,13 @@ struct MainWindow: View {
         return activeWorktreePath(for: project)
     }
 
+    private var activeNaturalCommandContext: NaturalCommandContext {
+        if let remoteSpace = activeRemoteSpace {
+            return .remote(remoteSpace)
+        }
+        return .local(projectPath: activeCommandPaletteProjectPath)
+    }
+
     private func commandItem(
         _ action: ShortcutAction,
         symbolName: String,
@@ -886,6 +896,8 @@ struct MainWindow: View {
             } else {
                 appState.selectProject(project, worktree: worktree)
             }
+        case .naturalCommand:
+            return
         }
     }
 
@@ -948,6 +960,41 @@ struct MainWindow: View {
     private func commandPaletteSnippetTitle(_ snippet: Snippet, remoteSpace: RemoteSpace?) -> String {
         guard let remoteSpace else { return snippet.displayName }
         return "\(remoteSpace.displayName) · \(snippet.displayName)"
+    }
+
+    private func runNaturalCommandPlan(_ plan: NaturalCommandPlan) {
+        guard plan.isRunnable else {
+            ToastState.shared.show(plan.blockedReason ?? "Command blocked")
+            return
+        }
+        guard let projectID = appState.activeProjectID else {
+            ToastState.shared.show("Select a project first")
+            return
+        }
+        let command = activeRemoteSpace.map {
+            RemoteCommandBuilder.command(plan.primaryCommand, for: $0)
+        } ?? plan.primaryCommand
+        appState.dispatch(.createCommandTab(
+            projectID: projectID,
+            areaID: nil,
+            name: plan.title,
+            command: command
+        ))
+        showCommandPalette = false
+    }
+
+    private func saveNaturalCommandPlan(_ plan: NaturalCommandPlan) {
+        guard !plan.primaryCommand.isEmpty else { return }
+        SnippetsStore.shared.selectScope(activeSnippetScope)
+        let snippet = Snippet(
+            name: plan.title,
+            description: plan.summary,
+            command: plan.primaryCommand,
+            tags: ["generated", plan.targetKind.rawValue, plan.riskLevel.rawValue]
+        )
+        if SnippetsStore.shared.add(snippet) != nil {
+            ToastState.shared.show("Saved snippet")
+        }
     }
 
     private var activeProjectHasSplitWorkspace: Bool {
