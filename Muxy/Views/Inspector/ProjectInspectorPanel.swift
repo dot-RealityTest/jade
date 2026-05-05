@@ -106,7 +106,7 @@ private struct ProjectInspectorContent: View {
         } else {
             VStack(spacing: 0) {
                 if showsNotes {
-                    ProjectNotesView(store: store)
+                    ProjectNotesView(store: store, showsSectionHeader: showsTodo)
                         .frame(
                             minHeight: showsTodo ? 150 : 280,
                             idealHeight: showsTodo ? 190 : 420,
@@ -126,14 +126,17 @@ private struct ProjectInspectorContent: View {
 
 private struct ProjectNotesView: View {
     let store: ProjectInspectorStore
+    let showsSectionHeader: Bool
 
     var body: some View {
         VStack(spacing: 6) {
-            sectionHeader(
-                title: "Notes",
-                symbolName: "note.text",
-                detail: notesDetail
-            )
+            if showsSectionHeader {
+                sectionHeader(
+                    title: "Notes",
+                    symbolName: "note.text",
+                    detail: notesDetail
+                )
+            }
             ZStack(alignment: .topLeading) {
                 if store.document.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text("Project notes...")
@@ -152,7 +155,7 @@ private struct ProjectNotesView: View {
                 .padding(8)
             }
         }
-        .padding(.top, 10)
+        .padding(.top, showsSectionHeader ? 10 : 8)
     }
 
     private var notesDetail: String {
