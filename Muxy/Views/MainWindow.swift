@@ -821,7 +821,7 @@ struct MainWindow: View {
     }
 
     private var windowTitle: String {
-        guard let project = activeProject else { return "Muxy" }
+        guard let project = activeProject else { return "Jade" }
         guard let tabTitle = appState.activeTab(for: project.id)?.title,
               !tabTitle.isEmpty
         else { return project.name }

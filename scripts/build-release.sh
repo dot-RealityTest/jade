@@ -57,8 +57,8 @@ fi
 
 TRIPLE="${ARCH}-apple-macosx14.0"
 BUILD_NUMBER=$(git -C "$PROJECT_ROOT" rev-list --count HEAD)
-APP_BUNDLE="$BUILD_DIR/Muxy.app"
-DMG_NAME="Muxy-${VERSION}-${ARCH}.dmg"
+APP_BUNDLE="$BUILD_DIR/Jade.app"
+DMG_NAME="Jade-${VERSION}-${ARCH}.dmg"
 
 rm -rf "$APP_BUNDLE"
 
@@ -147,7 +147,7 @@ fi
 cd "$BUILD_DIR"
 create-dmg "$APP_BUNDLE" "$BUILD_DIR" || true
 
-GENERATED_DMG=$(find "$BUILD_DIR" -maxdepth 1 -name "Muxy*.dmg" -not -name "$DMG_NAME" | head -1)
+GENERATED_DMG=$(find "$BUILD_DIR" -maxdepth 1 -name "Jade*.dmg" -not -name "$DMG_NAME" | head -1)
 if [[ -n "$GENERATED_DMG" ]]; then
     mv "$GENERATED_DMG" "$BUILD_DIR/$DMG_NAME"
 fi

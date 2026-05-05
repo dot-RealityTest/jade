@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="Muxy/Resources/Assets.xcassets/AppIcon.appiconset/icon_128@2x.png" alt="Muxy" width="128" height="128">
+  <img src="Muxy/Resources/Assets.xcassets/AppIcon.appiconset/icon_128@2x.png" alt="Jade" width="128" height="128">
 </p>
 
-<h1 align="center">Muxy</h1>
+<h1 align="center">Jade</h1>
 
 <p align="center">Lightweight and Memory efficient terminal for Mac built with SwiftUI and <a href="https://github.com/ghostty-org/ghostty">libghostty</a>.</p>
 <p align="center"><p align="center"><a href="#install">Mac</a> | <a href="#ios-app-testing">iOS</a> | <a href="https://discord.gg/4eMXAmJQ2n">Discord</a></p>
@@ -58,7 +58,7 @@ Download the latest release from the [releases page](https://github.com/muxy-app
 The iOS app is available for testers on TestFlight
 
 - Install the iOS app via TestFlight (https://testflight.apple.com/join/7t1AaYHW)
-- Open Muxy on your Mac
+- Open Jade on your Mac
 - Go to Settings (Cmd + `,`)
 - Go to Mobile tab
 - Toggle the `Allow mobile device connection`

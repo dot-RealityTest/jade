@@ -23,7 +23,7 @@ struct MobileSettingsView: View {
         SettingsContainer {
             SettingsSection(
                 "Network",
-                footer: "Allow other devices on your local network to connect to Muxy."
+                footer: "Allow other devices on your local network to connect to Jade."
             ) {
                 SettingsToggleRow(label: "Allow remote access", isOn: enabledBinding)
 
@@ -163,7 +163,7 @@ struct MobileSettingsView: View {
 
     private var connectionInstructions: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Access Muxy from another device on your local network or private VPN.")
+            Text("Access Jade from another device on your local network or private VPN.")
                 .font(.system(size: SettingsMetrics.footnoteFontSize))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
