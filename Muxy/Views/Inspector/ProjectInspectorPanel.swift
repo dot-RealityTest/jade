@@ -34,7 +34,7 @@ struct ProjectInspectorPanel: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            Image(systemName: "sidebar.right")
+            Image(systemName: symbolName)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .frame(width: 18)
@@ -48,6 +48,12 @@ struct ProjectInspectorPanel: View {
                     .lineLimit(1)
             }
             Spacer()
+            if showsNotes {
+                inspectorStatusChip("Notes")
+            }
+            if showsTodo {
+                inspectorStatusChip("Todo")
+            }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
@@ -57,6 +63,12 @@ struct ProjectInspectorPanel: View {
         if showsNotes, showsTodo { return "Inspector" }
         if showsNotes { return "Notes" }
         return "Todo"
+    }
+
+    private var symbolName: String {
+        if showsNotes, showsTodo { return "sidebar.right" }
+        if showsNotes { return "note.text" }
+        return "checklist"
     }
 }
 
@@ -73,7 +85,11 @@ private struct ProjectInspectorContent: View {
             VStack(spacing: 0) {
                 if showsNotes {
                     ProjectNotesView(store: store)
-                        .frame(minHeight: 140, idealHeight: showsTodo ? 180 : 360, maxHeight: showsTodo ? 240 : .infinity)
+                        .frame(
+                            minHeight: showsTodo ? 150 : 280,
+                            idealHeight: showsTodo ? 190 : 420,
+                            maxHeight: showsTodo ? 250 : .infinity
+                        )
                 }
                 if showsNotes, showsTodo {
                     Divider().overlay(MuxyTheme.border)
@@ -91,7 +107,11 @@ private struct ProjectNotesView: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            sectionHeader(title: "Notes", symbolName: "note.text")
+            sectionHeader(
+                title: "Notes",
+                symbolName: "note.text",
+                detail: notesDetail
+            )
             ZStack(alignment: .topLeading) {
                 if store.document.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text("Project notes...")
@@ -112,6 +132,13 @@ private struct ProjectNotesView: View {
         }
         .padding(.top, 10)
     }
+
+    private var notesDetail: String {
+        let text = store.document.notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else { return "Empty" }
+        let words = text.split(whereSeparator: \.isWhitespace).count
+        return words == 1 ? "1 word" : "\(words) words"
+    }
 }
 
 private struct ProjectTodoListView: View {
@@ -126,8 +153,12 @@ private struct ProjectTodoListView: View {
 
     private var guardContent: some View {
         VStack(spacing: 0) {
-            sectionHeader(title: "Todo", symbolName: "checklist")
-                .padding(.top, 10)
+            sectionHeader(
+                title: "Todo",
+                symbolName: "checklist",
+                detail: todoDetail
+            )
+            .padding(.top, 10)
             todoHeader
             Divider().overlay(MuxyTheme.border)
             if store.filteredTodos.isEmpty {
@@ -207,6 +238,14 @@ private struct ProjectTodoListView: View {
         store.todoSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "No todos yet" : "No matching todos"
     }
 
+    private var todoDetail: String {
+        let openCount = store.document.todos.count(where: { !$0.isDone })
+        let doneCount = store.document.todos.count - openCount
+        if store.document.todos.isEmpty { return "Empty" }
+        if doneCount == 0 { return "\(openCount) open" }
+        return "\(openCount) open, \(doneCount) done"
+    }
+
     private func addTodo() {
         guard store.addTodo(title: newTodoTitle) != nil else { return }
         newTodoTitle = ""
@@ -281,7 +320,8 @@ private struct ProjectTodoRow: View {
     }
 }
 
-private func sectionHeader(title: String, symbolName: String) -> some View {
+@MainActor
+private func sectionHeader(title: String, symbolName: String, detail: String) -> some View {
     HStack(spacing: 6) {
         Image(systemName: symbolName)
             .font(.system(size: 11, weight: .semibold))
@@ -291,8 +331,21 @@ private func sectionHeader(title: String, symbolName: String) -> some View {
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(.secondary)
         Spacer()
+        Text(detail)
+            .font(.system(size: 10, weight: .medium))
+            .foregroundStyle(MuxyTheme.fgDim)
     }
     .padding(.horizontal, 10)
+}
+
+@MainActor
+private func inspectorStatusChip(_ title: String) -> some View {
+    Text(title)
+        .font(.system(size: 10, weight: .medium))
+        .foregroundStyle(MuxyTheme.fgMuted)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .background(MuxyTheme.surface, in: Capsule())
 }
 
 private func inspectorEmptyState(symbolName: String, title: String) -> some View {

@@ -4,8 +4,8 @@
 
 <h1 align="center">Jade</h1>
 
-<p align="center">Lightweight and Memory efficient terminal for Mac built with SwiftUI and <a href="https://github.com/ghostty-org/ghostty">libghostty</a>.</p>
-<p align="center"><p align="center"><a href="#install">Mac</a> | <a href="#ios-app-testing">iOS</a> | <a href="https://discord.gg/4eMXAmJQ2n">Discord</a></p>
+<p align="center">Lightweight, memory-efficient terminal for Mac built with SwiftUI and <a href="https://github.com/ghostty-org/ghostty">libghostty</a>.</p>
+<p align="center"><a href="#install">Mac</a> | <a href="#ios-app-testing">iOS</a> | <a href="https://discord.gg/4eMXAmJQ2n">Discord</a></p>
 
 <div align="center">
   <img src="https://img.shields.io/github/downloads/muxy-app/muxy/total" />
@@ -16,7 +16,7 @@
 
 ## Screenshots
 
-<img width="3004" alt="image" src="https://github.com/user-attachments/assets/721c6b4a-bd9c-4e4e-ade0-cd2597399801" />
+<img width="3004" alt="Jade terminal workspace with project tools" src="assets/screenshots/jade-project-tools.png" />
 
 ## Features
 
@@ -24,9 +24,11 @@
 - **Vertical tabs** — Sidebar tab strip with drag-and-drop reordering, pinning, renaming, and middle-click close
 - **Split panes** — Horizontal and vertical splits with keyboard navigation and resizable dividers
 - **Built-in VCS** — Simple and lightweight basic git diff and operations
+- **Project tools** — Optional Snippets, Notes, and Todo buttons keep project context beside the terminal
 - **Terminal tools** — Launch lazygit with `Cmd+Shift+G` or yazi with `Cmd+Shift+Y`
 - **200+ themes** — Browse and search Ghostty themes with a built-in theme picker
 - **Customizable shortcuts** — 40+ configurable keyboard shortcuts with conflict detection
+- **Customizable toolbar** — Choose which tools appear in the titlebar from Settings
 - **Workspace persistence** — Tabs, splits, and focus state are saved and restored per project
 - **In-terminal search** — Find text in terminal output with match navigation
 - **Drag and drop** — Reorder tabs and projects, drag tabs between panes to create splits

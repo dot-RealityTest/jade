@@ -593,13 +593,23 @@ struct MainWindow: View {
                             .help("Snippets (\(KeyBindingStore.shared.combo(for: .toggleSnippetsPanel).displayString))")
                         }
                         if showsToolbarAction(.notes), activeProject != nil {
-                            IconButton(symbol: "note.text", size: 12, accessibilityLabel: "Notes") {
+                            IconButton(
+                                symbol: "note.text",
+                                size: 12,
+                                color: notesPanelVisible ? MuxyTheme.accent : MuxyTheme.fgMuted,
+                                accessibilityLabel: "Notes"
+                            ) {
                                 NotificationCenter.default.post(name: .toggleProjectNotesPanel, object: nil)
                             }
                             .help("Notes (\(KeyBindingStore.shared.combo(for: .toggleProjectNotesPanel).displayString))")
                         }
                         if showsToolbarAction(.todo), activeProject != nil {
-                            IconButton(symbol: "checklist", size: 12, accessibilityLabel: "Todo") {
+                            IconButton(
+                                symbol: "checklist",
+                                size: 12,
+                                color: todoPanelVisible ? MuxyTheme.accent : MuxyTheme.fgMuted,
+                                accessibilityLabel: "Todo"
+                            ) {
                                 NotificationCenter.default.post(name: .toggleProjectTodoPanel, object: nil)
                             }
                             .help("Todo (\(KeyBindingStore.shared.combo(for: .toggleProjectTodoPanel).displayString))")
