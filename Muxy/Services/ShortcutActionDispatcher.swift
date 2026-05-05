@@ -120,6 +120,18 @@ struct ShortcutActionDispatcher {
         case .findInTerminal:
             notificationCenter.post(name: .findInTerminal, object: nil)
             return true
+        case .openLazygit:
+            return openTerminalTool(
+                name: "Lazygit",
+                executable: "lazygit",
+                installCommand: "brew install lazygit"
+            )
+        case .openYazi:
+            return openTerminalTool(
+                name: "Yazi",
+                executable: "yazi",
+                installCommand: "brew install yazi"
+            )
         case .openVCSTab:
             guard let activeProject else { return false }
             openVCS(activeProject)
@@ -177,6 +189,31 @@ struct ShortcutActionDispatcher {
              .selectProject9:
             return false
         }
+    }
+
+    private func openTerminalTool(name: String, executable: String, installCommand: String) -> Bool {
+        guard let projectID = appState.activeProjectID,
+              appState.workspaceRoot(for: projectID) != nil
+        else { return false }
+        appState.dispatch(.createCommandTab(
+            projectID: projectID,
+            areaID: nil,
+            name: name,
+            command: terminalToolCommand(executable: executable, installCommand: installCommand)
+        ))
+        return true
+    }
+
+    private func terminalToolCommand(executable: String, installCommand: String) -> String {
+        let escapedExecutable = ShellEscaper.escape(executable)
+        return """
+        if command -v \(escapedExecutable) >/dev/null 2>&1; then
+          exec \(escapedExecutable)
+        else
+          printf '%s\\n' "\(executable) is not installed. Install it with: \(installCommand)"
+          exec "$SHELL" -l
+        fi
+        """
     }
 
     private func resolveActiveWorktree(for projectID: UUID) -> Worktree? {

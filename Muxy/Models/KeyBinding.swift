@@ -46,6 +46,8 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
     case selectProject8
     case selectProject9
     case findInTerminal
+    case openLazygit
+    case openYazi
     case commandPalette
     case openVCSTab
     case quickOpen
@@ -96,6 +98,8 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         .selectProject8,
         .selectProject9,
         .findInTerminal,
+        .openLazygit,
+        .openYazi,
         .commandPalette,
         .openVCSTab,
         .quickOpen,
@@ -147,6 +151,8 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         case .selectProject8: ShortcutMetadata(displayName: "Project 8", category: "Project Navigation", scope: .mainWindow)
         case .selectProject9: ShortcutMetadata(displayName: "Project 9", category: "Project Navigation", scope: .mainWindow)
         case .findInTerminal: ShortcutMetadata(displayName: "Find", category: "Terminal", scope: .mainWindow)
+        case .openLazygit: ShortcutMetadata(displayName: "Open Lazygit", category: "Terminal", scope: .mainWindow)
+        case .openYazi: ShortcutMetadata(displayName: "Open Yazi", category: "Terminal", scope: .mainWindow)
         case .commandPalette: ShortcutMetadata(displayName: "Command Palette", category: "App", scope: .mainWindow)
         case .openVCSTab: ShortcutMetadata(displayName: "Source Control", category: "App", scope: .mainWindow)
         case .quickOpen: ShortcutMetadata(displayName: "Quick Open", category: "App", scope: .mainWindow)
@@ -268,6 +274,8 @@ struct KeyBinding: Codable, Identifiable {
         Self(action: .selectProject8, combo: KeyCombo(key: "8", control: true)),
         Self(action: .selectProject9, combo: KeyCombo(key: "9", control: true)),
         Self(action: .findInTerminal, combo: KeyCombo(key: "f", command: true)),
+        Self(action: .openLazygit, combo: KeyCombo(key: "g", command: true, shift: true)),
+        Self(action: .openYazi, combo: KeyCombo(key: "y", command: true, shift: true)),
         Self(action: .quickOpen, combo: KeyCombo(key: "p", command: true)),
         Self(action: .switchWorktree, combo: KeyCombo(key: "o", command: true, shift: true)),
         Self(action: .saveFile, combo: KeyCombo(key: "s", command: true)),

@@ -98,6 +98,16 @@ struct KeyBindingTests {
         #expect(KeyBinding.defaults.first { $0.action == .openVCSTab }?.combo != KeyCombo(key: "k", command: true))
     }
 
+    @Test("Kaku-inspired terminal tool shortcuts")
+    func terminalToolShortcuts() {
+        #expect(ShortcutAction.openLazygit.displayName == "Open Lazygit")
+        #expect(ShortcutAction.openLazygit.category == "Terminal")
+        #expect(ShortcutAction.openYazi.displayName == "Open Yazi")
+        #expect(ShortcutAction.openYazi.category == "Terminal")
+        #expect(KeyBinding.defaults.first { $0.action == .openLazygit }?.combo == KeyCombo(key: "g", command: true, shift: true))
+        #expect(KeyBinding.defaults.first { $0.action == .openYazi }?.combo == KeyCombo(key: "y", command: true, shift: true))
+    }
+
     @Test("KeyBinding Codable round-trip")
     func codableRoundTrip() throws {
         let binding = KeyBinding(
