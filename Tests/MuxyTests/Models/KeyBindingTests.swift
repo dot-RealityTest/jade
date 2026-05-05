@@ -81,12 +81,14 @@ struct KeyBindingTests {
         #expect(combos.count == unique.count)
     }
 
-    @Test("Inspector shortcut metadata and default combo")
+    @Test("Snippets and inspector shortcut metadata and default combos")
     func snippetsPanelShortcut() {
-        #expect(ShortcutAction.toggleSnippetsPanel.displayName == "Toggle Inspector")
+        #expect(ShortcutAction.toggleSnippetsPanel.displayName == "Toggle Snippets")
         #expect(ShortcutAction.toggleSnippetsPanel.category == "App")
         #expect(ShortcutAction.toggleSnippetsPanel.scope == .mainWindow)
         #expect(KeyBinding.defaults.first { $0.action == .toggleSnippetsPanel }?.combo == KeyCombo(key: "j", command: true))
+        #expect(ShortcutAction.toggleInspectorPanel.displayName == "Toggle Inspector")
+        #expect(KeyBinding.defaults.first { $0.action == .toggleInspectorPanel }?.combo == KeyCombo(key: "j", command: true, shift: true))
     }
 
     @Test("Command palette owns Cmd+K default")

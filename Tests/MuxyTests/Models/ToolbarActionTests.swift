@@ -10,8 +10,10 @@ struct ToolbarActionTests {
             .debug,
             .tools,
             .snippets,
+            .inspector,
             .newTab,
         ])
+        #expect(ToolbarAction.visibleActions(from: "debug,tools,snippets,newTab").contains(.inspector))
     }
 
     @Test("raw value preserves case order and supports empty selection")

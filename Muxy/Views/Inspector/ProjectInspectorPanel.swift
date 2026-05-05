@@ -1,7 +1,6 @@
 import SwiftUI
 
 private enum ProjectInspectorTab: String, CaseIterable, Identifiable {
-    case snippets
     case notes
     case todo
 
@@ -9,7 +8,6 @@ private enum ProjectInspectorTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .snippets: "Snippets"
         case .notes: "Notes"
         case .todo: "Todo"
         }
@@ -17,7 +15,6 @@ private enum ProjectInspectorTab: String, CaseIterable, Identifiable {
 
     var symbolName: String {
         switch self {
-        case .snippets: "curlybraces"
         case .notes: "note.text"
         case .todo: "checklist"
         }
@@ -26,12 +23,11 @@ private enum ProjectInspectorTab: String, CaseIterable, Identifiable {
 
 struct ProjectInspectorPanel: View {
     let project: Project?
-    let snippetScope: SnippetScope
     @State private var store = ProjectInspectorStore.shared
-    @AppStorage("muxy.inspector.selectedTab") private var selectedTabRaw = ProjectInspectorTab.snippets.rawValue
+    @AppStorage("muxy.inspector.selectedTab") private var selectedTabRaw = ProjectInspectorTab.notes.rawValue
 
     private var selectedTab: ProjectInspectorTab {
-        get { ProjectInspectorTab(rawValue: selectedTabRaw) ?? .snippets }
+        get { ProjectInspectorTab(rawValue: selectedTabRaw) ?? .notes }
         nonmutating set { selectedTabRaw = newValue.rawValue }
     }
 
@@ -95,8 +91,6 @@ struct ProjectInspectorPanel: View {
     @ViewBuilder
     private var tabContent: some View {
         switch selectedTab {
-        case .snippets:
-            SnippetsPanel(scope: snippetScope, showsPanelChrome: false)
         case .notes:
             ProjectNotesView(project: project, store: store)
         case .todo:

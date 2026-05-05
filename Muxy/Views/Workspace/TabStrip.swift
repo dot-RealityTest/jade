@@ -109,10 +109,16 @@ struct PaneTabStrip: View {
                         .help(shortcutTooltip("File Tree", for: .toggleFileTree))
                     }
                     if showsToolbarAction(.snippets) {
-                        IconButton(symbol: "sidebar.right", size: 12, accessibilityLabel: "Inspector") {
+                        IconButton(symbol: "curlybraces", size: 12, accessibilityLabel: "Snippets") {
                             NotificationCenter.default.post(name: .toggleSnippetsPanel, object: nil)
                         }
-                        .help(shortcutTooltip("Inspector", for: .toggleSnippetsPanel))
+                        .help(shortcutTooltip("Snippets", for: .toggleSnippetsPanel))
+                    }
+                    if showsToolbarAction(.inspector) {
+                        IconButton(symbol: "sidebar.right", size: 12, accessibilityLabel: "Inspector") {
+                            NotificationCenter.default.post(name: .toggleInspectorPanel, object: nil)
+                        }
+                        .help(shortcutTooltip("Inspector", for: .toggleInspectorPanel))
                     }
                     if showsToolbarAction(.newTab) {
                         IconButton(symbol: "plus", accessibilityLabel: "New Tab") { onCreateTab() }

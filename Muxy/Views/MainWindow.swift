@@ -53,6 +53,7 @@ struct MainWindow: View {
     @State private var vcsStates: [WorktreeKey: VCSTabState] = [:]
     @State private var fileTreePanelVisible = false
     @State private var snippetsPanelVisible = UserDefaults.standard.bool(forKey: "muxy.snippetsPanelVisible")
+    @State private var inspectorPanelVisible = UserDefaults.standard.bool(forKey: "muxy.inspectorPanelVisible")
     @State private var remoteSpacesStore = RemoteSpacesStore.shared
     @State private var showCommandPalette = false
     @AppStorage("muxy.fileTreeWidth") private var fileTreePanelWidth: Double = .init(FileTreeLayout.defaultWidth)
@@ -140,6 +141,9 @@ struct MainWindow: View {
             .onReceive(NotificationCenter.default.publisher(for: .toggleSnippetsPanel)) { _ in
                 toggleSnippetsPanel()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleInspectorPanel)) { _ in
+                toggleInspectorPanel()
+            }
             .onReceive(NotificationCenter.default.publisher(for: .toggleThemePicker)) { _ in
                 showThemePicker.toggle()
             }
@@ -222,6 +226,7 @@ struct MainWindow: View {
             activeWorkspaceContent
             attachedSidePanel
             snippetsSidePanel
+            inspectorSidePanel
         }
     }
 
@@ -315,7 +320,14 @@ struct MainWindow: View {
     @ViewBuilder
     private var snippetsSidePanel: some View {
         if snippetsPanelVisible {
-            ProjectInspectorPanel(project: activeProject, snippetScope: activeSnippetScope)
+            SnippetsPanel(scope: activeSnippetScope)
+        }
+    }
+
+    @ViewBuilder
+    private var inspectorSidePanel: some View {
+        if inspectorPanelVisible {
+            ProjectInspectorPanel(project: activeProject)
         }
     }
 
@@ -562,10 +574,16 @@ struct MainWindow: View {
                             fallbackToolbarProjectActions(project: project)
                         }
                         if showsToolbarAction(.snippets), activeProject != nil {
-                            IconButton(symbol: "sidebar.right", size: 12, accessibilityLabel: "Inspector") {
+                            IconButton(symbol: "curlybraces", size: 12, accessibilityLabel: "Snippets") {
                                 NotificationCenter.default.post(name: .toggleSnippetsPanel, object: nil)
                             }
-                            .help("Inspector (\(KeyBindingStore.shared.combo(for: .toggleSnippetsPanel).displayString))")
+                            .help("Snippets (\(KeyBindingStore.shared.combo(for: .toggleSnippetsPanel).displayString))")
+                        }
+                        if showsToolbarAction(.inspector), activeProject != nil {
+                            IconButton(symbol: "sidebar.right", size: 12, accessibilityLabel: "Inspector") {
+                                NotificationCenter.default.post(name: .toggleInspectorPanel, object: nil)
+                            }
+                            .help("Inspector (\(KeyBindingStore.shared.combo(for: .toggleInspectorPanel).displayString))")
                         }
                         if showsToolbarAction(.newTab), let project = activeProject {
                             IconButton(symbol: "plus", accessibilityLabel: "New Tab") {
@@ -666,9 +684,15 @@ struct MainWindow: View {
             ),
             commandItem(
                 .toggleSnippetsPanel,
+                symbolName: "curlybraces",
+                subtitle: "Show or hide snippets",
+                aliases: ["commands", "vault", "scripts", "shell", "snippets"]
+            ),
+            commandItem(
+                .toggleInspectorPanel,
                 symbolName: "sidebar.right",
-                subtitle: "Show or hide snippets, notes, and todos",
-                aliases: ["commands", "vault", "scripts", "shell", "notes", "todo", "inspector"]
+                subtitle: "Show or hide project notes and todos",
+                aliases: ["notes", "todo", "inspector", "tasks"]
             ),
             commandItem(
                 .quickOpen,
@@ -1150,6 +1174,11 @@ struct MainWindow: View {
     private func toggleSnippetsPanel() {
         snippetsPanelVisible.toggle()
         UserDefaults.standard.set(snippetsPanelVisible, forKey: "muxy.snippetsPanelVisible")
+    }
+
+    private func toggleInspectorPanel() {
+        inspectorPanelVisible.toggle()
+        UserDefaults.standard.set(inspectorPanelVisible, forKey: "muxy.inspectorPanelVisible")
     }
 
     private var activeVCSState: VCSTabState? {

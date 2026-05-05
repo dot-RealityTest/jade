@@ -83,7 +83,7 @@ Muxy/
     NotificationStore.swift      @Observable notification store singleton (persisted to notifications.json)
     NotificationNavigator.swift  Pane context resolution + click-to-navigate dispatch
     NotificationSocketServer.swift  Unix domain socket IPC for external tool notifications
-    ProjectInspectorStore.swift  Per-project notes and todo persistence for the right-side inspector
+    ProjectInspectorStore.swift  Per-project notes and todo persistence for the inspector panel
     IDEIntegrationService.swift   Discovers installed IDE-like apps, remembers the selected target, and launches the active project or file in external editors
     AIProviderIntegration.swift  Protocol + AIProviderRegistry (notification-hook integrations, usage provider registry)
     AIUsageService.swift         @Observable @MainActor snapshot store, parallel fetch orchestration, refresh coalescing, row composition (Catalog, SnapshotComposer, RowPolicy)
@@ -172,7 +172,7 @@ Muxy/
     ThemePicker.swift         Theme selection popover (hosted in topbar right)
     WelcomeView.swift         Empty state view
     Inspector/
-      ProjectInspectorPanel.swift Right-side inspector shell with Snippets, Notes, and Todo tabs
+      ProjectInspectorPanel.swift Right-side inspector shell with Notes and Todo tabs
     Snippets/
       SnippetsPanel.swift     Snippets/workflows panel with inline create, edit, and variable-run views
     Components/
