@@ -5,9 +5,8 @@ struct SplitDiffView: View {
     let filePath: String
     var suppressLeadingTopBorder: Bool = false
 
-    private var chunks: [SplitDiffChunk] {
-        buildSplitDiffChunks(from: rows)
-    }
+    @State private var cachedChunks: [SplitDiffChunk] = []
+    @State private var cachedSignature: Int = 0
 
     private var numberColumnWidth: CGFloat {
         lineNumberWidth(for: maxLineNumber(in: rows))
@@ -15,7 +14,7 @@ struct SplitDiffView: View {
 
     var body: some View {
         LazyVStack(spacing: 0) {
-            ForEach(Array(chunks.enumerated()), id: \.offset) { index, chunk in
+            ForEach(Array(cachedChunks.enumerated()), id: \.offset) { index, chunk in
                 switch chunk {
                 case let .divider(text):
                     DiffSectionDivider(
@@ -30,6 +29,12 @@ struct SplitDiffView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Split diff, \(filePath)")
+        .onAppear {
+            refreshChunksIfNeeded()
+        }
+        .onChange(of: rowsSignature) { _, _ in
+            refreshChunksIfNeeded()
+        }
     }
 
     private func splitCodeBlock(leftRows: [DiffDisplayRow], rightRows: [DiffDisplayRow]) -> some View {
@@ -68,6 +73,37 @@ struct SplitDiffView: View {
         .frame(height: height)
         .frame(maxWidth: .infinity, alignment: .leading)
         .clipped()
+    }
+
+    private var rowsSignature: Int {
+        var hasher = Hasher()
+        hasher.combine(rows.count)
+        for row in rows {
+            hasher.combine(kindHash(row.kind))
+            hasher.combine(row.oldLineNumber)
+            hasher.combine(row.newLineNumber)
+            hasher.combine(row.oldText)
+            hasher.combine(row.newText)
+            hasher.combine(row.text)
+        }
+        return hasher.finalize()
+    }
+
+    private func refreshChunksIfNeeded() {
+        let signature = rowsSignature
+        guard signature != cachedSignature else { return }
+        cachedSignature = signature
+        cachedChunks = buildSplitDiffChunks(from: rows)
+    }
+
+    private func kindHash(_ kind: DiffDisplayRow.Kind) -> Int {
+        switch kind {
+        case .hunk: 1
+        case .context: 2
+        case .addition: 3
+        case .deletion: 4
+        case .collapsed: 5
+        }
     }
 }
 

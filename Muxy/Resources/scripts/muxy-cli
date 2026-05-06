@@ -1,12 +1,11 @@
 #!/bin/bash
-# Muxy CLI wrapper - Usage: muxy /path/to/project
-# Opens a folder in Muxy app
 
+COMMAND_NAME="$(basename "$0")"
 TARGET_DIR="$1"
 
 if [ -z "$TARGET_DIR" ]; then
-    echo "Usage: muxy <path>"
-    echo "       muxy ."
+    echo "Usage: $COMMAND_NAME <path>"
+    echo "       $COMMAND_NAME ."
     exit 1
 fi
 

@@ -1,4 +1,7 @@
 import SwiftUI
+import os
+
+private let paletteLogger = Logger(subsystem: "app.muxy", category: "CommandPalette")
 
 struct CommandPaletteOverlay: View {
     let appItems: [CommandPaletteItem]
@@ -16,6 +19,8 @@ struct CommandPaletteOverlay: View {
     @State private var snippetsStore = SnippetsStore.shared
     @State private var pendingConfirmationID: String?
     @State private var naturalCommandRequest: NaturalCommandRequest?
+    @State private var cachedBaseItems: [CommandPaletteItem] = []
+    @State private var cachedBaseItemsSignature: Int = 0
     private let naturalCommandGenerator = NaturalCommandCoordinator.live()
 
     var body: some View {
@@ -51,6 +56,12 @@ struct CommandPaletteOverlay: View {
                         ))
                     },
                     footer: AnyView(CommandPaletteFooter(isConfirming: pendingConfirmationID != nil))
+                    ,
+                    debounceDelay: { query in
+                        CommandPaletteFileSearchPolicy.shouldSearchFiles(query: query)
+                            ? .milliseconds(90)
+                            : .milliseconds(40)
+                    }
                 )
             }
         }
@@ -85,21 +96,44 @@ struct CommandPaletteOverlay: View {
     }
 
     private func search(query: String) async -> [CommandPaletteItem] {
+        let clock = ContinuousClock()
+        let start = clock.now
         async let fileItems = fileResults(query: query)
-        let baseItems = await MainActor.run {
-            appItems
-                + remoteCommandItems()
-                + remoteItems()
-                + snippetItems()
-                + worktreeCommandItems()
-        }
+        let baseItems = loadBaseItems()
         let shouldShowGenerator = await shouldShowNaturalCommandItem(query: query, baseItems: baseItems)
         let naturalItems = shouldShowGenerator ? [naturalCommandItem(query: query)] : []
-        return await CommandPaletteItem.filter(
+        let filtered = await CommandPaletteItem.filter(
             naturalItems + baseItems + fileItems,
             query: query,
             sectionOrder: sectionOrder
         )
+        let elapsed = start.duration(to: clock.now)
+        if elapsed > .milliseconds(20) {
+            paletteLogger.debug("Palette search for '\(query, privacy: .public)' returned \(filtered.count) items in \(String(describing: elapsed), privacy: .public)")
+        }
+        return filtered
+    }
+
+    @MainActor
+    private func loadBaseItems() -> [CommandPaletteItem] {
+        var hasher = Hasher()
+        hasher.combine(appItems.count)
+        hasher.combine(remoteSpaces.count)
+        hasher.combine(worktreeItems.count)
+        hasher.combine(snippetsStore.snippets.count)
+        hasher.combine(activeRemoteSpace?.id)
+        let signature = hasher.finalize()
+        if signature == cachedBaseItemsSignature {
+            return cachedBaseItems
+        }
+        let updated = appItems
+            + remoteCommandItems()
+            + remoteItems()
+            + snippetItems()
+            + worktreeCommandItems()
+        cachedBaseItemsSignature = signature
+        cachedBaseItems = updated
+        return updated
     }
 
     @MainActor
@@ -297,6 +331,7 @@ private struct CommandPaletteRow: View {
                     .font(.system(size: 12))
                     .foregroundStyle(iconColor)
                     .frame(width: 16)
+                    .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(isConfirming ? confirmationTitle : item.title)
@@ -320,6 +355,9 @@ private struct CommandPaletteRow: View {
             .background(rowBackground)
         }
         .onHover { hovered = $0 }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityHint(isConfirming ? "Press Return to confirm" : "Press Return to run")
     }
 
     private var confirmationTitle: String {
@@ -351,5 +389,14 @@ private struct CommandPaletteRow: View {
             return AnyShapeStyle(MuxyTheme.hover)
         }
         return AnyShapeStyle(Color.clear)
+    }
+
+    private var accessibilityLabel: String {
+        let parts = [
+            isConfirming ? confirmationTitle : item.title,
+            subtitle,
+            item.section.rawValue,
+        ].filter { !$0.isEmpty }
+        return parts.joined(separator: ", ")
     }
 }

@@ -92,6 +92,23 @@ struct CommandPaletteItemTests {
         ])
     }
 
+    @Test("filter ranks stronger matches inside a section")
+    func filterRanksStrongerMatchesInsideSection() {
+        let items = [
+            item(title: "Open Project", subtitle: "Git workspace", section: .app),
+            item(title: "Git", section: .app),
+            item(title: "Source Control", subtitle: "Git status", section: .app),
+            item(title: "Recent Files", section: .app, searchText: "git history"),
+        ]
+
+        #expect(CommandPaletteItem.filter(items, query: "git").map(\.title) == [
+            "Git",
+            "Open Project",
+            "Source Control",
+            "Recent Files",
+        ])
+    }
+
     @Test("remote command actions expose safety and aliases")
     func remoteCommandActionsExposeSafetyAndAliases() {
         #expect(RemoteCommandPaletteAction.reboot.requiresConfirmation)

@@ -1,6 +1,8 @@
-# Muxy
+# Jade
 
-Requires macOS 14+ and Swift 6.0+. No external dependency managers needed — everything is SPM-based.
+Jade is the distributed macOS app. The SwiftPM executable target, source directory, shared modules, persistence paths, bundle identifier, and URL scheme still use the Muxy name for compatibility.
+
+Requires macOS 14+ and Swift 6.0+. No external dependency managers needed; everything is SPM-based.
 
 ## Linting & Formatting
 
@@ -17,8 +19,10 @@ Run `scripts/checks.sh --fix` after every task.
 
 ## Architecture
 
-- Muxy is a macOS terminal multiplexer built with SwiftUI that uses [libghostty](https://github.com/ghostty-org/ghostty) for terminal emulation and rendering via Metal.
+- Jade is a macOS terminal multiplexer built with SwiftUI that uses [libghostty](https://github.com/ghostty-org/ghostty) for terminal emulation and rendering via Metal.
 - The architecture of the app is documented at `./docs/architecture.md` and must always be up to date.
+- Keep app identity centralized through `AppIdentity`. The user-facing app name is `Jade`; the primary CLI is `jade`; `muxy` remains a compatibility alias. Keep `com.muxy.app` and `muxy://` stable unless the user explicitly asks for a deeper migration.
+- Release packaging copies the SwiftPM `Muxy` executable into the app bundle as `Contents/MacOS/Jade`.
 
 ### Core Components
 
@@ -43,6 +47,13 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 - **Projects:** `~/Library/Application Support/Muxy/projects.json`
 - **Ghostty config:** `~/.config/ghostty/config`
 - **Terminal state (tabs, splits):** in-memory only, lost on app close
+
+## CLI
+
+- Install from the app menu item **Jade → Install CLI**.
+- The installer must install `jade` as the primary command and `muxy` as a legacy compatibility command.
+- The bundled wrapper lives at `Muxy/Resources/scripts/muxy-cli`; keep it command-name aware so usage text matches the executable name.
+- Do not manually overwrite `/usr/local/bin` during normal agent work unless the user explicitly asks for a system install.
 
 ## NSViewRepresentable Pitfalls
 
@@ -74,7 +85,7 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 - Avoid long PR descriptions. It is for humans and keep it in 3 lines maximum.
 - Upload screenshots or recordings for the PRs.
 - Never answer any question without a proper investigation and exploring the codebase.
-
+- Do not push this repo unless the user explicitly asks. Commits are local by default.
 
 ## Code Review
 

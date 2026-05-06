@@ -54,8 +54,8 @@ enum CLIAccessor {
 
         guard confirmInstall() else { return }
 
-        if copyScript(from: resourceURL, to: "/usr/local/bin", label: "/usr/local/bin/muxy") {
-            showInstalledAlert(label: "/usr/local/bin/muxy", pathNote: "")
+        if copyScripts(from: resourceURL, to: "/usr/local/bin") {
+            showInstalledAlert(binPath: "/usr/local/bin", pathNote: "")
             return
         }
 
@@ -63,48 +63,61 @@ enum CLIAccessor {
             let success = runAdminInstall(resourceURL: resourceURL)
             await MainActor.run {
                 if success {
-                    showInstalledAlert(label: "/usr/local/bin/muxy", pathNote: "")
+                    showInstalledAlert(binPath: "/usr/local/bin", pathNote: "")
                     return
                 }
                 if tryFallbackInstalls(resourceURL: resourceURL) { return }
                 alert(
                     title: "CLI Installation Failed",
                     body: """
-                    Could not install muxy to /usr/local/bin or any fallback directory.
+                    Could not install \(AppIdentity.cliName) to /usr/local/bin or any fallback directory.
 
                     Try manually:
-                      sudo cp "\(resourceURL.path)" /usr/local/bin/muxy
-                      sudo chmod +x /usr/local/bin/muxy
+                      sudo cp "\(resourceURL.path)" /usr/local/bin/\(AppIdentity.cliName)
+                      sudo chmod +x /usr/local/bin/\(AppIdentity.cliName)
+                      sudo cp "\(resourceURL.path)" /usr/local/bin/\(AppIdentity.legacyCLIName)
+                      sudo chmod +x /usr/local/bin/\(AppIdentity.legacyCLIName)
                     """
                 )
             }
         }
     }
 
-    private static func copyScript(from resourceURL: URL, to binPath: String, label: String) -> Bool {
-        let target = URL(fileURLWithPath: "\(binPath)/muxy")
+    private static func copyScripts(from resourceURL: URL, to binPath: String) -> Bool {
+        let targets = commandNames.map { URL(fileURLWithPath: "\(binPath)/\($0)") }
         let dir = URL(fileURLWithPath: binPath)
         if !FileManager.default.fileExists(atPath: binPath) {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
-        if FileManager.default.fileExists(atPath: target.path) {
-            try? FileManager.default.removeItem(at: target)
-        }
         do {
-            try FileManager.default.copyItem(at: resourceURL, to: target)
-            try FileManager.default.setAttributes(
-                [.posixPermissions: FilePermissions.executable],
-                ofItemAtPath: target.path
-            )
+            for target in targets where FileManager.default.fileExists(atPath: target.path) {
+                try FileManager.default.removeItem(at: target)
+            }
+            for target in targets {
+                try FileManager.default.copyItem(at: resourceURL, to: target)
+                try FileManager.default.setAttributes(
+                    [.posixPermissions: FilePermissions.executable],
+                    ofItemAtPath: target.path
+                )
+            }
             return true
         } catch {
+            for target in targets where FileManager.default.fileExists(atPath: target.path) {
+                try? FileManager.default.removeItem(at: target)
+            }
             return false
         }
     }
 
     nonisolated private static func runAdminInstall(resourceURL: URL) -> Bool {
         let quotedSource = ShellEscaper.escape(resourceURL.path)
-        let shellCommand = "mkdir -p /usr/local/bin && cp \(quotedSource) /usr/local/bin/muxy && chmod +x /usr/local/bin/muxy"
+        let shellCommand = """
+        mkdir -p /usr/local/bin && \
+        cp \(quotedSource) /usr/local/bin/\(AppIdentity.cliName) && \
+        chmod +x /usr/local/bin/\(AppIdentity.cliName) && \
+        cp \(quotedSource) /usr/local/bin/\(AppIdentity.legacyCLIName) && \
+        chmod +x /usr/local/bin/\(AppIdentity.legacyCLIName)
+        """
         let escapedForAppleScript = shellCommand
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
@@ -118,37 +131,43 @@ enum CLIAccessor {
     private static func tryFallbackInstalls(resourceURL: URL) -> Bool {
         let home = NSHomeDirectory()
         let fallbacks = [
-            (path: "\(home)/bin", label: "~/bin/muxy"),
-            (path: "\(home)/.local/bin", label: "~/.local/bin/muxy"),
+            "\(home)/bin",
+            "\(home)/.local/bin",
         ]
         for fallback in fallbacks {
-            guard copyScript(from: resourceURL, to: fallback.path, label: fallback.label) else {
+            guard copyScripts(from: resourceURL, to: fallback) else {
                 continue
             }
-            let pathNote = "\n\nAdd to PATH:\n  export PATH=\"$PATH:\(fallback.path)\""
-            showInstalledAlert(label: fallback.label, pathNote: pathNote)
+            let pathNote = "\n\nAdd to PATH:\n  export PATH=\"$PATH:\(fallback)\""
+            showInstalledAlert(binPath: fallback, pathNote: pathNote)
             return true
         }
         return false
     }
 
-    private static func showInstalledAlert(label: String, pathNote: String) {
+    private static func showInstalledAlert(binPath: String, pathNote: String) {
         alert(
             title: "CLI Installed",
-            body: "Installed to: \(label)\nRun 'muxy .' or 'muxy /path/to/project'\(pathNote)"
+            body: """
+            Installed to: \(binPath)/\(AppIdentity.cliName)
+            Compatibility alias: \(binPath)/\(AppIdentity.legacyCLIName)
+            Run '\(AppIdentity.cliName) .' or '\(AppIdentity.cliName) /path/to/project'\(pathNote)
+            """
         )
     }
 
     private static func confirmInstall() -> Bool {
         let alert = NSAlert()
-        alert.messageText = "Install Muxy CLI?"
+        alert.messageText = "Install \(AppIdentity.displayName) CLI?"
         alert.informativeText = """
-        This will install the 'muxy' command-line tool to /usr/local/bin so you \
-        can launch projects from your terminal (e.g. 'muxy .').
+        This will install the '\(AppIdentity.cliName)' command-line tool to \
+        /usr/local/bin so you can launch projects from your terminal \
+        (e.g. '\(AppIdentity.cliName) .'). The '\(AppIdentity.legacyCLIName)' \
+        command will also be installed as a compatibility alias.
 
         If /usr/local/bin is not writable, you will be prompted for your \
-        administrator password. If that is declined, Muxy will fall back to \
-        ~/bin or ~/.local/bin.
+        administrator password. If that is declined, \(AppIdentity.displayName) \
+        will fall back to ~/bin or ~/.local/bin.
         """
         alert.alertStyle = .informational
         alert.addButton(withTitle: "Install")
@@ -163,5 +182,9 @@ enum CLIAccessor {
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()
+    }
+
+    private static var commandNames: [String] {
+        [AppIdentity.cliName, AppIdentity.legacyCLIName]
     }
 }

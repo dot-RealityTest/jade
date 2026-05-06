@@ -79,6 +79,16 @@ swift build               # debug build
 swift run Muxy             # run
 ```
 
+## CLI
+
+Use **Jade → Install CLI** from the macOS menu to install the terminal command.
+It installs `jade` and keeps `muxy` as a compatibility alias.
+
+```bash
+jade .
+jade /path/to/project
+```
+
 ## License
 
 [MIT](LICENSE)

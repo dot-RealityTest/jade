@@ -52,7 +52,7 @@ Muxy/
     TerminalTab.swift         Terminal, VCS, editor, or diff-viewer tab model
     TabDragCoordinator.swift  Cross-pane tab drag-and-drop, TabMoveRequest, SplitPlacement
     CommandShortcut.swift     User-defined terminal command shortcut model for layered command chords
-    CommandPaletteItem.swift  Unified command palette result model, section headers, aliases, remote actions, confirmable actions, and remote-space ordering
+    CommandPaletteItem.swift  Unified command palette result model, ranked search, section headers, aliases, remote actions, confirmable actions, and remote-space ordering
     KeyBinding.swift          ShortcutAction enum + KeyBinding defaults
     KeyCombo.swift            Key combo encoding, display, matching
     ToolbarAction.swift       Persisted titlebar toolbar visibility actions and compact defaults
@@ -185,7 +185,7 @@ Muxy/
       UUIDFramePreferenceKey.swift  Generic PreferenceKey for frame tracking
       NotificationBadge.swift Unread count badge for sidebar project icons
       QuickOpenOverlay.swift  Cmd+P file search overlay (name substring match via find)
-      CommandPaletteOverlay.swift  Cmd+K unified command palette for app actions, project todos, remote commands, remote spaces, snippets, files, worktrees, and natural-language command generation
+      CommandPaletteOverlay.swift  Cmd+K unified command palette for app actions, project todos, remote commands, remote spaces, snippets, files, worktrees, and natural-language command generation with accessible rows and inline confirmation states
       NaturalCommandReviewView.swift  Palette-style review surface for generated shell commands with Run, Copy, and Save as Snippet actions
       AppBundleIconView.swift Renders and caches installed app bundle icons for menus and launcher controls
       OpenInIDEControl.swift  Split button for opening the active project or editor file in the remembered or selected IDE
@@ -298,7 +298,7 @@ User action → AppState.dispatch() → WorkspaceReducer.reduce()
 - **Terminal Working Directory Preservation**: When a user navigates within a terminal (e.g., `cd src/`), libghostty emits `GHOSTTY_ACTION_PWD` events. `GhosttyRuntimeEventAdapter` receives these events and routes them via the `onWorkingDirectoryChange` callback to `TerminalPane`, which updates `TerminalPaneState.currentWorkingDirectory`. This directory is persisted to disk through `TerminalTabSnapshot` in `workspaces.json`. On restore, `TerminalTab` initializes each terminal pane with its saved working directory (or the project root if none was saved), allowing terminals to reopen at their last-used directory instead of always starting at the project root.
 - **Terminal Tool Shortcuts**: `ShortcutActionDispatcher` opens selected terminal tools as named command tabs in the active worktree. Lazygit (`Cmd+Shift+G`) and yazi (`Cmd+Shift+Y`) are first-class default actions; missing tools leave the user in an interactive shell with the Homebrew install command printed.
 - **Local Port List**: Cmd+K exposes `Local Ports`, a native utility overlay backed by `/usr/sbin/lsof -nP -iTCP -sTCP:LISTEN -F pcunP`. `LocalPortMonitor` keeps the current active listeners and a session-only dead list populated when a listener disappears after refresh. The panel is read-only; it does not kill or restart processes.
-- **App Identity**: The distributed macOS app is named Jade (`CFBundleName` / `CFBundleDisplayName`) and uses the AppIcon asset catalog generated from the Jade icon artwork. The executable target remains `Muxy` for SwiftPM/test compatibility.
+- **App Identity**: The distributed macOS app is named Jade (`CFBundleName` / `CFBundleDisplayName` / `CFBundleExecutable`) and uses the AppIcon asset catalog generated from the Jade icon artwork. The SwiftPM executable target remains `Muxy` for build and test compatibility, then release packaging installs it into the app bundle as `Jade`.
 - **Persistence**: All files in `~/Library/Application Support/Muxy/`. Shared directory helper: `MuxyFileStorage`. Shortcuts are stored in `keybindings.json`; custom command shortcuts are stored in `command-shortcuts.json`; shared snippets are stored in `snippets.json`; project inspector notes/todos are stored in `project-inspector/{projectID}.json`; remote machine spaces are stored in `remote-spaces.json`; remote-space snippets are stored in `remote-spaces/{slug}/snippets.json`. Remote spaces are backward-compatible JSON records: simple `ssh user@host` command records are normalized into structured profile fields on load/save, while unsupported custom commands still run through the legacy command field. Remote spaces also persist an optional theme name; blank theme names use name-based defaults for Zen and Alienware. Snippets are backward-compatible JSON records; shared snippets seed common local workflows when storage is missing or empty, while remote scopes seed Linux starter workflows only when their snippet file does not exist yet. Cmd+K remote commands and remote-space snippets open named command tabs through `RemoteCommandBuilder`, which wraps the selected Linux command in the active space's SSH profile instead of running it in the local backing directory; reboot and power-off require an inline second Enter before execution. Natural-language shell commands are not saved as history; settings live in `UserDefaults`, generated commands must be reviewed before running, and useful results can be explicitly saved into the active snippet scope. Worktrees are persisted per-project at `worktrees/{projectID}.json`, including whether a secondary worktree is Muxy-managed or externally discovered. Git projects can manually refresh this list from `git worktree list --porcelain` to import existing worktrees without deleting absent entries; paths are matched after symlink resolution so a repo opened via a symlinked path still collapses onto a single primary entry. Externally discovered worktrees are never touched by Muxy's `cleanupOnDisk` paths (project removal, post-merge cleanup, manual removal) — they can only be unregistered by the user in the underlying repo. Worktree setup commands live in-repo at `{Project.path}/.muxy/worktree.json`.
 - **Ghostty Config**: Managed by `MuxyConfig`, stored at `~/Library/Application Support/Muxy/ghostty.conf`. Seeded from `~/.config/ghostty/config` on first run.
 - **Updates**: Sparkle framework via `UpdateService`. Two channels exist: `stable` (manual `release.yml`, tagged `vX.Y.Z`, accumulating appcast at `releases/latest/download/appcast-<arch>.xml`) and `beta` (auto `release-beta.yml` on every push to `main`, tagged `vX.Y.Z-beta.<buildNumber>` where `X.Y.Z` is read from the `BETA_VERSION` file at repo root, rolling appcast at `releases/download/beta-channel/appcast-beta-<arch>.xml`). Each channel's appcast accumulates only its own items (release notes are isolated). The user-selected channel is persisted in `UserDefaults` (`muxy.update.channel`) and routed at runtime via `SPUUpdaterDelegate.feedURLString(for:)` — the baked-in feed URL is just the default fallback. Stable releases are produced by **promoting a beta tag**: `release.yml` takes a `from_beta_tag` input (e.g. `v0.26.0-beta.42`), checks out that exact commit, and rebuilds with the stable version string — so stable users receive the exact bits beta testers validated, while `main` keeps accepting merges throughout. After publishing, the workflow bumps `BETA_VERSION` on `main` so subsequent betas target the next planned stable.
@@ -456,17 +456,18 @@ being key and identified as a Muxy main window.
 
 ## CLI / URL Scheme Entry Points
 
-External callers can open a project in Muxy through three coordinated paths,
+External callers can open a project in Jade through three coordinated paths,
 all funneled into a single `AppDelegate.handleOpenProjectPath(_:)` choke point
 so persistence, dedupe, and activation behave consistently.
 
-- **`muxy` shell wrapper** (`Muxy/Resources/scripts/muxy-cli`, installed to
-  `/usr/local/bin/muxy` via `CLIAccessor.installCLI`) — resolves the argument to
+- **`jade` shell wrapper** (`Muxy/Resources/scripts/muxy-cli`, installed to
+  `/usr/local/bin/jade` via `CLIAccessor.installCLI`) — resolves the argument to
   an absolute directory and tries, in order via `||` chaining: open the
   `muxy://open?path=<percent-encoded>` URL, fall back to `open -b com.muxy.app`
   Apple Events, and finally pipe `open-project|<path>` to the Unix socket. A
   small `python3`/`python` percent-encoder shells out without taking a
-  dependency on `jq`.
+  dependency on `jq`. `/usr/local/bin/muxy` is installed from the same wrapper
+  as a compatibility alias.
 - **`muxy://` URL scheme** — handled by `AppDelegate.application(_:open:)`.
   `AppDelegate.resolveProjectPath(from:)` parses with `URLComponents`,
   prefers a `path` query item, falls back to `host + path`, percent-decodes,

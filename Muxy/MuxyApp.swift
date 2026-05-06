@@ -1,5 +1,8 @@
 import AppKit
 import SwiftUI
+import os
+
+private let startupLogger = Logger(subsystem: "app.muxy", category: "Startup")
 
 @main
 struct MuxyApp: App {
@@ -13,6 +16,7 @@ struct MuxyApp: App {
 
     init() {
         _ = MuxyApp.launchDate
+        ProcessInfo.processInfo.processName = AppIdentity.displayName
         let environment = AppEnvironment.live
         let projectStore = ProjectStore(persistence: environment.projectPersistence)
         let worktreeStore = WorktreeStore(
@@ -48,7 +52,7 @@ struct MuxyApp: App {
                     NotificationStore.shared.worktreeStore = worktreeStore
                     NotificationStore.shared.markAllAsRead()
                     appDelegate.onTerminate = { [appState] in
-                        appState.saveWorkspaces()
+                        appState.flushPendingWorkspaceSave()
                     }
                     appDelegate.hasUnsavedEditorTabs = { [appState] in
                         appState.unsavedEditorTabs()
@@ -133,6 +137,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pendingOpenPaths: [String] = []
     private var systemAppearanceObserver: NSObjectProtocol?
 
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        ProcessInfo.processInfo.processName = AppIdentity.displayName
+    }
+
+    func applicationDidUpdate(_ notification: Notification) {
+        applyAppMenuIdentity()
+    }
+
     @MainActor
     func handleOpenProjectPath(_ path: String) {
         let standardized = URL(fileURLWithPath: path).standardizedFileURL.path
@@ -205,21 +217,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @MainActor
     func applicationDidFinishLaunching(_ notification: Notification) {
+        let launchClock = ContinuousClock()
+        let launchStart = launchClock.now
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
+        applyAppMenuIdentity()
+        DispatchQueue.main.async { [weak self] in
+            self?.applyAppMenuIdentity()
+        }
         setAppIcon()
         _ = GhosttyService.shared
         GhosttyService.shared.applyInitialColorScheme()
         ThemeService.shared.applyDefaultThemeIfNeeded()
         ThemeService.shared.migrateToPairedThemeIfNeeded()
         observeSystemAppearanceChanges()
-        UpdateService.shared.start()
-        ModifierKeyMonitor.shared.start()
-        NotificationSocketServer.shared.start()
-        AIProviderRegistry.shared.installAll()
-        _ = AIUsageSettingsStore.isUsageEnabled()
-
         consumeLaunchArguments()
+        startupLogger.debug("Core launch setup completed in \(String(describing: launchStart.duration(to: launchClock.now)), privacy: .public)")
+
+        DispatchQueue.main.async {
+            let deferredStart = launchClock.now
+            UpdateService.shared.start()
+            ModifierKeyMonitor.shared.start()
+            NotificationSocketServer.shared.start()
+            AIProviderRegistry.shared.installAll()
+            _ = AIUsageSettingsStore.isUsageEnabled()
+            startupLogger.debug("Deferred startup services completed in \(String(describing: deferredStart.duration(to: launchClock.now)), privacy: .public)")
+        }
+    }
+
+    private func applyAppMenuIdentity() {
+        guard let mainMenu = NSApp.mainMenu else { return }
+        for menuItem in mainMenu.items {
+            guard let submenu = menuItem.submenu,
+                  submenu.items.contains(where: { $0.title.hasPrefix("About ") })
+            else { continue }
+            menuItem.title = AppIdentity.displayName
+            for item in submenu.items where item.title.hasPrefix("About ") {
+                item.title = "About \(AppIdentity.displayName)"
+            }
+        }
     }
 
     @MainActor

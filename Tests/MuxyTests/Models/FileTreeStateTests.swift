@@ -276,17 +276,17 @@ struct FileTreeStateTests {
     }
 
     private func waitForRootLoaded(_ state: FileTreeState) async throws {
-        for _ in 0 ..< 400 {
+        for _ in 0 ..< 200 {
             if !state.visibleRootEntries().isEmpty { return }
-            try await Task.sleep(nanoseconds: 5_000_000)
+            try await Task.sleep(nanoseconds: 2_000_000)
         }
         throw FileTreeStateTestError.timeout("FileTreeState root entries never loaded")
     }
 
     private func waitForChildrenLoaded(_ state: FileTreeState, of path: String) async throws {
-        for _ in 0 ..< 400 {
+        for _ in 0 ..< 200 {
             if state.children[path] != nil { return }
-            try await Task.sleep(nanoseconds: 5_000_000)
+            try await Task.sleep(nanoseconds: 2_000_000)
         }
         throw FileTreeStateTestError.timeout("FileTreeState children of \(path) never loaded")
     }

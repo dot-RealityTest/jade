@@ -10,6 +10,7 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
     let onDismiss: () -> Void
     let row: (Item, Bool) -> AnyView
     var footer: AnyView?
+    var debounceDelay: (String) -> Duration = { _ in .milliseconds(50) }
 
     @State private var query = ""
     @State private var results: [Item] = []
@@ -19,9 +20,12 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.3)
-                .ignoresSafeArea()
-                .onTapGesture { onDismiss() }
+            Button(action: onDismiss) {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+            }
+            .buttonStyle(.plain)
+            .accessibilityHidden(true)
 
             VStack(spacing: 0) {
                 searchField
@@ -59,7 +63,7 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
                 text: $query,
                 placeholder: placeholder,
                 onSubmit: { confirmSelection() },
-                onEscape: { onDismiss() },
+                onEscape: { handleEscape() },
                 onArrowUp: { moveHighlight(-1) },
                 onArrowDown: { moveHighlight(1) }
             )
@@ -86,10 +90,14 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
                     ScrollView(.vertical, showsIndicators: true) {
                         LazyVStack(spacing: 0) {
                             ForEach(Array(results.enumerated()), id: \.element.id) { index, item in
-                                row(item, index == highlightedIndex)
-                                    .contentShape(Rectangle())
-                                    .onTapGesture { onSelect(item) }
-                                    .id(item.id)
+                                Button {
+                                    onSelect(item)
+                                } label: {
+                                    row(item, index == highlightedIndex)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.plain)
+                                .id(item.id)
                             }
                         }
                     }
@@ -111,7 +119,7 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
 
         searchTask = Task {
             if debounce {
-                try? await Task.sleep(for: .milliseconds(50))
+                try? await Task.sleep(for: debounceDelay(currentQuery))
                 guard !Task.isCancelled else { return }
             }
 
@@ -139,6 +147,14 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
         guard let index = highlightedIndex, index < results.count else { return }
         onSelect(results[index])
     }
+
+    private func handleEscape() {
+        guard !query.isEmpty else {
+            onDismiss()
+            return
+        }
+        query = ""
+    }
 }
 
 struct PaletteSearchField: NSViewRepresentable {
@@ -163,8 +179,11 @@ struct PaletteSearchField: NSViewRepresentable {
         field.font = .systemFont(ofSize: fontSize)
         field.textColor = NSColor(MuxyTheme.fg)
         field.placeholderString = placeholder
+        field.setAccessibilityLabel(placeholder)
         field.cell?.sendsActionOnEndEditing = false
         field.onEscape = onEscape
+        field.onArrowUp = onArrowUp
+        field.onArrowDown = onArrowDown
         DispatchQueue.main.async {
             field.window?.makeFirstResponder(field)
         }
@@ -178,6 +197,8 @@ struct PaletteSearchField: NSViewRepresentable {
         }
         if let field = nsView as? PaletteNSTextField {
             field.onEscape = onEscape
+            field.onArrowUp = onArrowUp
+            field.onArrowDown = onArrowDown
         }
     }
 
@@ -217,6 +238,8 @@ struct PaletteSearchField: NSViewRepresentable {
 
 private final class PaletteNSTextField: NSTextField {
     var onEscape: (() -> Void)?
+    var onArrowUp: (() -> Void)?
+    var onArrowDown: (() -> Void)?
 
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         if event.keyCode == 53 {
@@ -224,5 +247,16 @@ private final class PaletteNSTextField: NSTextField {
             return true
         }
         return super.performKeyEquivalent(with: event)
+    }
+
+    override func keyDown(with event: NSEvent) {
+        switch event.keyCode {
+        case 125:
+            onArrowDown?()
+        case 126:
+            onArrowUp?()
+        default:
+            super.keyDown(with: event)
+        }
     }
 }

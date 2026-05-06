@@ -78,6 +78,8 @@ final class AppState {
     var pendingSaveErrorMessage: String?
     let navigation = NavigationHistory()
     private var focusHistory: [WorktreeKey: [UUID]] = [:]
+    @ObservationIgnored private var pendingWorkspaceSaveTask: Task<Void, Never>?
+    private let workspaceSaveDebounce: Duration = .milliseconds(300)
 
     init(
         selectionStore: any ActiveProjectSelectionStoring,
@@ -129,6 +131,34 @@ final class AppState {
     }
 
     func saveWorkspaces() {
+        pendingWorkspaceSaveTask?.cancel()
+        pendingWorkspaceSaveTask = nil
+        performWorkspaceSave()
+    }
+
+    func flushPendingWorkspaceSave() {
+        pendingWorkspaceSaveTask?.cancel()
+        pendingWorkspaceSaveTask = nil
+        performWorkspaceSave()
+    }
+
+    private func scheduleWorkspaceSave() {
+        pendingWorkspaceSaveTask?.cancel()
+        let debounce = workspaceSaveDebounce
+        pendingWorkspaceSaveTask = Task { [weak self] in
+            try? await Task.sleep(for: debounce)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard let self else { return }
+                self.pendingWorkspaceSaveTask = nil
+                self.performWorkspaceSave()
+            }
+        }
+    }
+
+    private func performWorkspaceSave() {
+        let clock = ContinuousClock()
+        let start = clock.now
         let snapshots = WorkspaceRestorer.snapshotAll(
             workspaceRoots: workspaceRoots,
             focusedAreaID: focusedAreaID
@@ -137,6 +167,10 @@ final class AppState {
             try workspacePersistence.saveWorkspaces(snapshots)
         } catch {
             logger.error("Failed to save workspaces: \(error)")
+        }
+        let elapsed = start.duration(to: clock.now)
+        if elapsed > .milliseconds(25) {
+            logger.debug("Workspace save took \(elapsed.components.seconds)s (\(snapshots.count) snapshots)")
         }
     }
 
@@ -444,7 +478,7 @@ final class AppState {
               let tabID = area.activeTabID
         else { return }
         area.togglePin(tabID)
-        saveWorkspaces()
+        scheduleWorkspaceSave()
     }
 
     func dispatch(_ action: Action) {
@@ -507,7 +541,7 @@ final class AppState {
             NotificationStore.shared.markAsRead(tabID: activeTabID)
         }
 
-        saveWorkspaces()
+        scheduleWorkspaceSave()
         saveSelection()
     }
 

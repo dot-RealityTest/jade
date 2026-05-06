@@ -11,7 +11,31 @@ enum FileSearchService {
     static let maxResults = 30
     private static let candidatePoolLimit = 500
     private static let initialMaxDepth = 4
-    private static let initialCandidateLimit = 150
+    private static let initialCandidateLimit = 1200
+    private static let indexRefreshInterval: TimeInterval = 15
+    private actor IndexCache {
+        private var cachedIndexByProject: [String: CachedIndex] = [:]
+
+        func get(projectPath: String, maxAge: TimeInterval) -> [FileSearchResult]? {
+            guard let cached = cachedIndexByProject[projectPath] else { return nil }
+            guard Date().timeIntervalSince(cached.loadedAt) < maxAge else {
+                cachedIndexByProject.removeValue(forKey: projectPath)
+                return nil
+            }
+            return cached.candidates
+        }
+
+        func set(projectPath: String, candidates: [FileSearchResult]) {
+            cachedIndexByProject[projectPath] = CachedIndex(loadedAt: Date(), candidates: candidates)
+        }
+    }
+
+    private static let indexCache = IndexCache()
+
+    private struct CachedIndex {
+        let loadedAt: Date
+        let candidates: [FileSearchResult]
+    }
 
     private static let prunedDirectoryNames: [String] = [
         ".git", "node_modules", ".build", "build", "DerivedData",
@@ -22,22 +46,55 @@ enum FileSearchService {
 
     static func search(query: String, in projectPath: String) async -> [FileSearchResult] {
         let trimmed = query.trimmingCharacters(in: .whitespaces)
+        let indexedCandidates = await projectIndex(projectPath: projectPath)
 
         if trimmed.isEmpty {
-            let candidates = await runFind(
-                arguments: initialArguments(projectPath: projectPath),
-                projectPath: projectPath,
-                limit: initialCandidateLimit
-            )
-            return rankInitialCandidates(candidates)
+            return rankInitialCandidates(indexedCandidates)
         }
 
-        let candidates = await runFind(
+        var ranked = rankCandidates(indexedCandidates, query: trimmed)
+        if ranked.count >= maxResults || trimmed.count < 3 {
+            return ranked
+        }
+
+        let targetedCandidates = await runFind(
             arguments: queryArguments(query: trimmed, projectPath: projectPath),
             projectPath: projectPath,
             limit: candidatePoolLimit
         )
-        return rankCandidates(candidates, query: trimmed)
+        ranked = rankCandidates(mergeCandidates(ranked + targetedCandidates), query: trimmed)
+        return ranked
+    }
+
+    private static func projectIndex(projectPath: String) async -> [FileSearchResult] {
+        if let cached = await cachedIndex(projectPath: projectPath) {
+            return cached
+        }
+        let candidates = await runFind(
+            arguments: initialArguments(projectPath: projectPath),
+            projectPath: projectPath,
+            limit: initialCandidateLimit
+        )
+        await storeCachedIndex(candidates, projectPath: projectPath)
+        return candidates
+    }
+
+    private static func cachedIndex(projectPath: String) async -> [FileSearchResult]? {
+        await indexCache.get(projectPath: projectPath, maxAge: indexRefreshInterval)
+    }
+
+    private static func storeCachedIndex(_ candidates: [FileSearchResult], projectPath: String) async {
+        await indexCache.set(projectPath: projectPath, candidates: candidates)
+    }
+
+    private static func mergeCandidates(_ candidates: [FileSearchResult]) -> [FileSearchResult] {
+        var seen: Set<String> = []
+        var merged: [FileSearchResult] = []
+        merged.reserveCapacity(candidates.count)
+        for item in candidates where seen.insert(item.absolutePath).inserted {
+            merged.append(item)
+        }
+        return merged
     }
 
     private static func runFind(

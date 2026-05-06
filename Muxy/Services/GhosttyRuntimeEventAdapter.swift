@@ -15,10 +15,31 @@ protocol GhosttyRuntimeEventHandling {
 }
 
 final class GhosttyRuntimeEventAdapter: GhosttyRuntimeEventHandling {
+    private static let wakeupLock = NSLock()
+    nonisolated(unsafe) private static var tickEnqueued = false
+
     func wakeup() {
+        guard Self.claimTickSlot() else { return }
         DispatchQueue.main.async {
             GhosttyService.shared.tick()
+            Self.releaseTickSlot()
         }
+    }
+
+    private static func claimTickSlot() -> Bool {
+        wakeupLock.lock()
+        defer { wakeupLock.unlock() }
+        if tickEnqueued {
+            return false
+        }
+        tickEnqueued = true
+        return true
+    }
+
+    private static func releaseTickSlot() {
+        wakeupLock.lock()
+        tickEnqueued = false
+        wakeupLock.unlock()
     }
 
     func action(app: ghostty_app_t?, target: ghostty_target_s, action: ghostty_action_s) -> Bool {

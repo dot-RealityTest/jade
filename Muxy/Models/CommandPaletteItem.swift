@@ -18,8 +18,14 @@ enum CommandPaletteSection: String, CaseIterable {
 }
 
 enum CommandPaletteFileSearchPolicy {
+    private static let minimumQueryLength = 2
+
     static func shouldSearchFiles(query: String) -> Bool {
-        !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.contains("/") {
+            return !trimmed.isEmpty
+        }
+        return trimmed.count >= minimumQueryLength
     }
 }
 
@@ -238,9 +244,28 @@ struct CommandPaletteItem: Identifiable, Equatable {
                 if lhs.sortPriority != rhs.sortPriority {
                     return lhs.sortPriority < rhs.sortPriority
                 }
+                let lhsScore = lhs.matchScore(query: query)
+                let rhsScore = rhs.matchScore(query: query)
+                if lhsScore != rhsScore {
+                    return lhsScore < rhsScore
+                }
                 return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
             }
         return markedSectionStarts(sortedItems)
+    }
+
+    private func matchScore(query: String) -> Int {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !trimmed.isEmpty else { return 0 }
+        let titleText = title.lowercased()
+        let subtitleText = subtitle.lowercased()
+        let searchOnlyText = searchText.lowercased()
+        if titleText == trimmed { return 0 }
+        if titleText.hasPrefix(trimmed) { return 1 }
+        if titleText.contains(trimmed) { return 2 }
+        if subtitleText.contains(trimmed) { return 3 }
+        if searchOnlyText.contains(trimmed) { return 4 }
+        return 5
     }
 
     private static func markedSectionStarts(_ items: [CommandPaletteItem]) -> [CommandPaletteItem] {

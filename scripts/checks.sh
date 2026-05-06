@@ -9,9 +9,23 @@ YELLOW="\033[33m"
 RESET="\033[0m"
 
 FIX=0
+RUN_BUILD=1
+RUN_IOS=1
+RUN_TEST=1
 for arg in "$@"; do
   case "$arg" in
     --fix) FIX=1 ;;
+    --fast) RUN_IOS=0 ;;
+    --test-only)
+      RUN_BUILD=0
+      RUN_IOS=0
+      RUN_TEST=1
+      ;;
+    --ios)
+      RUN_BUILD=0
+      RUN_IOS=1
+      RUN_TEST=0
+      ;;
   esac
 done
 
@@ -142,15 +156,15 @@ if [ "$failed" -eq 0 ] && [ "$HAS_SWIFTLINT" -eq 1 ]; then
   run_step "Linting" swiftlint lint --strict --quiet || failed=1
 fi
 
-if [ "$failed" -eq 0 ]; then
+if [ "$failed" -eq 0 ] && [ "$RUN_BUILD" -eq 1 ] && [ "$RUN_TEST" -eq 0 ]; then
   run_step "Build" swift build || failed=1
 fi
 
-if [ "$failed" -eq 0 ]; then
+if [ "$failed" -eq 0 ] && [ "$RUN_IOS" -eq 1 ]; then
   run_step "Build (iOS)" xcodebuild -project MuxyMobile.xcodeproj -scheme MuxyMobile -destination "generic/platform=iOS Simulator" -quiet build || failed=1
 fi
 
-if [ "$failed" -eq 0 ]; then
+if [ "$failed" -eq 0 ] && [ "$RUN_TEST" -eq 1 ]; then
   run_step "Test" swift test || failed=1
 fi
 
