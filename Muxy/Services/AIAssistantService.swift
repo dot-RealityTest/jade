@@ -134,14 +134,32 @@ final class AIAssistantService {
     }
 
     private static func buildSystemPrompt(projectPath: String?, activeFile: String?) -> String {
-        var context = "You are Jade, a helpful AI coding assistant embedded in a macOS terminal multiplexer."
+        var context = """
+        You are Jade, a helpful AI coding assistant embedded in a macOS terminal multiplexer app.
+        The user is asking you about code in their active project.
+        You DO have access to the following workspace context — use it to ground every response:
+
+        """
         if let projectPath {
-            context += "\nActive project path: \(projectPath)"
+            context += "- Active project root: \(projectPath)\n"
+        } else {
+            context += "- No active project is currently open.\n"
         }
         if let activeFile {
-            context += "\nCurrently open file: \(activeFile)"
+            let fileName = URL(fileURLWithPath: activeFile).lastPathComponent
+            context += "- Currently open file: \(activeFile) (filename: \(fileName))\n"
+        } else {
+            context += "- No file is currently open in the editor.\n"
         }
-        context += "\nKeep responses concise and actionable. Use markdown for code blocks."
+        context += """
+
+        Rules:
+        1. Always reference the active file and project path when relevant.
+        2. If the user asks "where am I" or "what project is this", tell them the project root and open file from the context above.
+        3. Keep responses concise and actionable.
+        4. Use markdown code blocks for any code.
+        5. You cannot read files from disk directly, but you CAN see any code the user pastes into the chat.
+        """
         return context
     }
 }

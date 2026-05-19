@@ -354,7 +354,7 @@ struct MainWindow: View {
             AIAssistantPanel(
                 projectID: appState.activeProjectID,
                 projectPath: activeProject?.path,
-                activeFile: appState.activeTab(for: appState.activeProjectID ?? UUID())?.content.editorState?.filePath
+                activeFile: anyOpenEditorFilePath
             )
         }
     }
@@ -1191,6 +1191,21 @@ struct MainWindow: View {
 
     private var activeEditorFilePath: String? {
         activeEditorState?.filePath
+    }
+
+    private var anyOpenEditorFilePath: String? {
+        guard let project = activeProject,
+              appState.activeWorktreeKey(for: project.id) != nil,
+              let root = appState.workspaceRoot(for: project.id)
+        else { return nil }
+        for area in root.allAreas() {
+            for tab in area.tabs {
+                if let filePath = tab.content.editorState?.filePath {
+                    return filePath
+                }
+            }
+        }
+        return nil
     }
 
     private func activeEditorCursor() -> (line: Int?, column: Int?) {
