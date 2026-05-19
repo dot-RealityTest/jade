@@ -140,8 +140,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         ProcessInfo.processInfo.processName = AppIdentity.displayName
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
-        UNUserNotificationCenter.current().delegate = self
+        if Bundle.main.bundleURL.pathExtension == "app" {
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+            UNUserNotificationCenter.current().delegate = self
+        }
     }
 
     func applicationDidUpdate(_ notification: Notification) {

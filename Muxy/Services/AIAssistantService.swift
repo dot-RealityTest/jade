@@ -141,6 +141,7 @@ final class AIAssistantService {
     }
 
     private func postResponseNotification(projectID: UUID) {
+        guard Bundle.main.bundleURL.pathExtension == "app" else { return }
         let content = UNMutableNotificationContent()
         content.title = "Jade AI Assistant"
         content.body = "Response ready"
