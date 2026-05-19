@@ -243,6 +243,7 @@ Muxy/
       ConnectionsSettingsView.swift  Connections tab container for remote spaces, mobile access, and AI usage
       NotificationSettingsView.swift  Notification preferences tab
       AIUsageSettingsView.swift  AI usage tab (global enable, display mode, auto-refresh, secondary limits, per-provider toggles)
+      AIAssistantSettingsView.swift  AI Assistant backend config (Ollama base URL + model picker with fetch)
       MobileSettingsView.swift  Mobile server and approved devices tab
       RemoteSpacesSettingsView.swift  Remote machine profile add/edit/delete tab with generated SSH command preview and theme selection
       ShortcutRecorderView.swift  Shortcut capture field
@@ -662,13 +663,37 @@ Messages are keyed by `projectID` so each project maintains its own conversation
 
 The panel lives in the right-side inspector slot alongside Notes/Todo. It renders a scrollable message list with user messages right-aligned (accent background) and assistant messages left-aligned (surface background). An input bar at the bottom supports multi-line text and submits on Enter. A clear button resets the current project's conversation and cancels any in-flight stream.
 
+#### Markdown Rendering
+
+Assistant messages are parsed and rendered as rich markdown, not plain text:
+
+- **Headings** (`#` to `######`) — Bold, scaled by level (20pt down to 14pt)
+- **Bold** (`**text**`) — Bold weight
+- **Italic** (`*text*` or `_text_`) — Italic style
+- **Inline code** (`` `code` ``) — Monospace font with subtle background
+- **Code blocks** (` ```lang\ncode\n``` `) — Monospace + rounded background
+- **Bullet lists** (`- item` or `* item`) — `•` markers
+- **Blockquotes** (`> text`) — Left accent bar + muted text color
+- **Plain paragraphs** — Normal body text with inline formatting
+
+The parser (`MarkdownBlockParser` + `InlineParser` in `AIAssistantPanel.swift`) uses regex for inline emphasis and line-by-line scanning for block-level constructs. Rendered via `AttributedString` with theme-matched colors.
+
 ### Editor Integration
 
 Right-clicking selected code in the built-in editor adds an **"Explain with AI"** context-menu item. The selected text and file name are sent as a pre-formatted prompt (`Explain this code from <file>: \n\n\`\`\`\n<code>\n\`\`\``). The panel auto-opens if hidden, streams the explanation, and preserves the conversation thread.
 
+### Settings
+
+A dedicated **AI Assistant** tab in Settings (`⌘,`) exposes:
+- **Base URL** — Ollama server address (default `http://localhost:11434`)
+- **Model** — Manual text entry or dropdown fetched from `/api/tags`
+- **Fetch Models** button — Queries Ollama and populates the picker
+
+The settings share the same backend as Natural Commands (`NaturalCommandSettings.ollamaBaseURL` and `ollamaModel`), so changing the model here also affects `⌘K` natural command generation.
+
 ### Backend
 
-`AIAssistantService` reuses the Ollama URL and model from `NaturalCommandSettings` (`naturalCommands.ollamaBaseURL` and `naturalCommands.ollamaModel`) so no separate configuration is needed. The service sends the full conversation history on every turn, prefixed with a system message containing workspace context.
+`AIAssistantService` reuses the Ollama URL and model from `NaturalCommandSettings` so no separate configuration is needed. The service sends the full conversation history on every turn, prefixed with a system message containing workspace context. The system prompt explicitly instructs the model to use the provided project path and open file for grounding, and to answer "where am I" questions with actual workspace context.
 
 ## Remote Server (MuxyServer)
 
