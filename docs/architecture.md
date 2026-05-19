@@ -662,6 +662,10 @@ Messages are keyed by `projectID` so each project maintains its own conversation
 
 The panel lives in the right-side inspector slot alongside Notes/Todo. It renders a scrollable message list with user messages right-aligned (accent background) and assistant messages left-aligned (surface background). An input bar at the bottom supports multi-line text and submits on Enter. A clear button resets the current project's conversation and cancels any in-flight stream.
 
+### Editor Integration
+
+Right-clicking selected code in the built-in editor adds an **"Explain with AI"** context-menu item. The selected text and file name are sent as a pre-formatted prompt (`Explain this code from <file>: \n\n\`\`\`\n<code>\n\`\`\``). The panel auto-opens if hidden, streams the explanation, and preserves the conversation thread.
+
 ### Backend
 
 `AIAssistantService` reuses the Ollama URL and model from `NaturalCommandSettings` (`naturalCommands.ollamaBaseURL` and `naturalCommands.ollamaModel`) so no separate configuration is needed. The service sends the full conversation history on every turn, prefixed with a system message containing workspace context.
