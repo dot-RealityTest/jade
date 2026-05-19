@@ -25,6 +25,16 @@ struct AIAssistantPanel: View {
                 .fill(MuxyTheme.border)
                 .frame(width: 1)
         }
+        .background {
+            Button {
+                inputFocused = true
+            } label: {
+                EmptyView()
+            }
+            .keyboardShortcut("l", modifiers: [.command, .shift])
+            .opacity(0)
+            .frame(width: 0, height: 0)
+        }
     }
 
     private var header: some View {
@@ -69,7 +79,10 @@ struct AIAssistantPanel: View {
                 LazyVStack(spacing: 0) {
                     if let pid = projectID {
                         ForEach(store.messages(for: pid)) { message in
-                            MessageBubble(message: message)
+                            MessageBubble(
+                                message: message,
+                                onRetry: message.isError ? { retry() } : nil
+                            )
                         }
                     } else {
                         aiEmptyState
@@ -98,15 +111,27 @@ struct AIAssistantPanel: View {
                     send()
                 }
 
-            Button {
-                send()
-            } label: {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(canSend ? MuxyTheme.accent : MuxyTheme.fgDim)
+            if let pid = projectID, store.isStreaming[pid] == true {
+                Button {
+                    store.cancel(projectID: pid)
+                } label: {
+                    Image(systemName: "stop.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(MuxyTheme.diffRemoveFg)
+                        .frame(width: 22, height: 22)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Button {
+                    send()
+                } label: {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(canSend ? MuxyTheme.accent : MuxyTheme.fgDim)
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSend)
             }
-            .buttonStyle(.plain)
-            .disabled(!canSend)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
@@ -159,21 +184,55 @@ struct AIAssistantPanel: View {
         guard let pid = projectID else { return }
         store.clear(projectID: pid)
     }
+
+    private func retry() {
+        guard let pid = projectID,
+              let prompt = store.lastFailedPrompt[pid]
+        else { return }
+        store.setLastFailedPrompt(nil, projectID: pid)
+        service.send(
+            prompt: prompt,
+            projectID: pid,
+            projectPath: projectPath,
+            activeFile: activeFile
+        )
+    }
 }
 
 private struct MessageBubble: View {
     let message: AIAssistantMessage
+    let onRetry: (() -> Void)?
 
     var body: some View {
         HStack(spacing: 0) {
             if message.role == .user {
                 Spacer(minLength: 24)
             }
-            MarkdownMessageContent(text: message.content, isUser: message.role == .user)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 7)
-                .background(message.role == .user ? MuxyTheme.accentSoft : MuxyTheme.surface)
-                .cornerRadius(8)
+            VStack(alignment: .leading, spacing: 6) {
+                MarkdownMessageContent(text: message.content, isUser: message.role == .user)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(message.role == .user ? MuxyTheme.accentSoft : MuxyTheme.surface)
+                    .cornerRadius(8)
+                if let onRetry, message.isError {
+                    Button {
+                        onRetry()
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 9, weight: .semibold))
+                            Text("Retry")
+                                .font(.system(size: 10, weight: .medium))
+                        }
+                        .foregroundStyle(MuxyTheme.diffRemoveFg)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(MuxyTheme.diffRemoveFg.opacity(0.1), in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 10)
+                }
+            }
             if message.role == .assistant {
                 Spacer(minLength: 24)
             }
@@ -208,6 +267,8 @@ private struct MarkdownMessageContent: View {
             codeBlockView(code)
         case let .bulletList(items):
             bulletListView(items)
+        case let .orderedList(items):
+            orderedListView(items)
         case let .blockquote(text):
             blockquoteView(text)
         }
@@ -252,6 +313,23 @@ private struct MarkdownMessageContent: View {
                     Text("•")
                         .font(.system(size: 12))
                         .foregroundStyle(MuxyTheme.fgMuted)
+                    Text(items[index])
+                        .font(.system(size: 12))
+                        .foregroundStyle(MuxyTheme.fg)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+    }
+
+    private func orderedListView(_ items: [String]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(items.indices, id: \.self) { index in
+                HStack(alignment: .top, spacing: 6) {
+                    Text("\(index + 1).")
+                        .font(.system(size: 12))
+                        .foregroundStyle(MuxyTheme.fgMuted)
+                        .frame(width: 16, alignment: .trailing)
                     Text(items[index])
                         .font(.system(size: 12))
                         .foregroundStyle(MuxyTheme.fg)
@@ -306,6 +384,7 @@ private enum MarkdownBlock: Identifiable {
     case heading(level: Int, text: String)
     case codeBlock(language: String?, code: String)
     case bulletList(items: [String])
+    case orderedList(items: [String])
     case blockquote(text: String)
 
     var id: UUID {
@@ -314,6 +393,7 @@ private enum MarkdownBlock: Identifiable {
         case .heading: UUID()
         case .codeBlock: UUID()
         case .bulletList: UUID()
+        case .orderedList: UUID()
         case .blockquote: UUID()
         }
     }
@@ -359,6 +439,11 @@ private enum MarkdownBlockParser {
                 continue
             }
             if let list = parseBulletList(lines: lines, start: index) {
+                blocks.append(list.block)
+                index = list.nextIndex
+                continue
+            }
+            if let list = parseOrderedList(lines: lines, start: index) {
                 blocks.append(list.block)
                 index = list.nextIndex
                 continue
@@ -434,6 +519,28 @@ private enum MarkdownBlockParser {
             index += 1
         }
         return (.bulletList(items: items), index)
+    }
+
+    private static func parseOrderedList(lines: [String.SubSequence], start: Int) -> (block: MarkdownBlock, nextIndex: Int)? {
+        let line = String(lines[start])
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        guard trimmed.first?.isNumber == true else { return nil }
+        let pattern = #"^\d+\.\s"#
+        guard trimmed.range(of: pattern, options: .regularExpression) != nil else { return nil }
+        var items: [String] = []
+        var index = start
+        while index < lines.count {
+            let current = String(lines[index]).trimmingCharacters(in: .whitespaces)
+            if current.isEmpty { break }
+            guard current.first?.isNumber == true,
+                  current.range(of: pattern, options: .regularExpression) != nil
+            else { break }
+            let afterNumber = current.drop(while: { $0.isNumber }).dropFirst()
+            let content = afterNumber.hasPrefix(" ") ? String(afterNumber.dropFirst()) : String(afterNumber)
+            items.append(content)
+            index += 1
+        }
+        return (.orderedList(items: items), index)
     }
 
     private static func gatherParagraphLines(lines: [String.SubSequence], start: Int) -> [String] {

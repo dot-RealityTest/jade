@@ -12,6 +12,10 @@ struct AIAssistantMessage: Identifiable, Equatable, Codable {
     var content: String
     let timestamp: Date
 
+    var isError: Bool {
+        content.hasPrefix("**Error:**")
+    }
+
     init(role: Role, content: String, timestamp: Date = Date()) {
         self.id = UUID()
         self.role = role

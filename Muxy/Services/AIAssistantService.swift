@@ -73,10 +73,12 @@ final class AIAssistantService {
                     projectPath: projectPath,
                     activeFile: activeFile
                 )
+                store.setLastFailedPrompt(nil, projectID: projectID)
             } catch {
                 logger.error("AI assistant stream failed: \(error.localizedDescription)")
+                store.setLastFailedPrompt(prompt, projectID: projectID)
                 store.updateLastAssistantMessage(
-                    content: "Sorry, something went wrong. \(error.localizedDescription)",
+                    content: "**Error:** \(error.localizedDescription)",
                     projectID: projectID
                 )
             }

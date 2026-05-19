@@ -13,6 +13,7 @@ final class AIAssistantStore {
     private let persistence: CodableFileStore<[String: [AIAssistantMessage]]>
 
     var isStreaming: [UUID: Bool] = [:]
+    var lastFailedPrompt: [UUID: String] = [:]
 
     init() {
         let fileURL = MuxyFileStorage.appSupportDirectory()
@@ -48,6 +49,7 @@ final class AIAssistantStore {
 
     func clear(projectID: UUID) {
         conversations[projectID] = []
+        lastFailedPrompt[projectID] = nil
         cancel(projectID: projectID)
         save()
     }
@@ -64,6 +66,10 @@ final class AIAssistantStore {
 
     func setTask(_ task: Task<Void, Never>, projectID: UUID) {
         streamingTasks[projectID] = task
+    }
+
+    func setLastFailedPrompt(_ prompt: String?, projectID: UUID) {
+        lastFailedPrompt[projectID] = prompt
     }
 
     private func load() {
