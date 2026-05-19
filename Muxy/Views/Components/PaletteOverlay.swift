@@ -36,12 +36,12 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
                     footer
                 }
             }
-            .frame(width: 500, height: 380)
+            .frame(width: UIMetrics.scaled(500), height: UIMetrics.scaled(380))
             .background(MuxyTheme.bg)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(MuxyTheme.border, lineWidth: 1))
-            .shadow(color: .black.opacity(0.4), radius: 20, y: 8)
-            .padding(.top, 60)
+            .clipShape(RoundedRectangle(cornerRadius: UIMetrics.radiusXL))
+            .overlay(RoundedRectangle(cornerRadius: UIMetrics.radiusXL).stroke(MuxyTheme.border, lineWidth: 1))
+            .shadow(color: .black.opacity(0.4), radius: UIMetrics.scaled(20), y: UIMetrics.scaled(8))
+            .padding(.top, UIMetrics.scaled(60))
             .frame(maxHeight: .infinity, alignment: .top)
             .accessibilityAddTraits(.isModal)
         }
@@ -54,10 +54,10 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
     }
 
     private var searchField: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: UIMetrics.spacing4) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(MuxyTheme.fgMuted)
-                .font(.system(size: 13))
+                .font(.system(size: UIMetrics.fontEmphasis))
                 .accessibilityHidden(true)
             PaletteSearchField(
                 text: $query,
@@ -65,11 +65,13 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
                 onSubmit: { confirmSelection() },
                 onEscape: { handleEscape() },
                 onArrowUp: { moveHighlight(-1) },
-                onArrowDown: { moveHighlight(1) }
+                onArrowDown: { moveHighlight(1) },
+                onPageUp: { moveHighlight(-PaletteSearchField.pageJump) },
+                onPageDown: { moveHighlight(PaletteSearchField.pageJump) }
             )
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, UIMetrics.spacing6)
+        .padding(.vertical, UIMetrics.spacing5)
         .onChange(of: query) {
             performSearch()
         }
@@ -81,7 +83,7 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
                 VStack {
                     Spacer()
                     Text(query.isEmpty ? emptyLabel : noMatchLabel)
-                        .font(.system(size: 12))
+                        .font(.system(size: UIMetrics.fontBody))
                         .foregroundStyle(MuxyTheme.fgMuted)
                     Spacer()
                 }
@@ -158,13 +160,17 @@ struct PaletteOverlay<Item: Identifiable & Sendable>: View {
 }
 
 struct PaletteSearchField: NSViewRepresentable {
+    static let pageJump = 10
+
     @Binding var text: String
     let placeholder: String
-    var fontSize: CGFloat = 13
+    var fontSize: CGFloat = UIMetrics.fontEmphasis
     let onSubmit: () -> Void
     let onEscape: () -> Void
     let onArrowUp: () -> Void
     let onArrowDown: () -> Void
+    var onPageUp: () -> Void = {}
+    var onPageDown: () -> Void = {}
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -192,7 +198,7 @@ struct PaletteSearchField: NSViewRepresentable {
 
     func updateNSView(_ nsView: NSTextField, context: Context) {
         context.coordinator.parent = self
-        if nsView.stringValue != text {
+        if nsView.currentEditor() == nil, nsView.stringValue != text {
             nsView.stringValue = text
         }
         if let field = nsView as? PaletteNSTextField {
@@ -202,6 +208,7 @@ struct PaletteSearchField: NSViewRepresentable {
         }
     }
 
+    @MainActor
     final class Coordinator: NSObject, NSTextFieldDelegate {
         var parent: PaletteSearchField
 
@@ -211,7 +218,7 @@ struct PaletteSearchField: NSViewRepresentable {
 
         func controlTextDidChange(_ obj: Notification) {
             guard let field = obj.object as? NSTextField else { return }
-            parent.text = field.stringValue
+            syncText(from: field, skipsMarkedText: true)
         }
 
         func control(
@@ -220,6 +227,7 @@ struct PaletteSearchField: NSViewRepresentable {
             doCommandBy commandSelector: Selector
         ) -> Bool {
             if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+                syncText(from: control, skipsMarkedText: false)
                 parent.onSubmit()
                 return true
             }
@@ -231,7 +239,30 @@ struct PaletteSearchField: NSViewRepresentable {
                 parent.onArrowDown()
                 return true
             }
+            if commandSelector == #selector(NSResponder.pageUp(_:))
+                || commandSelector == #selector(NSResponder.scrollPageUp(_:))
+            {
+                parent.onPageUp()
+                return true
+            }
+            if commandSelector == #selector(NSResponder.pageDown(_:))
+                || commandSelector == #selector(NSResponder.scrollPageDown(_:))
+            {
+                parent.onPageDown()
+                return true
+            }
             return false
+        }
+
+        func syncText(from control: NSControl, skipsMarkedText: Bool) {
+            let editor = control.currentEditor() as? NSTextView
+            if skipsMarkedText, editor?.hasMarkedText() == true {
+                return
+            }
+            let currentText = editor?.string ?? control.stringValue
+            if parent.text != currentText {
+                parent.text = currentText
+            }
         }
     }
 }

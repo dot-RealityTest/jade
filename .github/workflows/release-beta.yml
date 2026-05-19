@@ -126,6 +126,8 @@ jobs:
           echo "public_key=$SPARKLE_PUBLIC_KEY" >> "$GITHUB_OUTPUT"
 
       - name: Build and package
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           chmod +x scripts/build-release.sh scripts/create-icns.sh
           scripts/build-release.sh \
@@ -145,10 +147,18 @@ jobs:
             --apple-id "$APPLE_ID" \
             --password "$APPLE_APP_SPECIFIC_PASSWORD" \
             --team-id "$APPLE_TEAM_ID"
-          xcrun notarytool submit \
+          set +e
+          submit_output=$(xcrun notarytool submit \
             "build/Muxy-${{ needs.validate.outputs.version }}-${{ matrix.arch }}.dmg" \
             --keychain-profile "notary-profile" \
-            --wait
+            --wait \
+            --output-format json)
+          submit_status=$?
+          echo "$submit_output"
+          submission_id=$(echo "$submit_output" | python3 -c 'import sys, json; print(json.load(sys.stdin)["id"])')
+          xcrun notarytool log "$submission_id" --keychain-profile "notary-profile" || true
+          set -e
+          if [ "$submit_status" -ne 0 ]; then exit "$submit_status"; fi
           xcrun stapler staple \
             "build/Muxy-${{ needs.validate.outputs.version }}-${{ matrix.arch }}.dmg"
 
@@ -214,20 +224,28 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ needs.validate.outputs.tag }}
         run: |
-          PREVIOUS_BETA=$(gh release list --repo "${{ github.repository }}" --limit 100 \
-            --json tagName,isPrerelease \
-            --jq '[.[] | select(.isPrerelease and (.tagName | contains("-beta.")))][0].tagName' || echo "")
-          NOTES_ARGS=(--generate-notes)
-          if [[ -n "$PREVIOUS_BETA" && "$PREVIOUS_BETA" != "$TAG" ]]; then
-            NOTES_ARGS+=(--notes-start-tag "$PREVIOUS_BETA")
+          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$TAG" \
+              --repo "${{ github.repository }}" \
+              --clobber \
+              artifacts/dmg-arm64/*.dmg \
+              artifacts/dmg-x86_64/*.dmg
+          else
+            PREVIOUS_BETA=$(gh release list --repo "${{ github.repository }}" --limit 100 \
+              --json tagName,isPrerelease \
+              --jq '[.[] | select(.isPrerelease and (.tagName | contains("-beta.")))][0].tagName' || echo "")
+            NOTES_ARGS=(--generate-notes)
+            if [[ -n "$PREVIOUS_BETA" && "$PREVIOUS_BETA" != "$TAG" ]]; then
+              NOTES_ARGS+=(--notes-start-tag "$PREVIOUS_BETA")
+            fi
+            gh release create "$TAG" \
+              --repo "${{ github.repository }}" \
+              --title "Muxy ${{ needs.validate.outputs.version }}" \
+              --prerelease \
+              "${NOTES_ARGS[@]}" \
+              artifacts/dmg-arm64/*.dmg \
+              artifacts/dmg-x86_64/*.dmg
           fi
-          gh release create "$TAG" \
-            --repo "${{ github.repository }}" \
-            --title "Muxy ${{ needs.validate.outputs.version }}" \
-            --prerelease \
-            "${NOTES_ARGS[@]}" \
-            artifacts/dmg-arm64/*.dmg \
-            artifacts/dmg-x86_64/*.dmg
 
       - name: Publish rolling beta-channel appcast release
         env:
@@ -245,4 +263,44 @@ jobs:
               --notes "Rolling Sparkle appcast for the beta channel. Do not delete." \
               --prerelease \
               appcast-beta-arm64.xml appcast-beta-x86_64.xml
+          fi
+
+      - name: Notify Discord
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.validate.outputs.tag }}
+          VERSION: ${{ needs.validate.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [[ -z "$DISCORD_WEBHOOK_URL" ]]; then
+            echo "DISCORD_WEBHOOK_URL not set, skipping Discord notification"
+            exit 0
+          fi
+          NOTES=$(gh release view "$TAG" --repo "$REPO" --json body --jq .body \
+            | sed -E 's# by @[A-Za-z0-9_-]+ in https://github\.com/[^ ]+/pull/[0-9]+##g')
+          if [[ ${#NOTES} -gt 3800 ]]; then
+            NOTES="${NOTES:0:3800}…"
+          fi
+          URL="https://github.com/${REPO}/releases/tag/${TAG}"
+          PAYLOAD=$(jq -n \
+            --arg title "Muxy ${VERSION} (beta) released" \
+            --arg url "$URL" \
+            --arg notes "$NOTES" \
+            --arg footer "Beta channel" \
+            '{
+              username: "Muxy Releases",
+              embeds: [{
+                title: $title,
+                url: $url,
+                description: $notes,
+                color: 15844367,
+                footer: { text: $footer },
+                timestamp: (now | todate)
+              }]
+            }')
+          if ! curl -fsSL -H "Content-Type: application/json" \
+            -X POST -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"; then
+            echo "Discord notification failed; release succeeded regardless"
           fi

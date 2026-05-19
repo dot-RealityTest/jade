@@ -6,13 +6,14 @@ let package = Package(
     name: "Muxy",
     platforms: [
         .macOS(.v14),
-        .iOS(.v17),
     ],
     products: [
         .library(name: "MuxyShared", targets: ["MuxyShared"]),
     ],
     dependencies: [
         .package(url: "https://github.com/sparkle-project/Sparkle", exact: "2.9.1"),
+        .package(url: "https://github.com/jpsim/Yams", from: "5.1.0"),
+        .package(url: "https://github.com/getsentry/sentry-cocoa", from: "8.40.0"),
     ],
     targets: [
         .target(
@@ -38,19 +39,23 @@ let package = Package(
                 "MuxyShared",
                 "MuxyServer",
                 .product(name: "Sparkle", package: "Sparkle"),
+                .product(name: "Yams", package: "Yams"),
+                .product(name: "Sentry", package: "sentry-cocoa"),
             ],
             path: "Muxy",
-            exclude: ["Info.plist", "Muxy.entitlements", "Resources/ghostty", "Resources/terminfo"],
+            exclude: ["Info.plist", "Muxy.entitlements", "Resources/ghostty", "Resources/terminfo", "Resources/rg"],
             resources: [
                 .process("Resources"),
                 .copy("Resources/ghostty"),
                 .copy("Resources/terminfo"),
+                .copy("Resources/rg"),
             ],
             linkerSettings: [
                 .unsafeFlags([
                     "GhosttyKit.xcframework/macos-arm64_x86_64/ghostty-internal.a",
                 ]),
                 .linkedFramework("AppKit"),
+                .linkedFramework("AVFoundation"),
                 .linkedFramework("Carbon"),
                 .linkedFramework("CoreGraphics"),
                 .linkedFramework("CoreText"),
@@ -59,6 +64,7 @@ let package = Package(
                 .linkedFramework("Metal"),
                 .linkedFramework("MetalKit"),
                 .linkedFramework("QuartzCore"),
+                .linkedFramework("Speech"),
                 .linkedLibrary("c++"),
             ]
         ),
@@ -68,6 +74,7 @@ let package = Package(
                 "Muxy",
                 "MuxyShared",
                 "MuxyServer",
+                .product(name: "Yams", package: "Yams"),
             ],
             path: "Tests/MuxyTests",
             linkerSettings: [
@@ -75,6 +82,7 @@ let package = Package(
                     "GhosttyKit.xcframework/macos-arm64_x86_64/ghostty-internal.a",
                 ]),
                 .linkedFramework("AppKit"),
+                .linkedFramework("AVFoundation"),
                 .linkedFramework("Carbon"),
                 .linkedFramework("CoreGraphics"),
                 .linkedFramework("CoreText"),
@@ -83,6 +91,7 @@ let package = Package(
                 .linkedFramework("Metal"),
                 .linkedFramework("MetalKit"),
                 .linkedFramework("QuartzCore"),
+                .linkedFramework("Speech"),
                 .linkedLibrary("c++"),
             ]
         ),

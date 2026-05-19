@@ -4,6 +4,7 @@ struct UnifiedDiffView: View {
     let rows: [DiffDisplayRow]
     let filePath: String
     var suppressLeadingTopBorder: Bool = false
+    @State private var themeRevision = 0
 
     @State private var cachedChunks: [DiffChunk] = []
     @State private var cachedSignature: Int = 0
@@ -13,6 +14,7 @@ struct UnifiedDiffView: View {
     }
 
     var body: some View {
+        _ = themeRevision
         LazyVStack(spacing: 0) {
             ForEach(Array(cachedChunks.enumerated()), id: \.offset) { index, chunk in
                 switch chunk {
@@ -34,6 +36,9 @@ struct UnifiedDiffView: View {
         }
         .onChange(of: rowsSignature) { _, _ in
             refreshChunksIfNeeded()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .themeDidChange)) { _ in
+            themeRevision &+= 1
         }
     }
 

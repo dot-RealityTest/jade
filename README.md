@@ -5,7 +5,7 @@
 <h1 align="center">Jade</h1>
 
 <p align="center">Lightweight, memory-efficient terminal for Mac built with SwiftUI and <a href="https://github.com/ghostty-org/ghostty">libghostty</a>.</p>
-<p align="center"><a href="#install">Mac</a> | <a href="#ios-app-testing">iOS</a> | <a href="https://discord.gg/4eMXAmJQ2n">Discord</a></p>
+<p align="center"><a href="#install">Mac</a> | <a href="#ios">iOS</a> | <a href="https://apps.apple.com/de/app/muxy/id6762464046?l=en-GB">App Store</a> | <a href="https://play.google.com/store/apps/details?id=com.muxy.app">Android</a> | <a href="https://discord.gg/4eMXAmJQ2n">Discord</a></p>
 
 <div align="center">
   <img src="https://img.shields.io/github/downloads/muxy-app/muxy/total" />
@@ -23,7 +23,18 @@
 - **Project-based workflow** — Organize terminals by project with persistent workspace state
 - **Vertical tabs** — Sidebar tab strip with drag-and-drop reordering, pinning, renaming, and middle-click close
 - **Split panes** — Horizontal and vertical splits with keyboard navigation and resizable dividers
-- **Built-in VCS** — Simple and lightweight basic git diff and operations
+- **Built-in VCS** — Git status, diff (unified and split), commit history, branch picker, and PR creation/listing via `gh`
+- **Git worktrees** — Create, switch, and manage worktrees from the sidebar with per-pane branch tracking
+- **File tree** — Built-in project file browser with file operations and clipboard
+- **Find in files** — Project-wide text search with match preview
+- **Quick open & command palette** — Fuzzy-find files and run commands without leaving the keyboard
+- **Text editor** — Native lightweight editor with syntax highlighting for most languages, search, and history
+- **Markdown preview** — Render Markdown files inline
+- **AI usage tracking** — Live token/cost usage panels for Claude Code, Codex, Cursor, Copilot, Amp, Factory, Kimi, MiniMax, OpenCode, and Z.ai
+- **IDE integration** — Open files and folders in your preferred IDE directly from Muxy
+- **Mobile companion apps** — Pair iOS and Android devices to control your Mac terminals remotely
+- **Rich input panel** — Compose multi-line input with image attachments and drafts before sending to the terminal
+- **Notifications** — In-app notification center with socket-based hooks (e.g. opencode plugin)
 - **Project tools** — Optional Snippets, Notes, and Todo buttons keep project context beside the terminal
 - **Terminal tools** — Launch lazygit with `Cmd+Shift+G` or yazi with `Cmd+Shift+Y`
 - **200+ themes** — Browse and search Ghostty themes with a built-in theme picker
@@ -31,15 +42,14 @@
 - **Customizable toolbar** — Choose which tools appear in the titlebar from Settings
 - **Workspace persistence** — Tabs, splits, and focus state are saved and restored per project
 - **In-terminal search** — Find text in terminal output with match navigation
-- **Drag and drop** — Reorder tabs and projects, drag tabs between panes to create splits
+- **Drag and drop** — Reorder tabs and projects, drag tabs between panes to create splits, drop file paths into the terminal
+- **Project icons** — Custom logos and color picker per project
 - **Auto-updates** — Built-in update checking via Sparkle
-- **Text Editor** - Native, Lightweight Text (not code) Editor with code highlight support for most of the programming languages
 
 ## Requirements
 
 - macOS 14+
 - Swift 6.0+
-- Ghostty installed (optional for themes)
 - `gh` installed (optional for PR management)
 
 ## Install
@@ -55,9 +65,9 @@ brew install --cask muxy
 
 Download the latest release from the [releases page](https://github.com/muxy-app/muxy/releases)
 
-### iOS app (Testing)
+### iOS
 
-The iOS app is available for testers on TestFlight
+[Instructions](https://github.com/muxy-app/mobile)
 
 - Install the iOS app via TestFlight (https://testflight.apple.com/join/7t1AaYHW)
 - Open Jade on your Mac
@@ -69,7 +79,9 @@ The iOS app is available for testers on TestFlight
 - Approve the connection on your Mac
 - Test and open issues for the bugs
 
-**The iOS app is also open-source and the source is in this repo**
+### Android
+
+[Instructions](https://github.com/muxy-app/mobile)
 
 ## Local Development
 

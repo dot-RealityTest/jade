@@ -19,7 +19,8 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
         }
-        .frame(width: 760, height: 560)
+        .frame(minWidth: 720, minHeight: 560)
+        .background(SettingsWindowConfigurator(minSize: NSSize(width: 720, height: 560)))
         .background(Color(nsColor: .windowBackgroundColor))
         .resetsSettingsFocusOnOutsideClick()
     }
@@ -35,6 +36,10 @@ struct SettingsView: View {
             CommandsSettingsView()
         case .editor:
             EditorSettingsView()
+        case .sessions:
+            SessionRestoreSettingsView()
+        case .recording:
+            RecordingSettingsView()
         case .notifications:
             NotificationSettingsView()
         case .connections:
@@ -52,6 +57,8 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
     case appearance
     case commands
     case editor
+    case sessions
+    case recording
     case notifications
     case connections
     case aiAssistant
@@ -65,6 +72,8 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
         case .appearance: "Appearance"
         case .commands: "Commands"
         case .editor: "Editor"
+        case .sessions: "Sessions"
+        case .recording: "Recording"
         case .notifications: "Notifications"
         case .connections: "Connections"
         case .aiAssistant: "AI Assistant"
@@ -78,9 +87,11 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
         case .appearance: "Themes and layout"
         case .commands: "Shortcuts and actions"
         case .editor: "Files and markdown"
+        case .sessions: "Terminal session restore"
+        case .recording: "Voice and screen capture"
         case .notifications: "Alerts and providers"
         case .connections: "Remote, mobile, usage"
-        case .aiAssistant: "Chat model and backend"
+        case .aiAssistant: "Commit and PR generation"
         case .ghostty: "Terminal emulator config"
         }
     }
@@ -91,9 +102,11 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
         case .appearance: "paintbrush"
         case .commands: "sparkles"
         case .editor: "pencil.line"
+        case .sessions: "clock.arrow.circlepath"
+        case .recording: "mic"
         case .notifications: "bell"
         case .connections: "network"
-        case .aiAssistant: "bubble.left.and.bubble.right"
+        case .aiAssistant: "sparkles"
         case .ghostty: "terminal"
         }
     }
@@ -189,4 +202,26 @@ private struct SettingsPageHeader: View {
         .padding(.horizontal, 18)
         .padding(.vertical, 13)
     }
+}
+
+private struct SettingsWindowConfigurator: NSViewRepresentable {
+    let minSize: NSSize
+
+    func makeNSView(context _: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async { [weak view] in
+            guard let window = view?.window else { return }
+            window.styleMask.insert(.resizable)
+            window.minSize = minSize
+            if window.frame.width < minSize.width || window.frame.height < minSize.height {
+                var frame = window.frame
+                frame.size.width = max(frame.size.width, minSize.width)
+                frame.size.height = max(frame.size.height, minSize.height)
+                window.setFrame(frame, display: true)
+            }
+        }
+        return view
+    }
+
+    func updateNSView(_: NSView, context _: Context) {}
 }

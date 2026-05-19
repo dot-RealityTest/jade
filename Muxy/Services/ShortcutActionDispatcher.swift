@@ -47,6 +47,8 @@ struct ShortcutActionDispatcher {
             }
             appState.createTab(projectID: projectID)
             return true
+        case .reopenClosedTerminalTab:
+            return appState.reopenLastClosedTerminalTab()
         case .closeTab:
             guard let projectID = appState.activeProjectID,
                   let area = appState.focusedArea(for: projectID),
@@ -91,6 +93,14 @@ struct ShortcutActionDispatcher {
             guard let projectID = appState.activeProjectID else { return false }
             appState.focusPaneDown(projectID: projectID)
             return true
+        case .cycleNextTabAcrossPanes:
+            guard let projectID = appState.activeProjectID else { return false }
+            appState.cycleNextTabAcrossPanes(projectID: projectID)
+            return true
+        case .cyclePreviousTabAcrossPanes:
+            guard let projectID = appState.activeProjectID else { return false }
+            appState.cyclePreviousTabAcrossPanes(projectID: projectID)
+            return true
         case .nextTab:
             guard let projectID = appState.activeProjectID else { return false }
             appState.selectNextTab(projectID: projectID)
@@ -105,7 +115,7 @@ struct ShortcutActionDispatcher {
         case .newProject:
             return false
         case .openProject:
-            ProjectOpenService.openProject(
+            ProjectOpenService.openProjectViaPicker(
                 appState: appState,
                 projectStore: projectStore,
                 worktreeStore: worktreeStore
@@ -135,6 +145,12 @@ struct ShortcutActionDispatcher {
                 executable: "yazi",
                 installCommand: "brew install yazi"
             )
+        case .toggleRichInput:
+            notificationCenter.post(name: .toggleRichInput, object: nil)
+            return true
+        case .submitRichInput,
+             .submitRichInputWithoutReturn:
+            return false
         case .openVCSTab:
             guard let activeProject else { return false }
             openVCS(activeProject)
@@ -144,6 +160,9 @@ struct ShortcutActionDispatcher {
             return true
         case .quickOpen:
             notificationCenter.post(name: .quickOpen, object: nil)
+            return true
+        case .findInFiles:
+            notificationCenter.post(name: .findInFiles, object: nil)
             return true
         case .switchWorktree:
             notificationCenter.post(name: .switchWorktree, object: nil)
@@ -181,7 +200,14 @@ struct ShortcutActionDispatcher {
             guard appState.navigation.canGoForward else { return false }
             appState.goForward()
             return true
-        case .selectTab1,
+        case .toggleMaximizePane:
+            guard let projectID = appState.activeProjectID,
+                  let areaID = appState.focusedAreaID(for: projectID)
+            else { return false }
+            appState.toggleMaximize(areaID: areaID, for: projectID)
+            return true
+        case .toggleVoiceRecording,
+             .selectTab1,
              .selectTab2,
              .selectTab3,
              .selectTab4,

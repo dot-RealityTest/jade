@@ -351,27 +351,14 @@ public struct TerminalOutputEventDTO: Codable, Sendable {
     }
 }
 
-public struct TabChangeEventDTO: Codable, Sendable {
+public struct GetVCSStatusParams: Codable, Sendable {
     public let projectID: UUID
-    public let areaID: UUID
-    public let tab: TabDTO
-    public let changeKind: TabChangeKind
-    public init(projectID: UUID, areaID: UUID, tab: TabDTO, changeKind: TabChangeKind) {
+    public init(projectID: UUID) {
         self.projectID = projectID
-        self.areaID = areaID
-        self.tab = tab
-        self.changeKind = changeKind
-    }
-
-    public enum TabChangeKind: String, Codable, Sendable {
-        case created
-        case closed
-        case selected
-        case titleChanged
     }
 }
 
-public struct GetVCSStatusParams: Codable, Sendable {
+public struct VCSRefreshParams: Codable, Sendable {
     public let projectID: UUID
     public init(projectID: UUID) {
         self.projectID = projectID
@@ -472,16 +459,43 @@ public struct VCSCreatePRParams: Codable, Sendable {
     }
 }
 
+public enum VCSMergeMethodDTO: String, Codable, Sendable {
+    case merge
+    case squash
+    case rebase
+}
+
+public struct VCSMergePullRequestParams: Codable, Sendable {
+    public let projectID: UUID
+    public let number: Int
+    public let method: VCSMergeMethodDTO
+    public let deleteBranch: Bool
+    public init(projectID: UUID, number: Int, method: VCSMergeMethodDTO, deleteBranch: Bool) {
+        self.projectID = projectID
+        self.number = number
+        self.method = method
+        self.deleteBranch = deleteBranch
+    }
+}
+
 public struct VCSAddWorktreeParams: Codable, Sendable {
     public let projectID: UUID
     public let name: String
     public let branch: String
     public let createBranch: Bool
-    public init(projectID: UUID, name: String, branch: String, createBranch: Bool) {
+    public let baseBranch: String?
+    public init(
+        projectID: UUID,
+        name: String,
+        branch: String,
+        createBranch: Bool,
+        baseBranch: String? = nil
+    ) {
         self.projectID = projectID
         self.name = name
         self.branch = branch
         self.createBranch = createBranch
+        self.baseBranch = baseBranch
     }
 }
 
@@ -491,6 +505,18 @@ public struct VCSRemoveWorktreeParams: Codable, Sendable {
     public init(projectID: UUID, worktreeID: UUID) {
         self.projectID = projectID
         self.worktreeID = worktreeID
+    }
+}
+
+public struct VCSGetDiffParams: Codable, Sendable {
+    public let projectID: UUID
+    public let filePath: String
+    public let forceFull: Bool
+
+    public init(projectID: UUID, filePath: String, forceFull: Bool = false) {
+        self.projectID = projectID
+        self.filePath = filePath
+        self.forceFull = forceFull
     }
 }
 

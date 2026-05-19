@@ -86,8 +86,22 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 - Upload screenshots or recordings for the PRs.
 - Never answer any question without a proper investigation and exploring the codebase.
 - Do not push this repo unless the user explicitly asks. Commits are local by default.
+- Prioritize problem comprehension over premature implementation. Validate the approach before execution to avoid rework
+- Plan properly before executing to not double work
 
 ## Code Review
 
 - Review the PRs/Code against the purpose of the PR/Issue/Asked. If you find unrelated issues to the PR during the review, Report them in a separate section.
 - Apply review recommendations only after user's confirmation.
+
+## Learned User Preferences
+
+- Prefer minimal top window chrome for Jade: avoid stacking a native title bar, a separate SwiftUI toolbar row, and a tab strip; keep one compact workspace chrome row (~32pt) under the native title bar.
+- When polishing Jade UI, aim for a finer, smaller, premium feel rather than chunky controls or extra vertical bands.
+- For UI screenshot feedback, confirm the target is Jade/muxy before changing code; the user also has a separate PiecesTask app and has corrected mistaken cross-repo polish.
+
+## Learned Workspace Facts
+
+- Launch Jade from a local debug build with `.build/arm64-apple-macosx/debug/Muxy` after `swift build` (SwiftPM executable name remains `Muxy`; user-facing app name is Jade).
+- PiecesTask is a separate project at `/Users/kika_hub/Projects/PiecesTask`, not part of the muxy/Jade repo.
+- Jade main-window HIG work favors incremental changes (native title bar, consolidated chrome, `WindowLayoutMetrics`) over a full `NavigationSplitView` / single-inspector refactor unless the user widens scope.

@@ -24,8 +24,12 @@ struct CreatePRForm: View {
         _ draft: Bool
     ) -> Void
     let onCancel: () -> Void
+    let onGenerateAI: ((_ baseBranch: String) async throws -> AIPullRequestDraft)?
 
     @State private var didLoadRemoteBranches = false
+    @State private var isGeneratingAI = false
+    @State private var aiError: String?
+    @State private var aiTask: Task<Void, Never>?
 
     private var availableBaseBranches: [String] {
         if !context.remoteBranches.isEmpty {
@@ -82,7 +86,7 @@ struct CreatePRForm: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: UIMetrics.spacing5) {
             header
             titleField
             descriptionField
@@ -97,7 +101,7 @@ struct CreatePRForm: View {
                 }
             }
 
-            HStack(spacing: 10) {
+            HStack(spacing: UIMetrics.spacing5) {
                 advancedToggle
                 if advanced {
                     draftToggle
@@ -110,7 +114,7 @@ struct CreatePRForm: View {
                 warning(errorMessage)
             }
         }
-        .padding(10)
+        .padding(UIMetrics.spacing5)
         .background(MuxyTheme.bg)
         .onAppear(perform: applyDefaults)
         .onChange(of: availableBaseBranches) { _, newList in
@@ -126,48 +130,48 @@ struct CreatePRForm: View {
     }
 
     private var header: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: UIMetrics.spacing4) {
             Button(action: onCancel) {
-                HStack(spacing: 4) {
+                HStack(spacing: UIMetrics.spacing2) {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: UIMetrics.fontCaption, weight: .bold))
                     Text("Back")
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: UIMetrics.fontFootnote, weight: .medium))
                 }
                 .foregroundStyle(MuxyTheme.fgMuted)
-                .padding(.vertical, 3)
+                .padding(.vertical, UIMetrics.scaled(3))
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .help("Back to commit")
 
             Image(systemName: "arrow.triangle.pull")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: UIMetrics.fontBody, weight: .semibold))
                 .foregroundStyle(MuxyTheme.accent)
             Text("New Pull Request")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: UIMetrics.fontBody, weight: .semibold))
             Spacer(minLength: 0)
         }
     }
 
     private var targetBranchField: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: UIMetrics.spacing2) {
             fieldLabel("Target Branch")
             if availableBaseBranches.isEmpty {
                 if context.isLoadingRemoteBranches {
-                    HStack(spacing: 6) {
+                    HStack(spacing: UIMetrics.spacing3) {
                         ProgressView().controlSize(.small)
                         Text("Loading remote branches…")
-                            .font(.system(size: 11))
+                            .font(.system(size: UIMetrics.fontFootnote))
                             .foregroundStyle(MuxyTheme.fgMuted)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 7)
+                    .padding(.horizontal, UIMetrics.spacing4)
+                    .padding(.vertical, UIMetrics.scaled(7))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .themedFieldBackground()
                 } else {
                     Text("No branches found.")
-                        .font(.system(size: 11))
+                        .font(.system(size: UIMetrics.fontFootnote))
                         .foregroundStyle(MuxyTheme.diffRemoveFg)
                 }
             } else {
@@ -190,22 +194,22 @@ struct CreatePRForm: View {
                     }
                     .disabled(context.isLoadingRemoteBranches)
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: UIMetrics.spacing3) {
                         Image(systemName: "arrow.triangle.branch")
-                            .font(.system(size: 10, weight: .semibold))
+                            .font(.system(size: UIMetrics.fontCaption, weight: .semibold))
                             .foregroundStyle(MuxyTheme.fgDim)
                         Text(baseBranch.isEmpty ? "Select branch" : baseBranch)
-                            .font(.system(size: 12, design: .monospaced))
+                            .font(.system(size: UIMetrics.fontBody, design: .monospaced))
                             .foregroundStyle(MuxyTheme.fg)
                             .lineLimit(1)
                             .truncationMode(.middle)
                         Spacer(minLength: 4)
                         Image(systemName: "chevron.down")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.system(size: UIMetrics.fontXS, weight: .bold))
                             .foregroundStyle(MuxyTheme.fgDim)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 7)
+                    .padding(.horizontal, UIMetrics.spacing4)
+                    .padding(.vertical, UIMetrics.scaled(7))
                     .contentShape(Rectangle())
                 }
                 .menuStyle(.button)
@@ -217,8 +221,14 @@ struct CreatePRForm: View {
     }
 
     private var titleField: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            fieldLabel("Title")
+        VStack(alignment: .leading, spacing: UIMetrics.spacing2) {
+            HStack(spacing: UIMetrics.spacing2) {
+                fieldLabel("Title")
+                Spacer(minLength: 0)
+                if onGenerateAI != nil {
+                    aiGenerateButton
+                }
+            }
             ThemedTextField(
                 text: $title,
                 placeholder: "Short summary of the change",
@@ -226,25 +236,95 @@ struct CreatePRForm: View {
                 onSubmit: { if canSubmit, !inProgress { submit() } }
             )
             .focused($titleFocused)
+            if let aiError {
+                Text(aiError)
+                    .font(.system(size: UIMetrics.fontFootnote))
+                    .foregroundStyle(MuxyTheme.diffRemoveFg)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 
+    private var aiGenerateButton: some View {
+        Button {
+            if isGeneratingAI {
+                cancelAIGeneration()
+            } else {
+                generateWithAI()
+            }
+        } label: {
+            HStack(spacing: UIMetrics.spacing2) {
+                if isGeneratingAI {
+                    ProgressView().controlSize(.mini)
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: UIMetrics.fontCaption))
+                } else {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: UIMetrics.fontCaption, weight: .semibold))
+                }
+                Text(isGeneratingAI ? "Cancel" : "Generate with AI")
+                    .font(.system(size: UIMetrics.fontFootnote, weight: .medium))
+            }
+            .foregroundStyle(MuxyTheme.accent)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(inProgress)
+        .help(isGeneratingAI ? "Cancel generation" : "Generate title and description from the diff")
+    }
+
+    private func generateWithAI() {
+        guard let onGenerateAI else { return }
+        guard !baseBranch.isEmpty else {
+            aiError = "Select a target branch first."
+            return
+        }
+        isGeneratingAI = true
+        aiError = nil
+        let base = baseBranch
+        aiTask?.cancel()
+        aiTask = Task { @MainActor in
+            do {
+                let draft = try await onGenerateAI(base)
+                guard !Task.isCancelled else { return }
+                title = draft.title
+                bodyText = draft.body
+                isGeneratingAI = false
+                aiTask = nil
+            } catch is CancellationError {
+                isGeneratingAI = false
+                aiTask = nil
+            } catch {
+                guard !Task.isCancelled else { return }
+                aiError = error.localizedDescription
+                isGeneratingAI = false
+                aiTask = nil
+            }
+        }
+    }
+
+    private func cancelAIGeneration() {
+        aiTask?.cancel()
+        aiTask = nil
+        isGeneratingAI = false
+    }
+
     private var descriptionField: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: UIMetrics.spacing2) {
             fieldLabel("Description")
             TextEditor(text: $bodyText)
-                .font(.system(size: 12))
+                .font(.system(size: UIMetrics.fontBody))
                 .foregroundStyle(MuxyTheme.fg)
                 .scrollContentBackground(.hidden)
-                .padding(.horizontal, 4)
-                .padding(.vertical, 3)
-                .frame(height: 100)
+                .padding(.horizontal, UIMetrics.spacing2)
+                .padding(.vertical, UIMetrics.scaled(3))
+                .frame(height: UIMetrics.scaled(100))
                 .themedFieldBackground()
         }
     }
 
     private var newBranchField: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: UIMetrics.spacing2) {
             fieldLabel("New Branch")
             ThemedTextField(
                 text: $newBranchName,
@@ -258,16 +338,16 @@ struct CreatePRForm: View {
                 }
             }
             Text("A new branch will be created from \(currentBranchSnapshot) for this pull request.")
-                .font(.system(size: 11))
+                .font(.system(size: UIMetrics.fontFootnote))
                 .foregroundStyle(MuxyTheme.fgDim)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var includeSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: UIMetrics.spacing3) {
             fieldLabel("Include")
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: UIMetrics.spacing2) {
                 includeRadio(label: "All changes (staged + unstaged)", value: true)
                 includeRadio(label: "Only staged changes", value: false)
             }
@@ -278,12 +358,12 @@ struct CreatePRForm: View {
         Button {
             includeAll = value
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: UIMetrics.spacing3) {
                 Image(systemName: includeAll == value ? "largecircle.fill.circle" : "circle")
-                    .font(.system(size: 12))
+                    .font(.system(size: UIMetrics.fontBody))
                     .foregroundStyle(includeAll == value ? MuxyTheme.accent : MuxyTheme.fgDim)
                 Text(label)
-                    .font(.system(size: 11))
+                    .font(.system(size: UIMetrics.fontFootnote))
                     .foregroundStyle(MuxyTheme.fg)
             }
             .contentShape(Rectangle())
@@ -295,11 +375,11 @@ struct CreatePRForm: View {
         Button {
             advanced.toggle()
         } label: {
-            HStack(spacing: 4) {
+            HStack(spacing: UIMetrics.spacing2) {
                 Image(systemName: advanced ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.system(size: UIMetrics.fontXS, weight: .bold))
                 Text("Advanced")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: UIMetrics.fontFootnote, weight: .medium))
             }
             .foregroundStyle(MuxyTheme.fgMuted)
             .contentShape(Rectangle())
@@ -311,7 +391,7 @@ struct CreatePRForm: View {
     private var draftToggle: some View {
         Toggle(isOn: $draft) {
             Text("Create as draft")
-                .font(.system(size: 11))
+                .font(.system(size: UIMetrics.fontFootnote))
                 .foregroundStyle(MuxyTheme.fg)
         }
         .toggleStyle(.checkbox)
@@ -319,21 +399,21 @@ struct CreatePRForm: View {
 
     private func warning(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 11))
+            .font(.system(size: UIMetrics.fontFootnote))
             .foregroundStyle(MuxyTheme.diffRemoveFg)
             .fixedSize(horizontal: false, vertical: true)
     }
 
     private var footerButtons: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: UIMetrics.spacing3) {
             Button(action: onCancel) {
                 Text("Cancel")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: UIMetrics.fontFootnote, weight: .medium))
                     .foregroundStyle(MuxyTheme.fg)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(MuxyTheme.border, lineWidth: 1))
+                    .padding(.horizontal, UIMetrics.spacing6)
+                    .padding(.vertical, UIMetrics.spacing3)
+                    .background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: UIMetrics.radiusMD))
+                    .overlay(RoundedRectangle(cornerRadius: UIMetrics.radiusMD).stroke(MuxyTheme.border, lineWidth: 1))
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -341,22 +421,22 @@ struct CreatePRForm: View {
 
             let submitEnabled = canSubmit && !inProgress
             Button(action: submit) {
-                HStack(spacing: 4) {
+                HStack(spacing: UIMetrics.spacing2) {
                     if inProgress {
                         ProgressView().controlSize(.mini)
                     }
                     Text("Create PR")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.system(size: UIMetrics.fontFootnote, weight: .semibold))
                 }
                 .foregroundStyle(submitEnabled ? MuxyTheme.bg : MuxyTheme.fgDim)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.horizontal, UIMetrics.spacing6)
+                .padding(.vertical, UIMetrics.spacing3)
                 .background(
                     submitEnabled ? MuxyTheme.accent : MuxyTheme.surface,
-                    in: RoundedRectangle(cornerRadius: 6)
+                    in: RoundedRectangle(cornerRadius: UIMetrics.radiusMD)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 6)
+                    RoundedRectangle(cornerRadius: UIMetrics.radiusMD)
                         .stroke(MuxyTheme.border, lineWidth: submitEnabled ? 0 : 1)
                 )
                 .contentShape(Rectangle())
@@ -369,7 +449,7 @@ struct CreatePRForm: View {
 
     private func fieldLabel(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 11))
+            .font(.system(size: UIMetrics.fontFootnote))
             .foregroundStyle(MuxyTheme.fgMuted)
     }
 
@@ -416,10 +496,10 @@ private struct ThemedTextField: View {
     var body: some View {
         TextField(placeholder, text: $text)
             .textFieldStyle(.plain)
-            .font(.system(size: 12, design: monospaced ? .monospaced : .default))
+            .font(.system(size: UIMetrics.fontBody, design: monospaced ? .monospaced : .default))
             .foregroundStyle(MuxyTheme.fg)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 7)
+            .padding(.horizontal, UIMetrics.spacing4)
+            .padding(.vertical, UIMetrics.scaled(7))
             .frame(maxWidth: .infinity, alignment: .leading)
             .themedFieldBackground()
             .onSubmit { onSubmit?() }
@@ -428,7 +508,7 @@ private struct ThemedTextField: View {
 
 private extension View {
     func themedFieldBackground() -> some View {
-        background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: 6))
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(MuxyTheme.border, lineWidth: 1))
+        background(MuxyTheme.surface, in: RoundedRectangle(cornerRadius: UIMetrics.radiusMD))
+            .overlay(RoundedRectangle(cornerRadius: UIMetrics.radiusMD).stroke(MuxyTheme.border, lineWidth: 1))
     }
 }

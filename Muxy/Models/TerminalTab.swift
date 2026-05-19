@@ -55,7 +55,7 @@ final class TerminalTab: Identifiable {
         }
     }
 
-    let id = UUID()
+    let id: UUID
     var customTitle: String?
     var colorID: String?
     var isPinned: Bool = false
@@ -80,37 +80,44 @@ final class TerminalTab: Identifiable {
     }
 
     init(pane: TerminalPaneState) {
+        id = UUID()
         content = .terminal(pane)
     }
 
     init(vcsState: VCSTabState) {
+        id = UUID()
         content = .vcs(vcsState)
     }
 
     init(editorState: EditorTabState) {
+        id = UUID()
         content = .editor(editorState)
     }
 
     init(diffViewerState: DiffViewerTabState) {
+        id = UUID()
         content = .diffViewer(diffViewerState)
     }
 
-    init(restoring snapshot: TerminalTabSnapshot) {
+    init(restoring snapshot: TerminalTabSnapshot, restoredSession: TerminalSessionSnapshot? = nil) {
+        id = snapshot.id
         customTitle = snapshot.customTitle
         colorID = snapshot.colorID
         isPinned = snapshot.isPinned
         switch snapshot.kind {
         case .terminal:
             content = .terminal(TerminalPaneState(
+                id: snapshot.paneID ?? UUID(),
                 projectPath: snapshot.projectPath,
                 title: snapshot.paneTitle,
-                initialWorkingDirectory: snapshot.currentWorkingDirectory,
+                initialWorkingDirectory: restoredSession?.workingDirectory ?? snapshot.currentWorkingDirectory,
                 startupCommand: snapshot.startupCommand,
                 startupCommandInteractive: snapshot.startupCommandInteractive,
-                externalEditorFilePath: snapshot.externalEditorFilePath
+                externalEditorFilePath: snapshot.externalEditorFilePath,
+                restoredSession: restoredSession
             ))
         case .vcs:
-            content = .vcs(VCSTabState(projectPath: snapshot.projectPath))
+            content = .vcs(VCSStateStore.shared.state(for: snapshot.projectPath))
         case .editor:
             if let filePath = snapshot.filePath {
                 content = .editor(EditorTabState(projectPath: snapshot.projectPath, filePath: filePath))
@@ -139,11 +146,13 @@ final class TerminalTab: Identifiable {
     func snapshot() -> TerminalTabSnapshot {
         TerminalTabSnapshot(
             kind: content.kind,
+            id: id,
             customTitle: customTitle,
             colorID: colorID,
             isPinned: isPinned,
             projectPath: content.projectPath,
             paneTitle: content.pane?.title,
+            paneID: content.pane?.id,
             filePath: content.editorState?.filePath,
             currentWorkingDirectory: content.pane?.currentWorkingDirectory,
             startupCommand: content.pane?.startupCommand,

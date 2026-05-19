@@ -7,6 +7,7 @@ struct PaneNode: View {
     var showTabStrip = true
     var showVCSButton = true
     let projectID: UUID
+    let shortcutOffsets: [UUID: Int]
     let onFocusArea: (UUID) -> Void
     let onSelectTab: (UUID, UUID) -> Void
     let onCreateTab: (UUID) -> Void
@@ -16,6 +17,8 @@ struct PaneNode: View {
     let onSplit: (UUID, SplitDirection) -> Void
     let onCloseArea: (UUID) -> Void
     let onDropAction: (TabDragCoordinator.DropResult) -> Void
+    var showMaximizeButton = false
+    var onToggleMaximize: ((UUID) -> Void)?
 
     var body: some View {
         switch node {
@@ -27,6 +30,7 @@ struct PaneNode: View {
                 showTabStrip: showTabStrip,
                 showVCSButton: showVCSButton,
                 projectID: projectID,
+                shortcutIndexOffset: shortcutOffsets[area.id] ?? 0,
                 onFocus: { onFocusArea(area.id) },
                 onSelectTab: { tabID in onSelectTab(area.id, tabID) },
                 onCreateTab: { onCreateTab(area.id) },
@@ -34,7 +38,9 @@ struct PaneNode: View {
                 onCloseTab: { tabID in onCloseTab(area.id, tabID) },
                 onForceCloseTab: { tabID in onForceCloseTab(area.id, tabID) },
                 onSplit: { dir in onSplit(area.id, dir) },
-                onDropAction: onDropAction
+                onDropAction: onDropAction,
+                showMaximizeButton: showMaximizeButton,
+                onToggleMaximize: onToggleMaximize.map { toggle in { toggle(area.id) } }
             )
         case let .split(branch):
             SplitContainer(
@@ -43,6 +49,7 @@ struct PaneNode: View {
                 isActiveProject: isActiveProject,
                 showVCSButton: showVCSButton,
                 projectID: projectID,
+                shortcutOffsets: shortcutOffsets,
                 onFocusArea: onFocusArea,
                 onSelectTab: onSelectTab,
                 onCreateTab: onCreateTab,
@@ -51,7 +58,9 @@ struct PaneNode: View {
                 onForceCloseTab: onForceCloseTab,
                 onSplit: onSplit,
                 onCloseArea: onCloseArea,
-                onDropAction: onDropAction
+                onDropAction: onDropAction,
+                showMaximizeButton: showMaximizeButton,
+                onToggleMaximize: onToggleMaximize
             )
         }
     }

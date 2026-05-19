@@ -13,6 +13,7 @@ struct MuxyApp: App {
     @State private var appState: AppState
     @State private var projectStore: ProjectStore
     @State private var worktreeStore: WorktreeStore
+    @State private var vcsWorktreeAutoRefresher: VCSWorktreeAutoRefresher
     private let updateService = UpdateService.shared
 
     init() {
@@ -33,9 +34,15 @@ struct MuxyApp: App {
             projects: projectStore.projects,
             worktrees: worktreeStore.worktrees
         )
+        let vcsWorktreeAutoRefresher = VCSWorktreeAutoRefresher(
+            appState: appState,
+            projectStore: projectStore,
+            worktreeStore: worktreeStore
+        )
         _appState = State(initialValue: appState)
         _projectStore = State(initialValue: projectStore)
         _worktreeStore = State(initialValue: worktreeStore)
+        _vcsWorktreeAutoRefresher = State(initialValue: vcsWorktreeAutoRefresher)
     }
 
     var body: some Scene {
@@ -52,7 +59,10 @@ struct MuxyApp: App {
                     NotificationStore.shared.appState = appState
                     NotificationStore.shared.worktreeStore = worktreeStore
                     NotificationStore.shared.markAllAsRead()
+                    MemoryDiagnostics.shared.configure(appState: appState)
+                    TerminalProgressStore.shared.appState = appState
                     appDelegate.onTerminate = { [appState] in
+                        appState.saveTerminalSessions()
                         appState.flushPendingWorkspaceSave()
                     }
                     appDelegate.hasUnsavedEditorTabs = { [appState] in
@@ -121,6 +131,12 @@ struct MuxyApp: App {
                 .preferredColorScheme(MuxyTheme.colorScheme)
         }
         .defaultSize(width: 700, height: 600)
+
+        Window("Muxy Help", id: "help") {
+            HelpView()
+                .preferredColorScheme(MuxyTheme.colorScheme)
+        }
+        .defaultSize(width: 820, height: 580)
 
         Settings {
             SettingsView()
@@ -249,6 +265,7 @@ extension AppDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         let launchClock = ContinuousClock()
         let launchStart = launchClock.now
+        SentryService.shared.start()
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
         applyAppMenuIdentity()
@@ -272,6 +289,7 @@ extension AppDelegate {
             NotificationSocketServer.shared.start()
             AIProviderRegistry.shared.installAll()
             _ = AIUsageSettingsStore.isUsageEnabled()
+            DiagnosticsMenuController.shared.install()
             let deferredDuration = String(describing: deferredStart.duration(to: launchClock.now))
             startupLogger.debug("Deferred startup services completed in \(deferredDuration, privacy: .public)")
         }
@@ -305,7 +323,7 @@ extension AppDelegate {
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         let unsaved = hasUnsavedEditorTabs?() ?? []
-        guard !unsaved.isEmpty else { return .terminateNow }
+        guard !unsaved.isEmpty else { return confirmQuitIfNeeded() }
 
         let alert = NSAlert()
         alert.messageText = unsaved.count == 1
@@ -348,6 +366,30 @@ extension AppDelegate {
     }
 
     @MainActor
+    private func confirmQuitIfNeeded() -> NSApplication.TerminateReply {
+        guard QuitConfirmationPreferences.confirmQuit else { return .terminateNow }
+
+        let alert = NSAlert()
+        alert.messageText = "Quit Muxy?"
+        alert.informativeText = "Are you sure you want to quit Muxy?"
+        alert.alertStyle = .warning
+        alert.icon = NSApp.applicationIconImage
+        alert.addButton(withTitle: "Quit")
+        alert.addButton(withTitle: "Cancel")
+        alert.buttons[0].keyEquivalent = "\r"
+        alert.buttons[1].keyEquivalent = "\u{1b}"
+        alert.showsSuppressionButton = true
+        alert.suppressionButton?.title = "Don't ask again"
+
+        let response = alert.runModal()
+        guard response == .alertFirstButtonReturn else { return .terminateCancel }
+        if alert.suppressionButton?.state == .on {
+            QuitConfirmationPreferences.confirmQuit = false
+        }
+        return .terminateNow
+    }
+
+    @MainActor
     private static func presentSaveFailureAlert(failures: [String]) {
         let alert = NSAlert()
         alert.messageText = failures.count == 1
@@ -371,6 +413,7 @@ extension AppDelegate {
         NotificationSocketServer.shared.stop()
         MainActor.assumeIsolated {
             MobileServerService.shared.stopForTermination()
+            RichInputDraftStore.shared.flush()
         }
     }
 
@@ -408,6 +451,7 @@ extension AppDelegate {
 
 struct WindowConfigurator: NSViewRepresentable {
     let configVersion: Int
+    let uiScalePreset: UIScale.Preset
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -427,6 +471,7 @@ struct WindowConfigurator: NSViewRepresentable {
             Self.repositionTrafficLights(in: w)
             Self.hideTitlebarDecorationView(in: w)
             Self.neutralizeSafeAreaInsets(in: w)
+            Self.interceptCloseButton(in: w, coordinator: context.coordinator)
             context.coordinator.observe(window: w)
         }
         return v
@@ -435,6 +480,7 @@ struct WindowConfigurator: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {
         guard let w = nsView.window else { return }
         Self.applyWindowBackground(w)
+        Self.repositionTrafficLights(in: w)
     }
 
     private static func applyWindowBackground(_ window: NSWindow) {
@@ -483,18 +529,30 @@ struct WindowConfigurator: NSViewRepresentable {
         }
     }
 
-    static let trafficLightY: CGFloat = 3.5
+    static func interceptCloseButton(in window: NSWindow, coordinator: Coordinator) {
+        guard let button = window.standardWindowButton(.closeButton) else { return }
+        button.target = coordinator
+        button.action = #selector(Coordinator.handleCloseButton(_:))
+    }
 
-    static func repositionTrafficLights(in window: NSWindow) {
-        let y: CGFloat
+    static let trafficLightY: CGFloat = 3.5
+    static let baselineTitleBarHeight: CGFloat = 32
+
+    static func desiredTrafficLightY() -> CGFloat {
+        let scaledTitleBarHeight = UIMetrics.scaled(baselineTitleBarHeight)
+        let extraVerticalSpace = scaledTitleBarHeight - baselineTitleBarHeight
         if #available(macOS 26.0, *) {
             let buttonHeight: CGFloat = 14
-            y = (32 - buttonHeight) / 2
-        } else {
-            y = trafficLightY
+            return (baselineTitleBarHeight - buttonHeight - extraVerticalSpace) / 2
         }
+        return trafficLightY - extraVerticalSpace / 2
+    }
+
+    static func repositionTrafficLights(in window: NSWindow) {
+        let y = desiredTrafficLightY()
         for button in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
             guard let btn = window.standardWindowButton(button) else { continue }
+            guard abs(btn.frame.origin.y - y) > 0.5 else { continue }
             var frame = btn.frame
             frame.origin.y = y
             btn.frame = frame
@@ -503,6 +561,14 @@ struct WindowConfigurator: NSViewRepresentable {
 
     final class Coordinator: NSObject {
         private var observations: [NSObjectProtocol] = []
+        private var buttonFrameObservations: [NSObjectProtocol] = []
+
+        @objc
+        func handleCloseButton(_: Any?) {
+            MainActor.assumeIsolated {
+                NSApp.terminate(nil)
+            }
+        }
 
         func observe(window: NSWindow) {
             guard observations.isEmpty else { return }
@@ -514,6 +580,9 @@ struct WindowConfigurator: NSViewRepresentable {
                 NSWindow.didChangeBackingPropertiesNotification,
                 NSWindow.didExitFullScreenNotification,
                 NSWindow.didEnterFullScreenNotification,
+                NSWindow.didUpdateNotification,
+                NSWindow.didBecomeKeyNotification,
+                NSWindow.didBecomeMainNotification,
             ]
             for name in names {
                 let token = NotificationCenter.default.addObserver(
@@ -545,10 +614,35 @@ struct WindowConfigurator: NSViewRepresentable {
                 }
                 observations.append(token)
             }
+
+            observeButtonFrames(window: window)
+        }
+
+        private func observeButtonFrames(window: NSWindow) {
+            buttonFrameObservations.forEach { NotificationCenter.default.removeObserver($0) }
+            buttonFrameObservations.removeAll()
+            for type in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
+                guard let button = MainActor.assumeIsolated({ window.standardWindowButton(type) }) else { continue }
+                MainActor.assumeIsolated { button.postsFrameChangedNotifications = true }
+                let token = NotificationCenter.default.addObserver(
+                    forName: NSView.frameDidChangeNotification,
+                    object: button,
+                    queue: .main
+                ) { [weak window] _ in
+                    guard let window else { return }
+                    DispatchQueue.main.async {
+                        MainActor.assumeIsolated {
+                            WindowConfigurator.repositionTrafficLights(in: window)
+                        }
+                    }
+                }
+                buttonFrameObservations.append(token)
+            }
         }
 
         deinit {
             observations.forEach { NotificationCenter.default.removeObserver($0) }
+            buttonFrameObservations.forEach { NotificationCenter.default.removeObserver($0) }
         }
     }
 }

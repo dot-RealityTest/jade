@@ -6,7 +6,7 @@ struct AIAssistantPanel: View {
     let activeFile: String?
 
     @State private var store = AIAssistantStore.shared
-    @State private var service = AIAssistantService.shared
+    @State private var service = AIAssistantChatService.shared
     @State private var draft = ""
     @FocusState private var inputFocused: Bool
 

@@ -55,8 +55,8 @@ struct WorktreePopover: View {
                         Task { await requestRemove(worktree: worktree) }
                     } : nil
                 )
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
+                .padding(.horizontal, UIMetrics.spacing3)
+                .padding(.vertical, UIMetrics.spacing1)
             }
         )
     }
@@ -163,21 +163,21 @@ private struct WorktreePopoverRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: UIMetrics.spacing5) {
             indicator
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: UIMetrics.scaled(1)) {
                 if isRenaming {
                     TextField("", text: $renameText)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: UIMetrics.fontBody, weight: .semibold))
                         .foregroundStyle(MuxyTheme.fg)
                         .focused($renameFieldFocused)
                         .onSubmit { commitRename() }
                         .onExitCommand { cancelRename() }
                 } else {
-                    HStack(spacing: 6) {
+                    HStack(spacing: UIMetrics.spacing3) {
                         Text(displayName)
-                            .font(.system(size: 12, weight: selected ? .semibold : .medium))
+                            .font(.system(size: UIMetrics.fontBody, weight: selected ? .semibold : .medium))
                             .foregroundStyle(selected ? MuxyTheme.fg : MuxyTheme.fg.opacity(0.9))
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -188,7 +188,7 @@ private struct WorktreePopoverRow: View {
                 }
                 if let branch = branchSubtitle, !isRenaming {
                     Text(branch)
-                        .font(.system(size: 10, design: .monospaced))
+                        .font(.system(size: UIMetrics.fontCaption, design: .monospaced))
                         .foregroundStyle(MuxyTheme.fgDim)
                         .lineLimit(1)
                         .truncationMode(.middle)
@@ -196,10 +196,10 @@ private struct WorktreePopoverRow: View {
             }
             Spacer(minLength: 4)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(rowBackground, in: RoundedRectangle(cornerRadius: 6))
-        .contentShape(RoundedRectangle(cornerRadius: 6))
+        .padding(.horizontal, UIMetrics.spacing5)
+        .padding(.vertical, UIMetrics.scaled(7))
+        .background(rowBackground, in: RoundedRectangle(cornerRadius: UIMetrics.radiusMD))
+        .contentShape(RoundedRectangle(cornerRadius: UIMetrics.radiusMD))
         .onHover { hovered = $0 }
         .onTapGesture {
             guard !isRenaming else { return }
@@ -207,7 +207,7 @@ private struct WorktreePopoverRow: View {
         }
         .contextMenu {
             if worktree.isPrimary {
-                Text("Primary worktree").font(.system(size: 11))
+                Text("Primary worktree").font(.system(size: UIMetrics.fontFootnote))
             } else if let onRemove {
                 Button("Rename") { startRename() }
                 Divider()
@@ -215,7 +215,7 @@ private struct WorktreePopoverRow: View {
             } else {
                 Button("Rename") { startRename() }
                 Divider()
-                Text("External worktree").font(.system(size: 11))
+                Text("External worktree").font(.system(size: UIMetrics.fontFootnote))
             }
         }
     }
@@ -224,9 +224,9 @@ private struct WorktreePopoverRow: View {
         ZStack {
             Circle()
                 .fill(selected ? MuxyTheme.accent : MuxyTheme.fgDim.opacity(0.35))
-                .frame(width: 7, height: 7)
+                .frame(width: UIMetrics.scaled(7), height: UIMetrics.scaled(7))
         }
-        .frame(width: 10)
+        .frame(width: UIMetrics.scaled(10))
     }
 
     private var rowBackground: AnyShapeStyle {

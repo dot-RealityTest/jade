@@ -1,9 +1,11 @@
 import MuxyShared
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct PaneTabStrip: View {
     struct TabSnapshot: Identifiable {
         let id: UUID
+        let paneID: UUID?
         let title: String
         let kind: TerminalTab.Kind
         let isPinned: Bool
@@ -22,6 +24,7 @@ struct PaneTabStrip: View {
     var openInIDEFilePath: String?
     var openInIDECursorProvider: () -> (line: Int?, column: Int?) = { (nil, nil) }
     let projectID: UUID
+    var shortcutIndexOffset: Int = 0
     let onSelectTab: (UUID) -> Void
     let onCreateTab: () -> Void
     let onCreateVCSTab: () -> Void
@@ -31,6 +34,9 @@ struct PaneTabStrip: View {
     let onCloseTabsToRight: (UUID) -> Void
     let onSplit: (SplitDirection) -> Void
     let onDropAction: (TabDragCoordinator.DropResult) -> Void
+    var showMaximizeButton = false
+    var isMaximized = false
+    var onToggleMaximize: (() -> Void)?
     let onCreateTabAdjacent: (UUID, TabArea.InsertSide) -> Void
     let onTogglePin: (UUID) -> Void
     let onSetCustomTitle: (UUID, String?) -> Void
@@ -44,6 +50,7 @@ struct PaneTabStrip: View {
         tabs.map { tab in
             TabSnapshot(
                 id: tab.id,
+                paneID: tab.content.pane?.id,
                 title: tab.title,
                 kind: tab.kind,
                 isPinned: tab.isPinned,
@@ -63,13 +70,19 @@ struct PaneTabStrip: View {
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 32)
+            .frame(height: UIMetrics.scaled(32))
 
             if isWindowTitleBar {
                 HStack(spacing: 0) {
                     if showsToolbarAction(.debug), showDevelopmentBadge {
                         developmentBadge
-                            .padding(.trailing, 6)
+                            .padding(.trailing, UIMetrics.spacing3)
+                    }
+                    if showsToolbarAction(.updates), let version = UpdateService.shared.availableUpdateVersion {
+                        UpdateBadge(version: version) {
+                            UpdateService.shared.checkForUpdates()
+                        }
+                        .padding(.trailing, UIMetrics.spacing2)
                     }
                     if showsToolbarAction(.tools) {
                         OpenInIDEControl(
@@ -77,12 +90,15 @@ struct PaneTabStrip: View {
                             filePath: openInIDEFilePath,
                             cursorProvider: openInIDECursorProvider
                         )
+                        LayoutPickerMenu(projectID: projectID)
                     }
-                    if showsToolbarAction(.updates), let version = UpdateService.shared.availableUpdateVersion {
-                        UpdateBadge(version: version) {
-                            UpdateService.shared.checkForUpdates()
-                        }
-                        .padding(.trailing, 4)
+                    if showMaximizeButton || isMaximized, let onToggleMaximize {
+                        let symbol = isMaximized
+                            ? "arrow.down.right.and.arrow.up.left"
+                            : "arrow.up.left.and.arrow.down.right"
+                        let label = isMaximized ? "Restore Pane" : "Maximize Pane"
+                        IconButton(symbol: symbol, accessibilityLabel: label, action: onToggleMaximize)
+                            .help(shortcutTooltip("Toggle Maximize Pane", for: .toggleMaximizePane))
                     }
                     if showsToolbarAction(.splitRight) {
                         IconButton(symbol: "square.split.2x1", accessibilityLabel: "Split Right") { onSplit(.horizontal) }
@@ -131,13 +147,13 @@ struct PaneTabStrip: View {
                             .help(shortcutTooltip("New Tab", for: .newTab))
                     }
                 }
-                .padding(.leading, 8)
-                .padding(.trailing, 4)
+                .padding(.leading, UIMetrics.spacing4)
+                .padding(.trailing, UIMetrics.spacing2)
                 .fixedSize(horizontal: true, vertical: false)
                 .background(WindowDragRepresentable(alwaysEnabled: true))
             }
         }
-        .frame(height: 32)
+        .frame(height: UIMetrics.scaled(32))
         .onPreferenceChange(TabFramePreferenceKey.self) { frames in
             guard dragState.draggedID != nil else { return }
             dragState.frames = frames
@@ -152,13 +168,15 @@ struct PaneTabStrip: View {
 
         return HStack(spacing: 0) {
             ForEach(Array(tabs.enumerated()), id: \.element.id) { index, tab in
+                let globalIndex = shortcutIndexOffset + index
                 TabCell(
                     tab: tab,
                     active: tab.id == activeTabID,
                     paneFocused: isFocused,
+                    areaID: areaID,
                     hasUnread: NotificationStore.shared.hasUnread(tabID: tab.id),
                     isAnyDragging: dragState.draggedID != nil,
-                    shortcutIndex: index < 9 ? index + 1 : nil,
+                    shortcutIndex: globalIndex < 9 ? globalIndex + 1 : nil,
                     closableOthersCount: closableOthersCount(excluding: tab.id),
                     closableLeftCount: closableCount(leftOf: index),
                     closableRightCount: closableCount(rightOf: index),
@@ -340,6 +358,7 @@ private struct TabCell: View {
     let tab: PaneTabStrip.TabSnapshot
     let active: Bool
     let paneFocused: Bool
+    let areaID: UUID
     var hasUnread: Bool = false
     var isAnyDragging: Bool = false
     var shortcutIndex: Int?
@@ -361,7 +380,14 @@ private struct TabCell: View {
     @State private var renameText = ""
     @State private var showColorPicker = false
     @State private var measuredWidth: CGFloat = TabCell.maxWidth
+    @State private var externalDragOverCell = false
+    @State private var springLoadTask: Task<Void, any Error>?
+    @State private var completionFlashOn = false
+    @State private var flashTask: Task<Void, any Error>?
     @FocusState private var renameFieldFocused: Bool
+    private let progressStore = TerminalProgressStore.shared
+
+    private static let springLoadDelay: Duration = .milliseconds(250)
 
     private var titleHidden: Bool {
         measuredWidth < Self.titleHideThreshold
@@ -389,6 +415,16 @@ private struct TabCell: View {
         return nil
     }
 
+    private var paneProgress: TerminalProgress? {
+        guard let paneID = tab.paneID else { return nil }
+        return progressStore.progress(for: paneID)
+    }
+
+    private var hasCompletionPending: Bool {
+        guard let paneID = tab.paneID else { return false }
+        return progressStore.isCompletionPending(for: paneID)
+    }
+
     private var showBadge: Bool {
         guard let shortcutIndex,
               let action = ShortcutAction.tabAction(for: shortcutIndex)
@@ -400,23 +436,23 @@ private struct TabCell: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            HStack(spacing: 6) {
+            HStack(spacing: UIMetrics.spacing3) {
                 tabIconView
                     .foregroundStyle(active ? MuxyTheme.fg : MuxyTheme.fgMuted)
                     .opacity(titleHidden && hovered && !tab.isPinned ? 0 : 1)
                     .overlay(alignment: .topTrailing) {
-                        if hasUnread, !active {
+                        if hasUnread || hasCompletionPending, !active {
                             Circle()
                                 .fill(MuxyTheme.accent)
-                                .frame(width: 6, height: 6)
-                                .offset(x: 3, y: -3)
+                                .frame(width: UIMetrics.scaled(6), height: UIMetrics.scaled(6))
+                                .offset(x: UIMetrics.scaled(3), y: -UIMetrics.scaled(3))
                         }
                     }
 
                 if isRenaming {
                     TextField("", text: $renameText)
                         .textFieldStyle(.plain)
-                        .font(.system(size: 12))
+                        .font(.system(size: UIMetrics.fontBody))
                         .foregroundStyle(MuxyTheme.fg)
                         .focused($renameFieldFocused)
                         .onSubmit { commitRename() }
@@ -426,16 +462,16 @@ private struct TabCell: View {
                         }
                 } else if !titleHidden {
                     Text(tab.title)
-                        .font(.system(size: 12))
+                        .font(.system(size: UIMetrics.fontBody))
                         .foregroundStyle(active ? MuxyTheme.fg : MuxyTheme.fgMuted)
                         .lineLimit(1)
                         .truncationMode(.head)
                 }
             }
-            .padding(.leading, titleHidden ? 0 : 12)
-            .padding(.trailing, titleHidden ? 0 : 28)
+            .padding(.leading, titleHidden ? 0 : UIMetrics.spacing6)
+            .padding(.trailing, titleHidden ? 0 : UIMetrics.iconXXL)
             .frame(maxWidth: .infinity, alignment: titleHidden ? .center : .leading)
-            .frame(height: 32)
+            .frame(height: UIMetrics.scaled(32))
             .background {
                 GeometryReader { geo in
                     Color.clear.preference(key: TabWidthPreferenceKey.self, value: geo.size.width)
@@ -443,17 +479,8 @@ private struct TabCell: View {
             }
             .onPreferenceChange(TabWidthPreferenceKey.self) { measuredWidth = $0 }
             .overlay(alignment: titleHidden ? .center : .trailing) {
-                if !tab.isPinned {
-                    let visible = titleHidden ? hovered : (active || hovered)
-                    Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(MuxyTheme.fgDim)
-                        .padding(.trailing, titleHidden ? 0 : 10)
-                        .opacity(visible ? 1 : 0)
-                        .onTapGesture(perform: onClose)
-                        .accessibilityLabel("Close Tab")
-                        .accessibilityAddTraits(.isButton)
-                }
+                trailingAccessory
+                    .padding(.trailing, titleHidden ? 0 : UIMetrics.spacing5)
             }
             .overlay {
                 if showBadge, let shortcutIndex,
@@ -466,13 +493,19 @@ private struct TabCell: View {
                 if let accentColor = bottomAccentColor {
                     Rectangle()
                         .fill(accentColor)
-                        .frame(height: 2)
+                        .frame(height: UIMetrics.scaled(2))
                         .accessibilityHidden(true)
                 }
             }
             .background(tabBackground)
+            .overlay {
+                Rectangle()
+                    .fill(MuxyTheme.accent)
+                    .opacity(completionFlashOn ? 0.18 : 0)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
+            }
             .contentShape(Rectangle())
-            .simultaneousGesture(TapGesture(count: 2).onEnded { startRename() })
             .onHover { hovering in
                 guard !isAnyDragging else { return }
                 hovered = hovering
@@ -485,6 +518,10 @@ private struct TabCell: View {
                     MiddleClickView(action: onClose)
                         .accessibilityHidden(true)
                 }
+            }
+            .overlay {
+                DoubleClickView(action: startRename)
+                    .accessibilityHidden(true)
             }
             .accessibilityElement(children: .combine)
             .accessibilityLabel(tabAccessibilityLabel)
@@ -530,6 +567,75 @@ private struct TabCell: View {
             guard active else { return }
             startRename()
         }
+        .onDrop(of: [.fileURL], isTargeted: $externalDragOverCell) { _, _ in false }
+        .onChange(of: externalDragOverCell) { _, hovering in
+            handleExternalDragHover(hovering: hovering)
+        }
+        .onChange(of: hasCompletionPending) { _, pending in
+            guard pending else { return }
+            triggerCompletionFlash()
+        }
+        .onDisappear {
+            springLoadTask?.cancel()
+            flashTask?.cancel()
+        }
+    }
+
+    private func handleExternalDragHover(hovering: Bool) {
+        NotificationCenter.default.post(
+            name: .externalDragHoverChanged,
+            object: nil,
+            userInfo: [
+                ExternalDragHoverUserInfoKey.isHovering: hovering,
+                ExternalDragHoverUserInfoKey.areaID: areaID,
+            ]
+        )
+        springLoadTask?.cancel()
+        guard hovering, !active else {
+            springLoadTask = nil
+            return
+        }
+        springLoadTask = Task { @MainActor in
+            try await Task.sleep(for: Self.springLoadDelay)
+            onSelect()
+        }
+    }
+
+    private var closeButtonVisible: Bool {
+        guard !tab.isPinned else { return false }
+        return titleHidden ? hovered : (active || hovered)
+    }
+
+    private var trailingAccessory: some View {
+        ZStack {
+            if !tab.isPinned {
+                Image(systemName: "xmark")
+                    .font(.system(size: UIMetrics.fontCaption, weight: .bold))
+                    .foregroundStyle(MuxyTheme.fgDim)
+                    .opacity(closeButtonVisible ? 1 : 0)
+                    .allowsHitTesting(closeButtonVisible)
+                    .onTapGesture(perform: onClose)
+                    .accessibilityLabel("Close Tab")
+                    .accessibilityAddTraits(.isButton)
+            }
+        }
+        .frame(width: UIMetrics.iconMD, height: UIMetrics.iconMD)
+    }
+
+    private func triggerCompletionFlash() {
+        flashTask?.cancel()
+        withAnimation(.easeIn(duration: 0.15)) {
+            completionFlashOn = true
+        }
+        if active, let paneID = tab.paneID {
+            progressStore.clearCompletion(for: paneID)
+        }
+        flashTask = Task { @MainActor in
+            try await Task.sleep(for: .milliseconds(450))
+            withAnimation(.easeOut(duration: 0.4)) {
+                completionFlashOn = false
+            }
+        }
     }
 
     private func startRename() {
@@ -563,22 +669,26 @@ private struct TabCell: View {
 
     @ViewBuilder
     private var tabIconView: some View {
-        if tab.isPinned {
+        if let progress = paneProgress {
+            TerminalProgressCircle(progress: progress)
+                .frame(width: UIMetrics.iconSM, height: UIMetrics.iconSM)
+                .transition(.opacity)
+        } else if tab.isPinned {
             Image(systemName: "pin.fill")
-                .font(.system(size: 10, weight: .semibold))
+                .font(.system(size: UIMetrics.fontCaption, weight: .semibold))
         } else if tab.kind == .vcs {
             FileDiffIcon()
                 .stroke(style: StrokeStyle(lineWidth: 1.5, lineCap: .round, lineJoin: .round))
-                .frame(width: 12, height: 12)
+                .frame(width: UIMetrics.iconSM, height: UIMetrics.iconSM)
         } else if tab.kind == .editor {
             Image(systemName: "pencil.line")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: UIMetrics.fontBody, weight: .semibold))
         } else if tab.kind == .diffViewer {
             Image(systemName: "rectangle.split.2x1")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: UIMetrics.fontFootnote, weight: .semibold))
         } else {
             Image(systemName: "terminal")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: UIMetrics.fontBody, weight: .semibold))
         }
     }
 }

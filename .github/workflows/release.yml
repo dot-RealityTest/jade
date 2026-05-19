@@ -129,6 +129,8 @@ jobs:
           echo "public_key=$SPARKLE_PUBLIC_KEY" >> "$GITHUB_OUTPUT"
 
       - name: Build and package
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         run: |
           chmod +x scripts/build-release.sh scripts/create-icns.sh
           scripts/build-release.sh \
@@ -148,10 +150,18 @@ jobs:
             --apple-id "$APPLE_ID" \
             --password "$APPLE_APP_SPECIFIC_PASSWORD" \
             --team-id "$APPLE_TEAM_ID"
-          xcrun notarytool submit \
+          set +e
+          submit_output=$(xcrun notarytool submit \
             "build/Muxy-${{ needs.validate.outputs.version }}-${{ matrix.arch }}.dmg" \
             --keychain-profile "notary-profile" \
-            --wait
+            --wait \
+            --output-format json)
+          submit_status=$?
+          echo "$submit_output"
+          submission_id=$(echo "$submit_output" | python3 -c 'import sys, json; print(json.load(sys.stdin)["id"])')
+          xcrun notarytool log "$submission_id" --keychain-profile "notary-profile" || true
+          set -e
+          if [ "$submit_status" -ne 0 ]; then exit "$submit_status"; fi
           xcrun stapler staple \
             "build/Muxy-${{ needs.validate.outputs.version }}-${{ matrix.arch }}.dmg"
 
@@ -171,7 +181,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ inputs.from_beta_tag }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_RELEASE_PAT }}
 
       - name: Resolve Sparkle dependency
         run: swift package resolve
@@ -218,17 +228,28 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: v${{ needs.validate.outputs.version }}
         run: |
-          gh release create "v${{ needs.validate.outputs.version }}" \
-            --repo "${{ github.repository }}" \
-            --title "Muxy v${{ needs.validate.outputs.version }}" \
-            --draft \
-            --generate-notes \
-            artifacts/dmg-arm64/*.dmg \
-            artifacts/dmg-x86_64/*.dmg \
-            appcast-arm64.xml \
-            appcast-x86_64.xml \
-            appcast.xml
+          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$TAG" \
+              --repo "${{ github.repository }}" \
+              --clobber \
+              artifacts/dmg-arm64/*.dmg \
+              artifacts/dmg-x86_64/*.dmg \
+              appcast-arm64.xml \
+              appcast-x86_64.xml \
+              appcast.xml
+          else
+            gh release create "$TAG" \
+              --repo "${{ github.repository }}" \
+              --title "Muxy $TAG" \
+              --generate-notes \
+              artifacts/dmg-arm64/*.dmg \
+              artifacts/dmg-x86_64/*.dmg \
+              appcast-arm64.xml \
+              appcast-x86_64.xml \
+              appcast.xml
+          fi
 
       - name: Bump BETA_VERSION
         env:
@@ -247,6 +268,46 @@ jobs:
           fi
           git commit -m "Bump BETA_VERSION to $NEXT"
           git push origin main
+
+      - name: Notify Discord
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.validate.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [[ -z "$DISCORD_WEBHOOK_URL" ]]; then
+            echo "DISCORD_WEBHOOK_URL not set, skipping Discord notification"
+            exit 0
+          fi
+          TAG="v${VERSION}"
+          NOTES=$(gh release view "$TAG" --repo "$REPO" --json body --jq .body \
+            | sed -E 's# by @[A-Za-z0-9_-]+ in https://github\.com/[^ ]+/pull/[0-9]+##g')
+          if [[ ${#NOTES} -gt 3800 ]]; then
+            NOTES="${NOTES:0:3800}…"
+          fi
+          URL="https://github.com/${REPO}/releases/tag/${TAG}"
+          PAYLOAD=$(jq -n \
+            --arg title "Muxy ${TAG} released" \
+            --arg url "$URL" \
+            --arg notes "$NOTES" \
+            --arg footer "Stable channel" \
+            '{
+              username: "Muxy Releases",
+              embeds: [{
+                title: $title,
+                url: $url,
+                description: $notes,
+                color: 3066993,
+                footer: { text: $footer },
+                timestamp: (now | todate)
+              }]
+            }')
+          if ! curl -fsSL -H "Content-Type: application/json" \
+            -X POST -d "$PAYLOAD" "$DISCORD_WEBHOOK_URL"; then
+            echo "Discord notification failed; release succeeded regardless"
+          fi
 
   update-homebrew-tap:
     needs: [validate, release]

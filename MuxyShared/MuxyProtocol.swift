@@ -79,6 +79,7 @@ public enum MuxyMethod: String, Codable, Sendable {
     case takeOverPane
     case releasePane
     case getVCSStatus
+    case vcsRefresh
     case vcsCommit
     case vcsPush
     case vcsPull
@@ -89,8 +90,10 @@ public enum MuxyMethod: String, Codable, Sendable {
     case vcsSwitchBranch
     case vcsCreateBranch
     case vcsCreatePR
+    case vcsMergePullRequest
     case vcsAddWorktree
     case vcsRemoveWorktree
+    case vcsGetDiff
     case getProjectLogo
     case listNotifications
     case markNotificationRead
@@ -119,6 +122,7 @@ public enum MuxyParams: Codable, Sendable {
     case takeOverPane(TakeOverPaneParams)
     case releasePane(ReleasePaneParams)
     case getVCSStatus(GetVCSStatusParams)
+    case vcsRefresh(VCSRefreshParams)
     case vcsCommit(VCSCommitParams)
     case vcsPush(VCSPushParams)
     case vcsPull(VCSPullParams)
@@ -129,8 +133,10 @@ public enum MuxyParams: Codable, Sendable {
     case vcsSwitchBranch(VCSSwitchBranchParams)
     case vcsCreateBranch(VCSCreateBranchParams)
     case vcsCreatePR(VCSCreatePRParams)
+    case vcsMergePullRequest(VCSMergePullRequestParams)
     case vcsAddWorktree(VCSAddWorktreeParams)
     case vcsRemoveWorktree(VCSRemoveWorktreeParams)
+    case vcsGetDiff(VCSGetDiffParams)
     case getProjectLogo(GetProjectLogoParams)
     case markNotificationRead(MarkNotificationReadParams)
     case subscribe(SubscribeParams)
@@ -165,6 +171,7 @@ public enum MuxyParams: Codable, Sendable {
         case "releasePane": self = try .releasePane(container.decode(ReleasePaneParams.self, forKey: .value))
         case "getTerminalContent": self = try .getTerminalContent(container.decode(GetTerminalContentParams.self, forKey: .value))
         case "getVCSStatus": self = try .getVCSStatus(container.decode(GetVCSStatusParams.self, forKey: .value))
+        case "vcsRefresh": self = try .vcsRefresh(container.decode(VCSRefreshParams.self, forKey: .value))
         case "vcsCommit": self = try .vcsCommit(container.decode(VCSCommitParams.self, forKey: .value))
         case "vcsPush": self = try .vcsPush(container.decode(VCSPushParams.self, forKey: .value))
         case "vcsPull": self = try .vcsPull(container.decode(VCSPullParams.self, forKey: .value))
@@ -175,8 +182,10 @@ public enum MuxyParams: Codable, Sendable {
         case "vcsSwitchBranch": self = try .vcsSwitchBranch(container.decode(VCSSwitchBranchParams.self, forKey: .value))
         case "vcsCreateBranch": self = try .vcsCreateBranch(container.decode(VCSCreateBranchParams.self, forKey: .value))
         case "vcsCreatePR": self = try .vcsCreatePR(container.decode(VCSCreatePRParams.self, forKey: .value))
+        case "vcsMergePullRequest": self = try .vcsMergePullRequest(container.decode(VCSMergePullRequestParams.self, forKey: .value))
         case "vcsAddWorktree": self = try .vcsAddWorktree(container.decode(VCSAddWorktreeParams.self, forKey: .value))
         case "vcsRemoveWorktree": self = try .vcsRemoveWorktree(container.decode(VCSRemoveWorktreeParams.self, forKey: .value))
+        case "vcsGetDiff": self = try .vcsGetDiff(container.decode(VCSGetDiffParams.self, forKey: .value))
         case "getProjectLogo": self = try .getProjectLogo(container.decode(GetProjectLogoParams.self, forKey: .value))
         case "markNotificationRead": self = try .markNotificationRead(container.decode(MarkNotificationReadParams.self, forKey: .value))
         case "subscribe": self = try .subscribe(container.decode(SubscribeParams.self, forKey: .value))
@@ -228,6 +237,8 @@ public enum MuxyParams: Codable, Sendable {
             try container.encode(v, forKey: .value)
         case let .getVCSStatus(v): try container.encode("getVCSStatus", forKey: .type)
             try container.encode(v, forKey: .value)
+        case let .vcsRefresh(v): try container.encode("vcsRefresh", forKey: .type)
+            try container.encode(v, forKey: .value)
         case let .vcsCommit(v): try container.encode("vcsCommit", forKey: .type)
             try container.encode(v, forKey: .value)
         case let .vcsPush(v): try container.encode("vcsPush", forKey: .type)
@@ -248,9 +259,13 @@ public enum MuxyParams: Codable, Sendable {
             try container.encode(v, forKey: .value)
         case let .vcsCreatePR(v): try container.encode("vcsCreatePR", forKey: .type)
             try container.encode(v, forKey: .value)
+        case let .vcsMergePullRequest(v): try container.encode("vcsMergePullRequest", forKey: .type)
+            try container.encode(v, forKey: .value)
         case let .vcsAddWorktree(v): try container.encode("vcsAddWorktree", forKey: .type)
             try container.encode(v, forKey: .value)
         case let .vcsRemoveWorktree(v): try container.encode("vcsRemoveWorktree", forKey: .type)
+            try container.encode(v, forKey: .value)
+        case let .vcsGetDiff(v): try container.encode("vcsGetDiff", forKey: .type)
             try container.encode(v, forKey: .value)
         case let .getProjectLogo(v): try container.encode("getProjectLogo", forKey: .type)
             try container.encode(v, forKey: .value)
@@ -277,6 +292,7 @@ public enum MuxyResult: Codable, Sendable {
     case vcsStatus(VCSStatusDTO)
     case vcsBranches(VCSBranchesDTO)
     case vcsPRCreated(VCSCreatePRResultDTO)
+    case vcsDiff(VCSDiffDTO)
     case projectLogo(ProjectLogoDTO)
     case notifications([NotificationDTO])
     case ok
@@ -302,6 +318,7 @@ public enum MuxyResult: Codable, Sendable {
         case "vcsStatus": self = try .vcsStatus(container.decode(VCSStatusDTO.self, forKey: .value))
         case "vcsBranches": self = try .vcsBranches(container.decode(VCSBranchesDTO.self, forKey: .value))
         case "vcsPRCreated": self = try .vcsPRCreated(container.decode(VCSCreatePRResultDTO.self, forKey: .value))
+        case "vcsDiff": self = try .vcsDiff(container.decode(VCSDiffDTO.self, forKey: .value))
         case "projectLogo": self = try .projectLogo(container.decode(ProjectLogoDTO.self, forKey: .value))
         case "notifications": self = try .notifications(container.decode([NotificationDTO].self, forKey: .value))
         case "ok": self = .ok
@@ -336,6 +353,8 @@ public enum MuxyResult: Codable, Sendable {
             try container.encode(v, forKey: .value)
         case let .vcsPRCreated(v): try container.encode("vcsPRCreated", forKey: .type)
             try container.encode(v, forKey: .value)
+        case let .vcsDiff(v): try container.encode("vcsDiff", forKey: .type)
+            try container.encode(v, forKey: .value)
         case let .projectLogo(v): try container.encode("projectLogo", forKey: .type)
             try container.encode(v, forKey: .value)
         case let .notifications(v): try container.encode("notifications", forKey: .type)
@@ -347,7 +366,6 @@ public enum MuxyResult: Codable, Sendable {
 
 public enum MuxyEventKind: String, Codable, Sendable {
     case workspaceChanged
-    case tabChanged
     case terminalOutput
     case terminalSnapshot
     case notificationReceived
@@ -358,7 +376,6 @@ public enum MuxyEventKind: String, Codable, Sendable {
 
 public enum MuxyEventData: Codable, Sendable {
     case workspace(WorkspaceDTO)
-    case tab(TabChangeEventDTO)
     case terminalOutput(TerminalOutputEventDTO)
     case terminalSnapshot(TerminalOutputEventDTO)
     case notification(NotificationDTO)
@@ -376,7 +393,6 @@ public enum MuxyEventData: Codable, Sendable {
         let type = try container.decode(String.self, forKey: .type)
         switch type {
         case "workspace": self = try .workspace(container.decode(WorkspaceDTO.self, forKey: .value))
-        case "tab": self = try .tab(container.decode(TabChangeEventDTO.self, forKey: .value))
         case "terminalOutput": self = try .terminalOutput(container.decode(TerminalOutputEventDTO.self, forKey: .value))
         case "terminalSnapshot": self = try .terminalSnapshot(container.decode(TerminalOutputEventDTO.self, forKey: .value))
         case "notification": self = try .notification(container.decode(NotificationDTO.self, forKey: .value))
@@ -391,8 +407,6 @@ public enum MuxyEventData: Codable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
         case let .workspace(v): try container.encode("workspace", forKey: .type)
-            try container.encode(v, forKey: .value)
-        case let .tab(v): try container.encode("tab", forKey: .type)
             try container.encode(v, forKey: .value)
         case let .terminalOutput(v): try container.encode("terminalOutput", forKey: .type)
             try container.encode(v, forKey: .value)

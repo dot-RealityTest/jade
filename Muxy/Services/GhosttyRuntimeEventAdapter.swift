@@ -4,7 +4,6 @@ import GhosttyKit
 import os
 
 private let logger = Logger(subsystem: "app.muxy", category: "RuntimeEventAdapter")
-
 protocol GhosttyRuntimeEventHandling {
     func wakeup()
     func action(app: ghostty_app_t?, target: ghostty_target_s, action: ghostty_action_s) -> Bool
@@ -66,6 +65,9 @@ final class GhosttyRuntimeEventAdapter: GhosttyRuntimeEventHandling {
         case GHOSTTY_ACTION_SEARCH_SELECTED:
             handleSearchSelected(target: target, selected: action.action.search_selected)
             return true
+        case GHOSTTY_ACTION_SECURE_INPUT:
+            handleSecureInput(target: target, secureInput: action.action.secure_input)
+            return true
         case GHOSTTY_ACTION_COMMAND_FINISHED,
              GHOSTTY_ACTION_SHOW_CHILD_EXITED:
             handleCommandExit(target: target)
@@ -75,6 +77,9 @@ final class GhosttyRuntimeEventAdapter: GhosttyRuntimeEventHandling {
             return true
         case GHOSTTY_ACTION_OPEN_URL:
             return handleOpenURL(target: target, openURL: action.action.open_url)
+        case GHOSTTY_ACTION_PROGRESS_REPORT:
+            handleProgressReport(target: target, report: action.action.progress_report)
+            return true
         default:
             return false
         }
@@ -85,6 +90,9 @@ final class GhosttyRuntimeEventAdapter: GhosttyRuntimeEventHandling {
         guard let titlePtr = title.title else { return }
         let titleString = String(cString: titlePtr)
         DispatchQueue.main.async {
+            if let paneID = TerminalViewRegistry.shared.paneID(for: view) {
+                TerminalCommandTracker.shared.recordShellCommandCandidate(titleString, paneID: paneID)
+            }
             view.onTitleChange?(titleString)
         }
     }
@@ -96,6 +104,17 @@ final class GhosttyRuntimeEventAdapter: GhosttyRuntimeEventHandling {
         logger.debug("PWD changed: \(path)")
         DispatchQueue.main.async {
             view.onWorkingDirectoryChange?(path)
+            if let paneID = TerminalViewRegistry.shared.paneID(for: view) {
+                TerminalCommandTracker.shared.confirmCommand(paneID: paneID)
+            }
+        }
+    }
+
+    private func handleSecureInput(target: ghostty_target_s, secureInput: ghostty_action_secure_input_e) {
+        guard let view = surfaceView(from: target) else { return }
+        DispatchQueue.main.async {
+            guard let paneID = TerminalViewRegistry.shared.paneID(for: view) else { return }
+            TerminalCommandTracker.shared.setSecureInput(secureInput, paneID: paneID)
         }
     }
 
@@ -164,6 +183,7 @@ final class GhosttyRuntimeEventAdapter: GhosttyRuntimeEventHandling {
         let hasLink = link.len > 0 && link.url != nil
         DispatchQueue.main.async {
             view.hasOSC8LinkUnderCursor = hasLink
+            view.refreshCmdHoverCursor()
         }
     }
 
@@ -197,6 +217,32 @@ final class GhosttyRuntimeEventAdapter: GhosttyRuntimeEventHandling {
         let value = total.total >= 0 ? Int(total.total) : nil
         DispatchQueue.main.async {
             view.onSearchTotal?(value)
+        }
+    }
+
+    private func handleProgressReport(target: ghostty_target_s, report: ghostty_action_progress_report_s) {
+        guard let view = surfaceView(from: target) else { return }
+        let progress = Self.makeProgress(from: report)
+        DispatchQueue.main.async {
+            view.onProgressReport?(progress)
+        }
+    }
+
+    private static func makeProgress(from report: ghostty_action_progress_report_s) -> TerminalProgress? {
+        let percent: Int? = report.progress >= 0 ? Int(report.progress) : nil
+        switch report.state {
+        case GHOSTTY_PROGRESS_STATE_REMOVE:
+            return nil
+        case GHOSTTY_PROGRESS_STATE_SET:
+            return TerminalProgress.clamping(kind: .set, percent: percent)
+        case GHOSTTY_PROGRESS_STATE_ERROR:
+            return TerminalProgress.clamping(kind: .error, percent: percent)
+        case GHOSTTY_PROGRESS_STATE_INDETERMINATE:
+            return TerminalProgress(kind: .indeterminate, percent: nil)
+        case GHOSTTY_PROGRESS_STATE_PAUSE:
+            return TerminalProgress.clamping(kind: .paused, percent: percent)
+        default:
+            return nil
         }
     }
 

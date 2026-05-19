@@ -39,6 +39,7 @@ final class TerminalViewRegistry {
     func removeView(for paneID: UUID) {
         guard let view = views.removeValue(forKey: paneID) else { return }
         paneIDs.removeValue(forKey: ObjectIdentifier(view))
+        TerminalCommandTracker.shared.removePane(paneID)
         view.tearDown()
     }
 
@@ -58,6 +59,14 @@ final class TerminalViewRegistry {
         for view in views.values {
             view.applyColorScheme(isDark: isDark)
         }
+    }
+
+    var liveViewCount: Int {
+        views.count
+    }
+
+    var liveSurfaceCount: Int {
+        views.values.reduce(0) { $1.surface != nil ? $0 + 1 : $0 }
     }
 }
 

@@ -8,14 +8,14 @@ struct DiffSectionDivider: View {
     var body: some View {
         HStack(spacing: 0) {
             Text(text)
-                .font(.system(size: 11, design: .monospaced))
+                .font(.system(size: UIMetrics.fontFootnote, design: .monospaced))
                 .foregroundStyle(MuxyTheme.fgDim)
                 .lineLimit(1)
                 .truncationMode(.tail)
-                .padding(.leading, 10)
-            Spacer(minLength: 8)
+                .padding(.leading, UIMetrics.spacing5)
+            Spacer(minLength: UIMetrics.spacing4)
         }
-        .frame(height: 28)
+        .frame(height: UIMetrics.scaled(28))
         .frame(maxWidth: .infinity)
         .background(MuxyTheme.bg)
         .overlay(alignment: .top) {
@@ -76,11 +76,12 @@ struct DiffRenderTheme: @unchecked Sendable {
 
     @MainActor
     static func current() -> DiffRenderTheme {
-        DiffRenderTheme(
+        let palette = EditorThemePalette.active
+        return DiffRenderTheme(
             rules: Self.buildRules(),
             additionColor: MuxyTheme.nsDiffAdd,
             deletionColor: MuxyTheme.nsDiffRemove,
-            defaultColor: GhosttyService.shared.foregroundColor,
+            defaultColor: palette.foreground,
             additionBackground: MuxyTheme.nsDiffAdd.withAlphaComponent(0.16),
             deletionBackground: MuxyTheme.nsDiffRemove.withAlphaComponent(0.16),
             hunkBackground: MuxyTheme.nsDiffHunk.withAlphaComponent(0.1),

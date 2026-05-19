@@ -1,6 +1,30 @@
 import AppKit
 import SwiftUI
 
+enum MainWindowLayout {
+    static func leftNavigationWidth(sidebarWidth: CGFloat) -> CGFloat {
+        max(0, sidebarWidth)
+    }
+
+    static func titleBarNavigationOverlayWidth(
+        leftNavigationWidth: CGFloat,
+        titleBarNavigationWidth: CGFloat,
+        isFullScreen: Bool
+    ) -> CGFloat {
+        guard !isFullScreen else { return 0 }
+        return max(leftNavigationWidth, titleBarNavigationWidth)
+    }
+
+    static func mainTitleBarLeadingInset(
+        leftNavigationWidth: CGFloat,
+        titleBarNavigationOverlayWidth: CGFloat,
+        isFullScreen: Bool
+    ) -> CGFloat {
+        guard !isFullScreen else { return 0 }
+        return max(0, titleBarNavigationOverlayWidth - leftNavigationWidth)
+    }
+}
+
 struct MainWindow: View {
     @Environment(AppState.self) private var appState
     @Environment(ProjectStore.self) private var projectStore
@@ -18,6 +42,20 @@ struct MainWindow: View {
         static let minWidth: CGFloat = 180
         static let defaultWidth: CGFloat = 260
         static let maxWidth: CGFloat = 600
+    }
+
+    private enum RichInputPanelLayout {
+        static let minWidth: CGFloat = 280
+        static let defaultWidth: CGFloat = 380
+        static let maxWidth: CGFloat = 800
+        static let minHeight: CGFloat = 120
+        static let defaultHeight: CGFloat = 220
+        static let maxHeight: CGFloat = 600
+    }
+
+    private enum SidePanelKind {
+        case vcs
+        case fileTree
     }
 
     private enum CloseConfirmationKind {
@@ -50,8 +88,26 @@ struct MainWindow: View {
 
     @State private var vcsPanelVisible = false
     @State private var vcsPanelWidth: CGFloat = AttachedVCSLayout.defaultWidth
-    @State private var vcsStates: [WorktreeKey: VCSTabState] = [:]
     @State private var fileTreePanelVisible = false
+    @AppStorage("muxy.fileTreeWidth") private var fileTreePanelWidth: Double = .init(FileTreeLayout.defaultWidth)
+    @State private var fileTreeStates: [WorktreeKey: FileTreeState] = [:]
+    @State private var fileTreeLastTerminalPaths: [WorktreeKey: String] = [:]
+    @AppStorage(GeneralSettingsKeys.fileTreeSource) private var fileTreeSourceRaw = FileTreeSourcePreference.defaultValue.rawValue
+    @State private var richInputPanelVisible = false
+    @State private var panelToRestoreAfterRichInput: SidePanelKind?
+    @AppStorage("muxy.richInputPanelWidth") private var richInputPanelWidth: Double = .init(RichInputPanelLayout.defaultWidth)
+    @AppStorage("muxy.richInputPanelHeight") private var richInputPanelHeight: Double = .init(RichInputPanelLayout.defaultHeight)
+    @AppStorage(RichInputPreferences.fontSizeKey) private var richInputFontSize: Double = RichInputPreferences.defaultFontSize
+    @AppStorage(RichInputPreferences.floatingKey) private var richInputFloating = RichInputPreferences.defaultFloating
+    @AppStorage(RichInputPreferences.positionKey) private var richInputPosition: RichInputPanelPosition = RichInputPreferences
+        .defaultPosition
+    @AppStorage(RichInputPreferences.broadcastKey) private var richInputBroadcast = RichInputPreferences.defaultBroadcast
+    @State private var richInputStates: [WorktreeKey: RichInputState] = [:]
+    @State private var showQuickOpen = false
+    @State private var showFindInFiles = false
+    @State private var showWorktreeSwitcher = false
+    @State private var showProjectPicker = false
+    @State private var overlayAnimatingOut = false
     @State private var snippetsPanelVisible = UserDefaults.standard.bool(forKey: "muxy.snippetsPanelVisible")
     @State private var notesPanelVisible = UserDefaults.standard.bool(forKey: "muxy.notesPanelVisible")
         || UserDefaults.standard.bool(forKey: "muxy.inspectorPanelVisible")
@@ -60,426 +116,449 @@ struct MainWindow: View {
     @State private var projectInspectorStore = ProjectInspectorStore.shared
     @State private var remoteSpacesStore = RemoteSpacesStore.shared
     @State private var showCommandPalette = false
-    @AppStorage("muxy.fileTreeWidth") private var fileTreePanelWidth: Double = .init(FileTreeLayout.defaultWidth)
-    @State private var fileTreeStates: [WorktreeKey: FileTreeState] = [:]
-    @State private var showQuickOpen = false
-    @State private var showWorktreeSwitcher = false
     @State private var showThemePicker = false
     @State private var showNotificationPanel = false
     @State private var showLocalPorts = false
     @State private var aiAssistantPanelVisible = false
     @State private var isFullScreen = false
-    @State private var sidebarExpanded = UserDefaults.standard.bool(forKey: "muxy.sidebarExpanded")
+    @AppStorage("muxy.sidebarExpanded") private var sidebarExpanded = false
+    @AppStorage("muxy.showStatusBar") private var showStatusBar = true
     @AppStorage(SidebarCollapsedStyle.storageKey) private var sidebarCollapsedStyleRaw = SidebarCollapsedStyle.defaultValue.rawValue
     @AppStorage(SidebarExpandedStyle.storageKey) private var sidebarExpandedStyleRaw = SidebarExpandedStyle.defaultValue.rawValue
     @AppStorage("muxy.notifications.toastPosition") private var toastPositionRaw = ToastPosition.topCenter.rawValue
+    @AppStorage(RecordingPreferences.autoSendKey) private var recordingAutoSend = RecordingPreferences.defaultAutoSend
+    @AppStorage(RecordingPreferences.languageKey) private var recordingLanguage = RecordingPreferences.defaultLanguage
+    @State private var voiceRecording = VoiceRecordingState.shared
     @AppStorage(ToolbarAction.storageKey) private var toolbarActionsRaw = ToolbarAction.defaultRawValue
-    private let trafficLightWidth: CGFloat = 75
+    @MainActor private var trafficLightWidth: CGFloat { UIMetrics.scaled(75) }
 
     var body: some View {
-        stateSyncLayer
-    }
-
-    private var stateSyncLayer: some View {
-        AnyView(notificationLayer)
-            .onChange(of: vcsPruneSignature) {
-                pruneDetachedSidePanelStates()
-            }
-            .onChange(of: vcsEnsureSignature) {
-                ensureVisibleSidePanelState()
-            }
-            .modifier(FileTreeSelectionSync(
-                filePath: activeEditorFilePath,
-                panelVisible: fileTreePanelVisible,
-                sync: syncFileTreeSelection
-            ))
-            .modifier(RemoteSpaceThemeSync(
-                projectID: appState.activeProjectID,
-                activeSpace: activeRemoteSpace
-            ))
-            .onChange(of: appState.pendingLastTabClose != nil) { _, isPresented in
-                guard isPresented else { return }
-                presentCloseConfirmation(.lastTab)
-            }
-            .onChange(of: appState.pendingUnsavedEditorTabClose != nil) { _, isPresented in
-                guard isPresented else { return }
-                presentCloseConfirmation(.unsavedEditor)
-            }
-            .onChange(of: appState.pendingProcessTabClose != nil) { _, isPresented in
-                guard isPresented else { return }
-                presentCloseConfirmation(.runningProcess)
-            }
-            .onChange(of: appState.pendingSaveErrorMessage != nil) { _, isPresented in
-                guard isPresented, let message = appState.pendingSaveErrorMessage else { return }
-                presentSaveErrorAlert(message: message)
-            }
-            .onAppear {
-                syncProjectInspectorStore()
-            }
-            .onChange(of: appState.activeProjectID) {
-                syncProjectInspectorStore()
-            }
-    }
-
-    private var notificationLayer: some View {
-        AnyView(chromeLayer)
-            .onReceive(NotificationCenter.default.publisher(for: .quickOpen)) { _ in
-                showQuickOpen.toggle()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .commandPalette)) { _ in
-                showCommandPalette.toggle()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .switchWorktree)) { _ in
-                showWorktreeSwitcher.toggle()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleSidebar)) { _ in
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    sidebarExpanded.toggle()
-                }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .windowFullScreenDidChange)) { notification in
-                isFullScreen = notification.userInfo?["isFullScreen"] as? Bool ?? false
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .openVCSWindow)) { _ in
-                openWindow(id: "vcs")
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleAttachedVCS)) { _ in
-                toggleAttachedVCSPanel()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleFileTree)) { _ in
-                toggleFileTreePanel()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleSnippetsPanel)) { _ in
-                toggleSnippetsPanel()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleInspectorPanel)) { _ in
-                toggleNotesPanel()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleProjectNotesPanel)) { _ in
-                toggleNotesPanel()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleProjectTodoPanel)) { _ in
-                toggleTodoPanel()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleAIAssistant)) { _ in
-                aiAssistantPanelVisible.toggle()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .explainSelectionWithAI)) { notification in
-                handleExplainSelection(notification: notification)
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleThemePicker)) { _ in
-                showThemePicker.toggle()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .toggleNotificationPanel)) { _ in
-                showNotificationPanel.toggle()
-            }
-    }
-
-    private var chromeLayer: some View {
-        AnyView(windowLayer)
-            .environment(
-                \.overlayActive,
-                showQuickOpen
-                    || showWorktreeSwitcher
-                    || showCommandPalette
-                    || showThemePicker
-                    || showNotificationPanel
-                    || showLocalPorts
-            )
-            .animation(.easeInOut(duration: 0.15), value: showCommandPalette)
-            .animation(.easeInOut(duration: 0.15), value: showQuickOpen)
-            .animation(.easeInOut(duration: 0.15), value: showWorktreeSwitcher)
-            .animation(.easeInOut(duration: 0.15), value: showThemePicker)
-            .animation(.easeInOut(duration: 0.15), value: showNotificationPanel)
-            .animation(.easeInOut(duration: 0.15), value: showLocalPorts)
-            .animation(.easeInOut(duration: 0.2), value: ToastState.shared.message != nil)
-            .coordinateSpace(name: DragCoordinateSpace.mainWindow)
-            .environment(dragCoordinator)
-            .background(MainWindowShortcutInterceptor(
-                onShortcut: { action in handleShortcutAction(action) },
-                onCommandShortcut: { shortcut in handleCommandShortcut(shortcut) },
-                onMouseBack: { appState.goBack() },
-                onMouseForward: { appState.goForward() }
-            ))
-            .background(WindowConfigurator(configVersion: ghostty.configVersion))
-            .background(WindowTitleUpdater(title: windowTitle))
-            .ignoresSafeArea(.container, edges: .top)
-            .onReceive(NotificationCenter.default.publisher(for: .applyAIAssistantCode)) { notification in
-                handleApplyAIAssistantCode(notification: notification)
-            }
-    }
-
-    private var windowLayer: some View {
-        ZStack {
-            AnyView(mainWindowStack)
-            AnyView(activeOverlayLayer)
-            AnyView(toastLayer)
-        }
-    }
-
-    private var mainWindowStack: some View {
-        VStack(spacing: 0) {
-            titleBar
-            Rectangle().fill(MuxyTheme.border).frame(height: 1)
-                .background(MuxyTheme.bg)
-            workspaceStack
-        }
-    }
-
-    private var titleBar: some View {
         HStack(spacing: 0) {
+            leftNavigationColumn
+            mainWorkspaceColumn
+        }
+        .animation(.easeInOut(duration: 0.2), value: sidebarExpanded)
+        .overlay(alignment: .topLeading) {
+            titleBarNavigationOverlay
+        }
+        .environment(\.overlayActive, showQuickOpen || showFindInFiles || showWorktreeSwitcher || showProjectPicker || overlayAnimatingOut || showCommandPalette || showThemePicker || showNotificationPanel || showLocalPorts)
+        .overlay(alignment: .bottom) {
+            if voiceRecording.isPanelVisible {
+                VoiceRecordingPanel(state: voiceRecording, autoSend: recordingAutoSend)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: voiceRecording.isPanelVisible)
+        .overlay(alignment: toastAlignment) {
+            if let toast = ToastState.shared.message {
+                HStack(spacing: UIMetrics.spacing3) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: UIMetrics.fontBody, weight: .semibold))
+                        .foregroundStyle(MuxyTheme.diffAddFg)
+                    Text(toast)
+                        .font(.system(size: UIMetrics.fontBody, weight: .medium))
+                        .foregroundStyle(MuxyTheme.fg)
+                }
+                .padding(.horizontal, UIMetrics.scaled(14))
+                .padding(.vertical, UIMetrics.spacing4)
+                .background(MuxyTheme.bg, in: Capsule())
+                .overlay(Capsule().stroke(MuxyTheme.border, lineWidth: 1))
+                .padding(toastEdgePadding)
+                .transition(.move(edge: toastTransitionEdge).combined(with: .opacity))
+                .allowsHitTesting(false)
+                .accessibilityLabel(toast)
+                .accessibilityAddTraits(.isStaticText)
+            }
+        }
+        .overlay {
+            if showQuickOpen, let project = activeProject {
+                QuickOpenOverlay(
+                    projectPath: activeWorktreePath(for: project),
+                    onSelect: { filePath in
+                        showQuickOpen = false
+                        appState.openFile(filePath, projectID: project.id)
+                    },
+                    onDismiss: { showQuickOpen = false }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
+        }
+        .overlay {
+            if showFindInFiles, let project = activeProject {
+                FindInFilesOverlay(
+                    projectPath: activeWorktreePath(for: project),
+                    onSelect: { match in
+                        showFindInFiles = false
+                        appState.openFile(
+                            match.absolutePath,
+                            projectID: project.id,
+                            line: match.lineNumber,
+                            column: match.column
+                        )
+                    },
+                    onDismiss: { showFindInFiles = false }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
+        }
+        .overlay {
+            if showWorktreeSwitcher {
+                OpenerOverlay(
+                    items: openerItems,
+                    recents: openerRecentItems,
+                    activeWorktreeKey: activeWorktreeKey,
+                    onSelect: { item in
+                        showWorktreeSwitcher = false
+                        handleOpenerSelection(item)
+                    },
+                    onDismiss: { showWorktreeSwitcher = false }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
+        }
+        .overlay {
+            if showProjectPicker {
+                ProjectPickerOverlay(
+                    projectPaths: projectStore.projects.map(\.path),
+                    onConfirm: { path, createIfMissing in
+                        ProjectOpenService.confirmProjectPathResult(
+                            path,
+                            appState: appState,
+                            projectStore: projectStore,
+                            worktreeStore: worktreeStore,
+                            createIfMissing: createIfMissing
+                        )
+                    },
+                    onChooseFinder: {
+                        ProjectOpenService.openProject(
+                            appState: appState,
+                            projectStore: projectStore,
+                            worktreeStore: worktreeStore
+                        )
+                    },
+                    onDismiss: { showProjectPicker = false }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
+        }
+
+        .overlay {
+            if showCommandPalette {
+                CommandPaletteOverlay(
+                    appItems: commandPaletteAppItems,
+                    remoteSpaces: remoteSpacesStore.spaces,
+                    activeRemoteSpace: activeRemoteSpace,
+                    snippetScope: activeSnippetScope,
+                    projectPath: activeCommandPaletteProjectPath,
+                    worktreeItems: worktreeSwitcherItems,
+                    naturalCommandContext: activeNaturalCommandContext,
+                    onSelect: selectCommandPaletteItem,
+                    onRunNaturalCommand: runNaturalCommandPlan,
+                    onSaveNaturalCommand: saveNaturalCommandPlan,
+                    onDismiss: dismissCommandPalette
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
+        }
+        .overlay {
+            if showThemePicker {
+                UtilityOverlay(onDismiss: { showThemePicker = false }, content: {
+                    ThemePicker(mode: .sidebar)
+                        .frame(width: 360, height: 430)
+                })
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
+        }
+        .overlay {
+            if showNotificationPanel {
+                UtilityOverlay(onDismiss: { showNotificationPanel = false }, content: {
+                    NotificationPanel(onDismiss: { showNotificationPanel = false })
+                        .frame(width: 360, height: 420)
+                })
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
+        }
+        .overlay {
+            if showLocalPorts {
+                UtilityOverlay(onDismiss: { showLocalPorts = false }, content: {
+                    LocalPortsPanel(onDismiss: { showLocalPorts = false })
+                })
+                .transition(.opacity.combined(with: .scale(scale: 0.98)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.15), value: showQuickOpen)
+        .animation(.easeInOut(duration: 0.15), value: showFindInFiles)
+        .animation(.easeInOut(duration: 0.15), value: showWorktreeSwitcher)
+        .animation(.easeInOut(duration: 0.15), value: showProjectPicker)
+        .modifier(OverlayExitTracker(
+            showQuickOpen: showQuickOpen,
+            showFindInFiles: showFindInFiles,
+            showWorktreeSwitcher: showWorktreeSwitcher,
+            showProjectPicker: showProjectPicker,
+            onAnimatingOut: { overlayAnimatingOut = $0 }
+        ))
+        .animation(.easeInOut(duration: 0.2), value: ToastState.shared.message != nil)
+        .coordinateSpace(name: DragCoordinateSpace.mainWindow)
+        .environment(dragCoordinator)
+        .background(MainWindowShortcutInterceptor(
+            onShortcut: { action in handleShortcutAction(action) },
+            onCommandShortcut: { shortcut in handleCommandShortcut(shortcut) },
+            onMouseBack: { appState.goBack() },
+            onMouseForward: { appState.goForward() }
+        ))
+        .background(WindowConfigurator(configVersion: ghostty.configVersion, uiScalePreset: UIScale.shared.preset))
+        .background(WindowTitleUpdater(title: windowTitle))
+        .ignoresSafeArea(.container, edges: .top)
+        .onReceive(NotificationCenter.default.publisher(for: .quickOpen)) { _ in
+            showQuickOpen.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .findInFiles)) { _ in
+            showFindInFiles.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openProjectPicker)) { _ in
+            showProjectPicker = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .switchWorktree)) { _ in
+            showWorktreeSwitcher.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleSidebar)) { _ in
+            withAnimation(.easeInOut(duration: 0.2)) {
+                sidebarExpanded.toggle()
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .windowFullScreenDidChange)) { notification in
+            isFullScreen = notification.userInfo?["isFullScreen"] as? Bool ?? false
+        }
+        .background(WindowOpenReceiver(openWindow: openWindow))
+
+        .onReceive(NotificationCenter.default.publisher(for: .commandPalette)) { _ in
+            showCommandPalette.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openVCSWindow)) { _ in
+            openWindow(id: "vcs")
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleSnippetsPanel)) { _ in
+            toggleSnippetsPanel()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleInspectorPanel)) { _ in
+            toggleNotesPanel()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleProjectNotesPanel)) { _ in
+            toggleNotesPanel()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleProjectTodoPanel)) { _ in
+            toggleTodoPanel()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleAIAssistant)) { _ in
+            aiAssistantPanelVisible.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .explainSelectionWithAI)) { notification in
+            handleExplainSelection(notification: notification)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleThemePicker)) { _ in
+            showThemePicker.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .toggleNotificationPanel)) { _ in
+            showNotificationPanel.toggle()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .applyAIAssistantCode)) { notification in
+            handleApplyAIAssistantCode(notification: notification)
+        }
+        .modifier(SidePanelNotificationListeners(
+            onToggleAttachedVCS: { toggleAttachedVCSPanel() },
+            onToggleFileTree: { toggleFileTreePanel() },
+            onToggleRichInput: { toggleRichInputPanel() },
+            onToggleVoiceRecording: { _ = openVoiceRecorder() }
+        ))
+        .onChange(of: vcsPruneSignature) {
+            pruneFileTreeStates()
+        }
+        .onChange(of: vcsEnsureSignature) {
+            guard let project = activeProject else { return }
+            if fileTreePanelVisible {
+                ensureFileTreeState(for: project)
+            }
+        }
+        .modifier(FileTreeSourceObserver(
+            activeTerminalCWD: activeTerminalPane?.currentWorkingDirectory,
+            activeTerminalID: activeTerminalPane?.id,
+            sourceRaw: fileTreeSourceRaw,
+            onTerminalChange: refreshFileTreeRootForActiveTerminal,
+            onSourceChange: {
+                guard let project = activeProject else { return }
+                ensureFileTreeState(for: project)
+            }
+        ))
+        .modifier(FileTreeSelectionSync(
+            filePath: activeEditorFilePath,
+            panelVisible: fileTreePanelVisible,
+            sync: syncFileTreeSelection
+        ))
+        .onChange(of: appState.pendingLastTabClose != nil) { _, isPresented in
+            guard isPresented else { return }
+            presentCloseConfirmation(.lastTab)
+        }
+        .onChange(of: appState.pendingUnsavedEditorTabClose != nil) { _, isPresented in
+            guard isPresented else { return }
+            presentCloseConfirmation(.unsavedEditor)
+        }
+        .onChange(of: appState.pendingProcessTabClose != nil) { _, isPresented in
+            guard isPresented else { return }
+            presentCloseConfirmation(.runningProcess)
+        }
+        .onChange(of: appState.pendingSaveErrorMessage != nil) { _, isPresented in
+            guard isPresented, let message = appState.pendingSaveErrorMessage else { return }
+            presentSaveErrorAlert(message: message)
+        }
+        .onChange(of: appState.pendingLayoutApply != nil) { _, isPresented in
+            guard isPresented, let pending = appState.pendingLayoutApply else { return }
+            presentLayoutApplyConfirmation(pending: pending)
+        }
+        .modifier(RemoteSpaceThemeSync(
+            projectID: appState.activeProjectID,
+            activeSpace: activeRemoteSpace
+        ))
+        .onAppear { syncProjectInspectorStore() }
+        .onChange(of: appState.activeProjectID) { syncProjectInspectorStore() }
+        .modifier(SentryConsentPrompter())
+    }
+
+    private var leftNavigationColumn: some View {
+        VStack(spacing: 0) {
             if !isFullScreen {
                 Color.clear
-                    .frame(width: topBarLeadingWidth)
-                    .fixedSize(horizontal: true, vertical: false)
-                    .overlay(alignment: .trailing) {
-                        HStack(spacing: 0) {
-                            navigationArrows
-                            Rectangle().fill(MuxyTheme.border).frame(width: 1)
-                        }
-                    }
+                    .frame(height: UIMetrics.titleBarHeight)
+                    .background(WindowDragRepresentable())
+
+                Rectangle().fill(MuxyTheme.border).frame(height: 1)
+                    .accessibilityHidden(true)
             }
-            topBarContent
+
+            Sidebar(expanded: sidebarExpanded)
         }
-        .frame(height: 32)
-        .background(WindowDragRepresentable())
+        .frame(width: leftNavigationWidth, alignment: .leading)
+        .clipped()
         .background(MuxyTheme.bg)
-    }
-
-    private var workspaceStack: some View {
-        HStack(spacing: 0) {
-            sidebarStack
-            activeWorkspaceContent
-            attachedSidePanel
-            snippetsSidePanel
-            aiAssistantSidePanel
-            inspectorSidePanel
-        }
-    }
-
-    private var sidebarStack: some View {
-        HStack(spacing: 0) {
-            Sidebar()
-            if !SidebarLayout.isHidden(expanded: sidebarExpanded, collapsedStyle: sidebarCollapsedStyle) {
-                Rectangle().fill(MuxyTheme.border).frame(width: 1)
+        .overlay(alignment: .trailing) {
+            if leftNavigationWidth > 0 {
+                Rectangle().fill(MuxyTheme.border)
+                    .frame(width: 1)
+                    .padding(.top, leftNavigationBorderTopPadding)
                     .accessibilityHidden(true)
             }
         }
         .fixedSize(horizontal: true, vertical: false)
-        .background(MuxyTheme.bg)
+        .animation(.easeInOut(duration: 0.2), value: leftNavigationWidth)
     }
 
-    private var activeWorkspaceContent: some View {
-        ZStack {
-            MuxyTheme.bg
-            if let project = activeProject,
-               appState.workspaceRoot(for: project.id) == nil,
-               let worktree = resolvedActiveWorktree(for: project)
-            {
-                EmptyProjectPlaceholder(project: project) {
-                    appState.selectWorktree(projectID: project.id, worktree: worktree)
-                }
-            } else if projectsWithWorkspaces.isEmpty {
-                WelcomeView()
-            } else if let project = activeProjectWithWorkspace,
-                      let activeKey = appState.activeWorktreeKey(for: project.id)
-            {
-                ForEach(mountedWorktreeKeys(for: project), id: \.self) { key in
-                    TerminalArea(
-                        project: project,
-                        worktreeKey: key,
-                        isActiveProject: key == activeKey
-                    )
-                    .opacity(key == activeKey ? 1 : 0)
-                    .allowsHitTesting(key == activeKey)
-                    .zIndex(key == activeKey ? 1 : 0)
-                }
-            }
+    private var mainWorkspaceColumn: some View {
+        VStack(spacing: 0) {
+            mainTitleBarContent
+                .frame(height: UIMetrics.titleBarHeight)
+                .background(WindowDragRepresentable())
+                .background(MuxyTheme.bg)
+
+            Rectangle().fill(MuxyTheme.border).frame(height: 1)
+                .background(MuxyTheme.bg)
+
+            workspaceContent
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var mainTitleBarContent: some View {
+        HStack(spacing: 0) {
+            if mainTitleBarLeadingInset > 0 {
+                Color.clear
+                    .frame(width: mainTitleBarLeadingInset)
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+
+            topBarContent
+        }
+        .animation(.easeInOut(duration: 0.2), value: mainTitleBarLeadingInset)
     }
 
     @ViewBuilder
-    private var attachedSidePanel: some View {
-        if vcsPanelVisible, VCSDisplayMode.current == .attached, let state = activeVCSState {
-            HStack(spacing: 0) {
-                sidePanelResizeHandle { delta in
-                    vcsPanelWidth = max(
-                        AttachedVCSLayout.minWidth,
-                        min(AttachedVCSLayout.maxWidth, vcsPanelWidth - delta)
-                    )
-                }
-                VCSTabView(state: state, focused: false, onFocus: {})
-                    .frame(width: vcsPanelWidth)
-            }
-        } else if fileTreePanelVisible, let treeState = activeFileTreeState {
-            HStack(spacing: 0) {
-                sidePanelResizeHandle { delta in
-                    let next = fileTreePanelWidth - Double(delta)
-                    fileTreePanelWidth = max(
-                        Double(FileTreeLayout.minWidth),
-                        min(Double(FileTreeLayout.maxWidth), next)
-                    )
-                }
-                FileTreeView(
-                    state: treeState,
-                    onOpenFile: { filePath in
-                        guard let projectID = appState.activeProjectID else { return }
-                        appState.openFile(filePath, projectID: projectID, preserveFocus: true)
-                    },
-                    onOpenTerminal: { directory in
-                        guard let projectID = appState.activeProjectID else { return }
-                        appState.dispatch(.createTabInDirectory(
-                            projectID: projectID,
-                            areaID: nil,
-                            directory: directory
-                        ))
-                    },
-                    onFileMoved: { oldPath, newPath in
-                        appState.handleFileMoved(from: oldPath, to: newPath)
+    private var titleBarNavigationOverlay: some View {
+        if !isFullScreen {
+            Color.clear
+                .frame(width: titleBarNavigationOverlayWidth, height: UIMetrics.titleBarHeight)
+                .fixedSize(horizontal: true, vertical: false)
+                .background(WindowDragRepresentable())
+                .background(MuxyTheme.bg)
+                .overlay(alignment: .trailing) {
+                    HStack(spacing: 0) {
+                        navigationArrows
+                        if titleBarNavigationOverflowsSidebar {
+                            Rectangle().fill(MuxyTheme.border).frame(width: 1)
+                                .accessibilityHidden(true)
+                        }
                     }
+                }
+                .animation(.easeInOut(duration: 0.2), value: titleBarNavigationOverlayWidth)
+        }
+    }
+
+    private var workspaceContent: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                ZStack {
+                    MuxyTheme.bg
+                    if let project = activeProject,
+                       appState.workspaceRoot(for: project.id) == nil,
+                       let worktree = resolvedActiveWorktree(for: project)
+                    {
+                        EmptyProjectPlaceholder(project: project) {
+                            appState.selectWorktree(projectID: project.id, worktree: worktree)
+                        }
+                    } else if projectsWithWorkspaces.isEmpty {
+                        WelcomeView()
+                    } else if let project = activeProjectWithWorkspace,
+                              let activeKey = appState.activeWorktreeKey(for: project.id)
+                    {
+                        ForEach(mountedWorktreeKeys(for: project), id: \.self) { key in
+                            TerminalArea(
+                                project: project,
+                                worktreeKey: key,
+                                isActiveProject: key == activeKey
+                            )
+                            .opacity(key == activeKey ? 1 : 0)
+                            .allowsHitTesting(key == activeKey)
+                            .zIndex(key == activeKey ? 1 : 0)
+                        }
+                    }
+                }
+
+                rightSidePanel
+                snippetsSidePanel
+                aiAssistantSidePanel
+                inspectorSidePanel
+            }
+            .overlay(alignment: .trailing) {
+                floatingRichInputOverlay
+            }
+            .overlay(alignment: .bottom) {
+                floatingBottomRichInputOverlay
+            }
+            .animation(.easeInOut(duration: 0.2), value: richInputPanelVisible)
+
+            bottomDockedRichInputPanel
+
+            if showStatusBar {
+                ProjectStatusBar(
+                    activePane: activeTerminalPane,
+                    activeWorktree: activeProject.flatMap { resolvedActiveWorktree(for: $0) },
+                    isInteractive: activeTerminalPane != nil && !overlayAnimatingOut,
+                    richInputVisible: richInputPanelVisible,
+                    richInputFontSize: $richInputFontSize
                 )
-                .id(treeState.rootPath)
-                .frame(width: CGFloat(fileTreePanelWidth))
             }
-        }
-    }
-
-    @ViewBuilder
-    private var snippetsSidePanel: some View {
-        if snippetsPanelVisible {
-            SnippetsPanel(scope: activeSnippetScope)
-        }
-    }
-
-    @ViewBuilder
-    private var aiAssistantSidePanel: some View {
-        if aiAssistantPanelVisible {
-            AIAssistantPanel(
-                projectID: appState.activeProjectID,
-                projectPath: activeProject?.path,
-                activeFile: anyOpenEditorFilePath
-            )
-        }
-    }
-
-    @ViewBuilder
-    private var inspectorSidePanel: some View {
-        if notesPanelVisible || todoPanelVisible {
-            ProjectInspectorPanel(
-                project: activeProject,
-                showsNotes: notesPanelVisible,
-                showsTodo: todoPanelVisible
-            )
-        }
-    }
-
-    @ViewBuilder
-    private var toastLayer: some View {
-        if let toast = ToastState.shared.message {
-            HStack(spacing: 6) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(MuxyTheme.diffAddFg)
-                Text(toast)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(MuxyTheme.fg)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(MuxyTheme.bg, in: Capsule())
-            .overlay(Capsule().stroke(MuxyTheme.border, lineWidth: 1))
-            .padding(toastEdgePadding)
-            .transition(.move(edge: toastTransitionEdge).combined(with: .opacity))
-            .allowsHitTesting(false)
-            .accessibilityLabel(toast)
-            .accessibilityAddTraits(.isStaticText)
-        }
-    }
-
-    @ViewBuilder
-    private var activeOverlayLayer: some View {
-        commandPaletteLayer
-        quickOpenLayer
-        worktreeSwitcherLayer
-        utilityOverlayLayer
-    }
-
-    @ViewBuilder
-    private var commandPaletteLayer: some View {
-        if showCommandPalette {
-            CommandPaletteOverlay(
-                appItems: commandPaletteAppItems,
-                remoteSpaces: remoteSpacesStore.spaces,
-                activeRemoteSpace: activeRemoteSpace,
-                snippetScope: activeSnippetScope,
-                projectPath: activeCommandPaletteProjectPath,
-                worktreeItems: worktreeSwitcherItems,
-                naturalCommandContext: activeNaturalCommandContext,
-                onSelect: selectCommandPaletteItem,
-                onRunNaturalCommand: runNaturalCommandPlan,
-                onSaveNaturalCommand: saveNaturalCommandPlan,
-                onDismiss: dismissCommandPalette
-            )
-            .transition(.opacity.combined(with: .scale(scale: 0.98)))
-        }
-    }
-
-    @ViewBuilder
-    private var quickOpenLayer: some View {
-        if showQuickOpen, let project = activeProject {
-            QuickOpenOverlay(
-                projectPath: activeWorktreePath(for: project),
-                onSelect: { filePath in
-                    showQuickOpen = false
-                    appState.openFile(filePath, projectID: project.id)
-                },
-                onDismiss: { showQuickOpen = false }
-            )
-            .transition(.opacity.combined(with: .scale(scale: 0.98)))
-        }
-    }
-
-    @ViewBuilder
-    private var worktreeSwitcherLayer: some View {
-        if showWorktreeSwitcher {
-            WorktreeSwitcherOverlay(
-                items: worktreeSwitcherItems,
-                activeKey: activeWorktreeKey,
-                onSelect: selectWorktreeSwitcherItem,
-                onDismiss: { showWorktreeSwitcher = false }
-            )
-            .transition(.opacity.combined(with: .scale(scale: 0.98)))
-        }
-    }
-
-    @ViewBuilder
-    private var utilityOverlayLayer: some View {
-        if showThemePicker {
-            UtilityOverlay(onDismiss: { showThemePicker = false }, content: {
-                ThemePicker(mode: .sidebar)
-                    .frame(width: 360, height: 430)
-            })
-            .transition(.opacity.combined(with: .scale(scale: 0.98)))
-        }
-
-        if showNotificationPanel {
-            UtilityOverlay(onDismiss: { showNotificationPanel = false }, content: {
-                NotificationPanel(onDismiss: { showNotificationPanel = false })
-                    .frame(width: 360, height: 420)
-            })
-            .transition(.opacity.combined(with: .scale(scale: 0.98)))
-        }
-
-        if showLocalPorts {
-            UtilityOverlay(onDismiss: { showLocalPorts = false }, content: {
-                LocalPortsPanel(onDismiss: { showLocalPorts = false })
-            })
-            .transition(.opacity.combined(with: .scale(scale: 0.98)))
         }
     }
 
     private var navigationArrows: some View {
-        HStack(spacing: 2) {
+        HStack(spacing: UIMetrics.spacing1) {
             NavigationArrowButton(
                 symbol: "chevron.left",
                 isEnabled: appState.navigation.canGoBack,
@@ -495,7 +574,7 @@ struct MainWindow: View {
                 appState.goForward()
             }
         }
-        .padding(.trailing, 4)
+        .padding(.trailing, UIMetrics.spacing2)
     }
 
     @ViewBuilder
@@ -585,9 +664,9 @@ struct MainWindow: View {
                     HStack {
                         if let project = activeProject {
                             Text(project.name)
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: UIMetrics.fontBody, weight: .semibold))
                                 .foregroundStyle(MuxyTheme.fgMuted)
-                                .padding(.leading, 12)
+                                .padding(.leading, UIMetrics.spacing6)
                         }
                         Spacer(minLength: 0)
                     }
@@ -595,9 +674,15 @@ struct MainWindow: View {
                 }
                 .overlay(alignment: .trailing) {
                     HStack(spacing: 0) {
+                        if showsToolbarAction(.updates), let version = UpdateService.shared.availableUpdateVersion {
+                            UpdateBadge(version: version) {
+                                UpdateService.shared.checkForUpdates()
+                            }
+                            .padding(.trailing, UIMetrics.spacing2)
+                        }
                         if showsToolbarAction(.debug), AppEnvironment.isDevelopment {
                             devModeBadge
-                                .padding(.trailing, 6)
+                                .padding(.trailing, UIMetrics.spacing3)
                         }
                         if showsToolbarAction(.tools), let project = activeProject {
                             OpenInIDEControl(
@@ -605,12 +690,7 @@ struct MainWindow: View {
                                 filePath: activeEditorFilePath,
                                 cursorProvider: activeEditorCursor
                             )
-                        }
-                        if showsToolbarAction(.updates), let version = UpdateService.shared.availableUpdateVersion {
-                            UpdateBadge(version: version) {
-                                UpdateService.shared.checkForUpdates()
-                            }
-                            .padding(.trailing, 4)
+                            LayoutPickerMenu(projectID: project.id)
                         }
                         if let project = activeProject, activeProjectHasSplitWorkspace {
                             fallbackToolbarProjectActions(project: project)
@@ -650,55 +730,37 @@ struct MainWindow: View {
                             .help("New Tab (\(KeyBindingStore.shared.combo(for: .newTab).displayString))")
                         }
                     }
-                    .padding(.trailing, 4)
+                    .padding(.trailing, UIMetrics.spacing2)
                 }
         }
     }
 
-    @ViewBuilder
-    private func fallbackToolbarProjectActions(project: Project) -> some View {
-        if showsToolbarAction(.splitRight) {
-            IconButton(symbol: "square.split.2x1", accessibilityLabel: "Split Right") {
-                splitFallbackToolbarArea(project: project, direction: .horizontal)
-            }
-            .help("Split Right (\(KeyBindingStore.shared.combo(for: .splitRight).displayString))")
-        }
-        if showsToolbarAction(.splitDown) {
-            IconButton(symbol: "square.split.1x2", accessibilityLabel: "Split Down") {
-                splitFallbackToolbarArea(project: project, direction: .vertical)
-            }
-            .help("Split Down (\(KeyBindingStore.shared.combo(for: .splitDown).displayString))")
-        }
-        if showsToolbarAction(.quickOpen) {
-            IconButton(symbol: "doc.text", size: 12, accessibilityLabel: "Quick Open") {
-                NotificationCenter.default.post(name: .quickOpen, object: nil)
-            }
-            .help("Quick Open (\(KeyBindingStore.shared.combo(for: .quickOpen).displayString))")
-        }
-        if showsToolbarAction(.sourceControl) {
-            FileDiffIconButton {
-                openVCS(for: project)
-            }
-            .help("Source Control (\(KeyBindingStore.shared.combo(for: .openVCSTab).displayString))")
-        }
-        if showsToolbarAction(.fileTree) {
-            FileTreeIconButton {
-                NotificationCenter.default.post(name: .toggleFileTree, object: nil)
-            }
-            .help("File Tree (\(KeyBindingStore.shared.combo(for: .toggleFileTree).displayString))")
+    private var snippetsSidePanel: some View {
+        if snippetsPanelVisible {
+            SnippetsPanel(scope: activeSnippetScope)
         }
     }
 
-    private func splitFallbackToolbarArea(project: Project, direction: SplitDirection) {
-        let areaID = appState.focusedAreaID(for: project.id)
-            ?? appState.workspaceRoot(for: project.id)?.allAreas().first?.id
-        guard let areaID else { return }
-        appState.dispatch(.splitArea(.init(
-            projectID: project.id,
-            areaID: areaID,
-            direction: direction,
-            position: .second
-        )))
+    @ViewBuilder
+    private var aiAssistantSidePanel: some View {
+        if aiAssistantPanelVisible {
+            AIAssistantPanel(
+                projectID: appState.activeProjectID,
+                projectPath: activeProject?.path,
+                activeFile: anyOpenEditorFilePath
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var inspectorSidePanel: some View {
+        if notesPanelVisible || todoPanelVisible {
+            ProjectInspectorPanel(
+                project: activeProject,
+                showsNotes: notesPanelVisible,
+                showsTodo: todoPanelVisible
+            )
+        }
     }
 
     private var worktreeSwitcherItems: [WorktreeSwitcherItem] {
@@ -1134,146 +1196,6 @@ struct MainWindow: View {
         }
     }
 
-    private var activeProjectHasSplitWorkspace: Bool {
-        guard let project = activeProject,
-              let root = appState.workspaceRoot(for: project.id)
-        else { return false }
-        if case .split = root { return true }
-        return false
-    }
-
-    private var projectsWithWorkspaces: [Project] {
-        projectStore.projects.filter { appState.workspaceRoot(for: $0.id) != nil }
-    }
-
-    private func sidePanelResizeHandle(onDrag: @escaping (CGFloat) -> Void) -> some View {
-        Rectangle().fill(MuxyTheme.border).frame(width: 1)
-            .accessibilityHidden(true)
-            .overlay {
-                Color.clear
-                    .frame(width: 5)
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 1)
-                            .onChanged { v in onDrag(v.translation.width) }
-                    )
-                    .onHover { on in
-                        if on { NSCursor.resizeLeftRight.push() } else { NSCursor.pop() }
-                    }
-            }
-    }
-
-    private var activeFileTreeState: FileTreeState? {
-        guard let project = activeProject,
-              let key = appState.activeWorktreeKey(for: project.id)
-        else { return nil }
-        return fileTreeStates[key]
-    }
-
-    private func ensureFileTreeState(for project: Project) {
-        guard let key = appState.activeWorktreeKey(for: project.id) else { return }
-        let path = activeWorktreePath(for: project)
-        if let existing = fileTreeStates[key], existing.rootPath == path { return }
-        fileTreeStates[key] = FileTreeState(rootPath: path)
-    }
-
-    private func ensureVisibleSidePanelState() {
-        guard let project = activeProject else { return }
-        if vcsPanelVisible, VCSDisplayMode.current == .attached {
-            ensureVCSState(for: project)
-        }
-        if fileTreePanelVisible {
-            ensureFileTreeState(for: project)
-        }
-    }
-
-    private var activeEditorState: EditorTabState? {
-        guard let project = activeProject else { return nil }
-        return appState.activeTab(for: project.id)?.content.editorState
-    }
-
-    private var activeEditorFilePath: String? {
-        activeEditorState?.filePath
-    }
-
-    private var anyOpenEditorFilePath: String? {
-        guard let project = activeProject,
-              appState.activeWorktreeKey(for: project.id) != nil,
-              let root = appState.workspaceRoot(for: project.id)
-        else { return nil }
-        for area in root.allAreas() {
-            for tab in area.tabs {
-                if let filePath = tab.content.editorState?.filePath {
-                    return filePath
-                }
-            }
-        }
-        return nil
-    }
-
-    private func activeEditorCursor() -> (line: Int?, column: Int?) {
-        guard let state = activeEditorState else { return (nil, nil) }
-        return (state.cursorLine, state.cursorColumn)
-    }
-
-    private func syncFileTreeSelection(filePath: String?) {
-        guard fileTreePanelVisible,
-              let project = activeProject,
-              let key = appState.activeWorktreeKey(for: project.id),
-              let state = fileTreeStates[key]
-        else { return }
-        if let filePath {
-            state.revealFile(at: filePath)
-        } else {
-            state.clearSelection()
-        }
-    }
-
-    private func pruneFileTreeStates() {
-        let validKeys = validVCSKeys()
-        fileTreeStates = fileTreeStates.filter { validKeys.contains($0.key) }
-    }
-
-    private func pruneDetachedSidePanelStates() {
-        pruneVCSStates()
-        pruneFileTreeStates()
-    }
-
-    private func toggleAttachedVCSPanel() {
-        guard VCSDisplayMode.current == .attached,
-              let project = activeProject
-        else {
-            vcsPanelVisible = false
-            return
-        }
-
-        ensureVCSState(for: project)
-        let isShowing = !vcsPanelVisible
-        vcsPanelVisible = isShowing
-        if isShowing {
-            fileTreePanelVisible = false
-        }
-    }
-
-    private func toggleFileTreePanel() {
-        guard let project = activeProject else {
-            if fileTreePanelVisible {
-                fileTreePanelVisible = false
-                NotificationCenter.default.post(name: .refocusActiveTerminal, object: nil)
-            }
-            return
-        }
-
-        ensureFileTreeState(for: project)
-        let isShowing = !fileTreePanelVisible
-        fileTreePanelVisible = isShowing
-        if isShowing {
-            vcsPanelVisible = false
-        } else {
-            NotificationCenter.default.post(name: .refocusActiveTerminal, object: nil)
-        }
-    }
-
     private func toggleSnippetsPanel() {
         snippetsPanelVisible.toggle()
         UserDefaults.standard.set(snippetsPanelVisible, forKey: "muxy.snippetsPanelVisible")
@@ -1301,7 +1223,7 @@ struct MainWindow: View {
         else { return }
         aiAssistantPanelVisible = true
         let prompt = "Explain this code from \(URL(fileURLWithPath: filePath).lastPathComponent):\n\n```\n\(selection)\n```"
-        AIAssistantService.shared.send(
+        AIAssistantChatService.shared.send(
             prompt: prompt,
             projectID: projectID,
             projectPath: activeProject?.path,
@@ -1321,17 +1243,641 @@ struct MainWindow: View {
         projectInspectorStore.selectProject(appState.activeProjectID)
     }
 
-    private var activeVCSState: VCSTabState? {
+    private var openerItems: [OpenerItem] {
+        var items: [OpenerItem] = []
+
+        for project in projectStore.projects {
+            items.append(.project(.init(
+                projectID: project.id,
+                projectName: project.name
+            )))
+        }
+
+        for project in projectStore.projects {
+            for worktree in worktreeStore.list(for: project.id) {
+                items.append(.worktree(.init(
+                    projectID: project.id,
+                    projectName: project.name,
+                    worktreeID: worktree.id,
+                    worktreeName: worktree.isPrimary && worktree.name.isEmpty ? "main" : worktree.name,
+                    branch: worktree.branch,
+                    isPrimary: worktree.isPrimary
+                )))
+            }
+        }
+
+        if let active = activeProject {
+            for descriptor in appState.availableLayouts(for: active.id) {
+                items.append(.layout(.init(
+                    projectID: active.id,
+                    projectName: active.name,
+                    layoutName: descriptor.name
+                )))
+            }
+
+            let worktrees = worktreeStore.list(for: active.id)
+            for branch in BranchCache.shared.branches(for: active.path) {
+                let matching = worktrees.first { $0.branch == branch }
+                items.append(.branch(.init(
+                    projectID: active.id,
+                    projectName: active.name,
+                    branch: branch,
+                    matchingWorktreeID: matching?.id
+                )))
+            }
+
+            for area in appState.allAreas(for: active.id) {
+                for tab in area.tabs {
+                    items.append(.openTab(.init(
+                        projectID: active.id,
+                        projectName: active.name,
+                        areaID: area.id,
+                        tabID: tab.id,
+                        title: tab.title,
+                        kind: tab.kind.rawValue
+                    )))
+                }
+            }
+        }
+
+        return items
+    }
+
+    private var openerRecentItems: [OpenerItem] {
+        let allByID = Dictionary(uniqueKeysWithValues: openerItems.map { ($0.id, $0) })
+        return OpenerPreferences.recents.compactMap { allByID[$0.key] }
+    }
+
+    private func handleOpenerSelection(_ item: OpenerItem) {
+        OpenerPreferences.remember(.init(key: item.id, category: item.category))
+        switch item {
+        case let .project(project):
+            guard let target = projectStore.projects.first(where: { $0.id == project.projectID }) else { return }
+            let worktree = worktreeStore.preferred(for: target.id, matching: appState.activeWorktreeID[target.id])
+            if let worktree {
+                appState.selectProject(target, worktree: worktree)
+            }
+        case let .worktree(wt):
+            guard let target = projectStore.projects.first(where: { $0.id == wt.projectID }),
+                  let worktree = worktreeStore.list(for: wt.projectID).first(where: { $0.id == wt.worktreeID })
+            else { return }
+            if appState.activeProjectID == wt.projectID {
+                appState.selectWorktree(projectID: wt.projectID, worktree: worktree)
+            } else {
+                appState.selectProject(target, worktree: worktree)
+            }
+        case let .layout(layout):
+            appState.requestApplyLayout(projectID: layout.projectID, layoutName: layout.layoutName)
+        case let .branch(br):
+            if let worktreeID = br.matchingWorktreeID,
+               let worktree = worktreeStore.list(for: br.projectID).first(where: { $0.id == worktreeID }),
+               let project = projectStore.projects.first(where: { $0.id == br.projectID })
+            {
+                if appState.activeProjectID == br.projectID {
+                    appState.selectWorktree(projectID: br.projectID, worktree: worktree)
+                } else {
+                    appState.selectProject(project, worktree: worktree)
+                }
+            } else {
+                ToastState.shared.show("No worktree for '\(br.branch)'")
+            }
+        case let .openTab(tab):
+            appState.dispatch(.selectTab(projectID: tab.projectID, areaID: tab.areaID, tabID: tab.tabID))
+        }
+    }
+
+    private var toastPosition: ToastPosition {
+        ToastPosition(rawValue: toastPositionRaw) ?? .topCenter
+    }
+
+    private var toastAlignment: Alignment {
+        switch toastPosition {
+        case .topCenter: .top
+        case .topRight: .topTrailing
+        case .bottomCenter: .bottom
+        case .bottomRight: .bottomTrailing
+        }
+    }
+
+    private var toastEdgePadding: EdgeInsets {
+        let big = UIMetrics.scaled(40)
+        let small = UIMetrics.spacing7
+        return switch toastPosition {
+        case .topCenter: EdgeInsets(top: big, leading: 0, bottom: 0, trailing: 0)
+        case .topRight: EdgeInsets(top: big, leading: 0, bottom: 0, trailing: small)
+        case .bottomCenter: EdgeInsets(top: 0, leading: 0, bottom: small, trailing: 0)
+        case .bottomRight: EdgeInsets(top: 0, leading: 0, bottom: small, trailing: small)
+        }
+    }
+
+    private var toastTransitionEdge: Edge {
+        switch toastPosition {
+        case .topCenter,
+             .topRight: .top
+        case .bottomCenter,
+             .bottomRight: .bottom
+        }
+    }
+
+    private var sidebarCollapsedStyle: SidebarCollapsedStyle {
+        SidebarCollapsedStyle(rawValue: sidebarCollapsedStyleRaw) ?? .defaultValue
+    }
+
+    private var sidebarExpandedStyle: SidebarExpandedStyle {
+        SidebarExpandedStyle(rawValue: sidebarExpandedStyleRaw) ?? .defaultValue
+    }
+
+    private var sidebarResolvedWidth: CGFloat {
+        SidebarLayout.resolvedWidth(
+            expanded: sidebarExpanded,
+            collapsedStyle: sidebarCollapsedStyle,
+            expandedStyle: sidebarExpandedStyle
+        )
+    }
+
+    private var leftNavigationWidth: CGFloat {
+        MainWindowLayout.leftNavigationWidth(sidebarWidth: sidebarResolvedWidth)
+    }
+
+    private var titleBarNavigationOverlayWidth: CGFloat {
+        MainWindowLayout.titleBarNavigationOverlayWidth(
+            leftNavigationWidth: leftNavigationWidth,
+            titleBarNavigationWidth: titleBarNavigationWidth,
+            isFullScreen: isFullScreen
+        )
+    }
+
+    private var mainTitleBarLeadingInset: CGFloat {
+        MainWindowLayout.mainTitleBarLeadingInset(
+            leftNavigationWidth: leftNavigationWidth,
+            titleBarNavigationOverlayWidth: titleBarNavigationOverlayWidth,
+            isFullScreen: isFullScreen
+        )
+    }
+
+    private var titleBarNavigationOverflowsSidebar: Bool {
+        titleBarNavigationOverlayWidth > leftNavigationWidth
+    }
+
+    private var leftNavigationBorderTopPadding: CGFloat {
+        titleBarNavigationOverflowsSidebar ? UIMetrics.titleBarHeight + 1 : 0
+    }
+
+    private var titleBarNavigationWidth: CGFloat {
+        trafficLightWidth + navigationArrowsWidth
+    }
+
+    private var navigationArrowsWidth: CGFloat { UIMetrics.scaled(52) }
+
+    private var devModeBadge: some View {
+        DebugButton()
+    }
+
+    private var activeWorktreeKey: WorktreeKey? {
+        guard let projectID = appState.activeProjectID,
+              let worktreeID = appState.activeWorktreeID[projectID]
+        else { return nil }
+        return WorktreeKey(projectID: projectID, worktreeID: worktreeID)
+    }
+
+    private var activeProject: Project? {
+        guard let pid = appState.activeProjectID else { return nil }
+        return projectStore.projects.first { $0.id == pid }
+    }
+
+    private var windowTitle: String {
+        guard let project = activeProject else { return "Muxy" }
+        guard let tabTitle = appState.activeTab(for: project.id)?.title,
+              !tabTitle.isEmpty
+        else { return project.name }
+        return "\(project.name) — \(tabTitle)"
+    }
+
+    private var activeProjectWithWorkspace: Project? {
+        guard let project = activeProject,
+              appState.workspaceRoot(for: project.id) != nil
+        else { return nil }
+        return project
+    }
+
+    private func resolvedActiveWorktree(for project: Project) -> Worktree? {
+        worktreeStore.preferred(for: project.id, matching: appState.activeWorktreeID[project.id])
+    }
+
+    private var shortcutDispatcher: ShortcutActionDispatcher {
+        ShortcutActionDispatcher(
+            appState: appState,
+            projectStore: projectStore,
+            worktreeStore: worktreeStore,
+            ghostty: ghostty
+        )
+    }
+
+    private func mountedWorktreeKeys(for project: Project) -> [WorktreeKey] {
+        appState.workspaceRoots.keys
+            .filter { $0.projectID == project.id }
+            .sorted { $0.worktreeID.uuidString < $1.worktreeID.uuidString }
+    }
+
+    private func handleShortcutAction(_ action: ShortcutAction) -> Bool {
+        if action == .toggleVoiceRecording {
+            return openVoiceRecorder()
+        }
+        return shortcutDispatcher.perform(action, activeProject: activeProject) { project in
+            openVCS(for: project)
+        }
+    }
+
+    private func openVoiceRecorder() -> Bool {
+        if voiceRecording.isPanelVisible {
+            voiceRecording.cancel()
+            return true
+        }
+        voiceRecording.present(languageIdentifier: recordingLanguage)
+        return true
+    }
+
+    private func handleCommandShortcut(_ shortcut: CommandShortcut) -> Bool {
+        guard let projectID = appState.activeProjectID,
+              appState.workspaceRoot(for: projectID) != nil,
+              !shortcut.trimmedCommand.isEmpty
+        else { return false }
+        appState.createCommandTab(projectID: projectID, shortcut: shortcut)
+        return true
+    }
+
+    private var activeProjectHasSplitWorkspace: Bool {
+        guard let project = activeProject,
+              let root = appState.workspaceRoot(for: project.id)
+        else { return false }
+        if case .split = root { return true }
+        return false
+    }
+
+    private var projectsWithWorkspaces: [Project] {
+        projectStore.projects.filter { appState.workspaceRoot(for: $0.id) != nil }
+    }
+
+    @ViewBuilder
+    private var floatingRichInputOverlay: some View {
+        if isRichInputVisible(floating: true, at: .right) {
+            richInputPanelContent(at: .right)
+                .background(MuxyTheme.bg)
+                .transition(.move(edge: .trailing))
+        }
+    }
+
+    @ViewBuilder
+    private var bottomDockedRichInputPanel: some View {
+        if isRichInputVisible(floating: false, at: .bottom) {
+            richInputPanelContent(at: .bottom)
+        }
+    }
+
+    @ViewBuilder
+    private var floatingBottomRichInputOverlay: some View {
+        if isRichInputVisible(floating: true, at: .bottom) {
+            richInputPanelContent(at: .bottom)
+                .background(MuxyTheme.bg)
+                .transition(.move(edge: .bottom))
+        }
+    }
+
+    private func isRichInputVisible(floating: Bool, at position: RichInputPanelPosition) -> Bool {
+        richInputPanelVisible
+            && richInputFloating == floating
+            && richInputPosition == position
+            && activeRichInputState != nil
+            && activeWorktreeKey != nil
+    }
+
+    @ViewBuilder
+    private func richInputPanelContent(at position: RichInputPanelPosition) -> some View {
+        if let richInputState = activeRichInputState, let worktreeKey = activeWorktreeKey {
+            let panel = RichInputSidePanel(
+                state: richInputState,
+                worktreeKey: worktreeKey,
+                onDismiss: { closeRichInputPanel() },
+                onSubmit: { appendReturn in submitRichInput(richInputState, appendReturn: appendReturn) }
+            )
+            switch position {
+            case .right:
+                HStack(spacing: 0) {
+                    sidePanelResizeHandle { delta in
+                        let next = richInputPanelWidth - Double(delta)
+                        richInputPanelWidth = max(
+                            Double(RichInputPanelLayout.minWidth),
+                            min(Double(RichInputPanelLayout.maxWidth), next)
+                        )
+                    }
+                    panel.frame(width: CGFloat(richInputPanelWidth))
+                }
+            case .bottom:
+                VStack(spacing: 0) {
+                    bottomPanelResizeHandle { delta in
+                        let next = richInputPanelHeight - Double(delta)
+                        richInputPanelHeight = max(
+                            Double(RichInputPanelLayout.minHeight),
+                            min(Double(RichInputPanelLayout.maxHeight), next)
+                        )
+                    }
+                    panel.frame(height: CGFloat(richInputPanelHeight))
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var rightSidePanel: some View {
+        if isRichInputVisible(floating: false, at: .right) {
+            richInputPanelContent(at: .right)
+        } else if vcsPanelVisible, VCSDisplayMode.current == .attached, let state = activeVCSState {
+            HStack(spacing: 0) {
+                sidePanelResizeHandle { delta in
+                    vcsPanelWidth = max(
+                        AttachedVCSLayout.minWidth,
+                        min(AttachedVCSLayout.maxWidth, vcsPanelWidth - delta)
+                    )
+                }
+                VCSTabView(state: state, focused: false, onFocus: {})
+                    .frame(width: vcsPanelWidth)
+            }
+        } else if fileTreePanelVisible, let treeState = activeFileTreeState {
+            HStack(spacing: 0) {
+                sidePanelResizeHandle { delta in
+                    let next = fileTreePanelWidth - Double(delta)
+                    fileTreePanelWidth = max(
+                        Double(FileTreeLayout.minWidth),
+                        min(Double(FileTreeLayout.maxWidth), next)
+                    )
+                }
+                FileTreeView(
+                    state: treeState,
+                    onOpenFile: { filePath in
+                        guard let projectID = appState.activeProjectID else { return }
+                        appState.openFile(filePath, projectID: projectID, preserveFocus: true)
+                    },
+                    onOpenTerminal: { directory in
+                        guard let projectID = appState.activeProjectID else { return }
+                        appState.dispatch(.createTabInDirectory(
+                            projectID: projectID,
+                            areaID: nil,
+                            directory: directory
+                        ))
+                    },
+                    onFileMoved: { oldPath, newPath in
+                        appState.handleFileMoved(from: oldPath, to: newPath)
+                    }
+                )
+                .id(activeFileTreeIdentity)
+                .frame(width: CGFloat(fileTreePanelWidth))
+            }
+        }
+    }
+
+    private func sidePanelResizeHandle(onDrag: @escaping (CGFloat) -> Void) -> some View {
+        ResizeHandle(axis: .horizontal) { v in
+            onDrag(v.translation.width)
+        }
+        .accessibilityHidden(true)
+    }
+
+    private func bottomPanelResizeHandle(onDrag: @escaping (CGFloat) -> Void) -> some View {
+        ResizeHandle(axis: .vertical) { v in
+            onDrag(v.translation.height)
+        }
+        .accessibilityHidden(true)
+    }
+
+    private var activeFileTreeState: FileTreeState? {
         guard let project = activeProject,
               let key = appState.activeWorktreeKey(for: project.id)
         else { return nil }
-        return vcsStates[key]
+        return fileTreeStates[key]
     }
 
-    private func ensureVCSState(for project: Project) {
+    private var activeFileTreeIdentity: WorktreeKey? {
+        guard let project = activeProject else { return nil }
+        return appState.activeWorktreeKey(for: project.id)
+    }
+
+    private func ensureFileTreeState(for project: Project) {
         guard let key = appState.activeWorktreeKey(for: project.id) else { return }
-        guard vcsStates[key] == nil else { return }
-        vcsStates[key] = VCSTabState(projectPath: activeWorktreePath(for: project))
+        let path = resolvedFileTreeRoot(for: project, key: key)
+        if let existing = fileTreeStates[key] {
+            existing.setRootPath(path)
+            return
+        }
+        fileTreeStates[key] = FileTreeState(rootPath: path)
+    }
+
+    private var fileTreeSource: FileTreeSourcePreference {
+        FileTreeSourcePreference(rawValue: fileTreeSourceRaw) ?? .projectBase
+    }
+
+    private func resolvedFileTreeRoot(for project: Project, key: WorktreeKey) -> String {
+        let base = activeWorktreePath(for: project)
+        guard fileTreeSource == .activeTerminal else { return base }
+        if let cwd = appState.activeTab(for: project.id)?.content.pane?.currentWorkingDirectory {
+            fileTreeLastTerminalPaths[key] = cwd
+            return cwd
+        }
+        return fileTreeLastTerminalPaths[key] ?? base
+    }
+
+    private func refreshFileTreeRootForActiveTerminal() {
+        guard fileTreeSource == .activeTerminal,
+              fileTreePanelVisible,
+              let project = activeProject
+        else { return }
+        ensureFileTreeState(for: project)
+    }
+
+    private var activeEditorState: EditorTabState? {
+        guard let project = activeProject else { return nil }
+        return appState.activeTab(for: project.id)?.content.editorState
+    }
+
+    private var anyOpenEditorFilePath: String? {
+        guard let project = activeProject,
+              appState.activeWorktreeKey(for: project.id) != nil,
+              let root = appState.workspaceRoot(for: project.id)
+        else { return nil }
+        for area in root.allAreas() {
+            for tab in area.tabs {
+                if let filePath = tab.content.editorState?.filePath {
+                    return filePath
+                }
+            }
+        }
+        return nil
+    }
+
+    private var activeEditorFilePath: String? {
+        activeEditorState?.filePath
+    }
+
+    private func activeEditorCursor() -> (line: Int?, column: Int?) {
+        guard let state = activeEditorState else { return (nil, nil) }
+        return (state.cursorLine, state.cursorColumn)
+    }
+
+    private func syncFileTreeSelection(filePath: String?) {
+        guard fileTreePanelVisible,
+              let project = activeProject,
+              let key = appState.activeWorktreeKey(for: project.id),
+              let state = fileTreeStates[key]
+        else { return }
+        if let filePath {
+            state.revealFile(at: filePath)
+        } else {
+            state.clearSelection()
+        }
+    }
+
+    private func pruneFileTreeStates() {
+        let validKeys = validVCSKeys()
+        fileTreeStates = fileTreeStates.filter { validKeys.contains($0.key) }
+        fileTreeLastTerminalPaths = fileTreeLastTerminalPaths.filter { validKeys.contains($0.key) }
+        richInputStates = richInputStates.filter { validKeys.contains($0.key) }
+    }
+
+    private func toggleAttachedVCSPanel() {
+        guard VCSDisplayMode.current == .attached,
+              activeProject != nil
+        else {
+            vcsPanelVisible = false
+            return
+        }
+
+        let isShowing = !vcsPanelVisible
+        vcsPanelVisible = isShowing
+        if isShowing {
+            fileTreePanelVisible = false
+            panelToRestoreAfterRichInput = nil
+            closeRichInputPanel()
+        }
+    }
+
+    private func toggleFileTreePanel() {
+        guard let project = activeProject else {
+            if fileTreePanelVisible {
+                fileTreePanelVisible = false
+                NotificationCenter.default.post(name: .refocusActiveTerminal, object: nil)
+            }
+            return
+        }
+
+        ensureFileTreeState(for: project)
+        let isShowing = !fileTreePanelVisible
+        fileTreePanelVisible = isShowing
+        if isShowing {
+            vcsPanelVisible = false
+            panelToRestoreAfterRichInput = nil
+            closeRichInputPanel()
+        } else {
+            NotificationCenter.default.post(name: .refocusActiveTerminal, object: nil)
+        }
+    }
+
+    private var activeRichInputState: RichInputState? {
+        guard let project = activeProject,
+              let key = appState.activeWorktreeKey(for: project.id)
+        else { return nil }
+        if let existing = richInputStates[key] { return existing }
+        let new = RichInputState()
+        if let draft = RichInputDraftStore.shared.draft(for: key) {
+            new.apply(draft)
+        }
+        richInputStates[key] = new
+        return new
+    }
+
+    private var activeRichInputPaneID: UUID? {
+        activeTerminalPane?.id
+    }
+
+    private var activeTerminalPane: TerminalPaneState? {
+        guard let project = activeProject else { return nil }
+        return appState.activeTab(for: project.id)?.content.pane
+    }
+
+    private func toggleRichInputPanel() {
+        guard let richInputState = activeRichInputState else { return }
+        guard richInputPanelVisible else {
+            if richInputReplacesRightSidePanel {
+                if vcsPanelVisible {
+                    panelToRestoreAfterRichInput = .vcs
+                } else if fileTreePanelVisible {
+                    panelToRestoreAfterRichInput = .fileTree
+                } else {
+                    panelToRestoreAfterRichInput = nil
+                }
+                vcsPanelVisible = false
+                fileTreePanelVisible = false
+            } else {
+                panelToRestoreAfterRichInput = nil
+            }
+            richInputPanelVisible = true
+            richInputState.focusVersion += 1
+            return
+        }
+        if NSApp.keyWindow?.firstResponder is MarkdownEditingTextView {
+            closeRichInputPanel()
+        } else {
+            richInputState.focusVersion += 1
+        }
+    }
+
+    private var richInputReplacesRightSidePanel: Bool {
+        !richInputFloating && richInputPosition == .right
+    }
+
+    private func closeRichInputPanel() {
+        richInputPanelVisible = false
+        let panelToRestore = panelToRestoreAfterRichInput
+        panelToRestoreAfterRichInput = nil
+        switch panelToRestore {
+        case .vcs:
+            if VCSDisplayMode.current == .attached, activeProject != nil {
+                vcsPanelVisible = true
+                return
+            }
+        case .fileTree:
+            if let project = activeProject {
+                ensureFileTreeState(for: project)
+                fileTreePanelVisible = true
+                return
+            }
+        case .none:
+            break
+        }
+        guard let paneID = activeRichInputPaneID,
+              let view = TerminalViewRegistry.shared.existingView(for: paneID)
+        else { return }
+        DispatchQueue.main.async {
+            view.window?.makeFirstResponder(view)
+        }
+    }
+
+    private func submitRichInput(_ richInput: RichInputState, appendReturn: Bool) {
+        let paneIDs = richInputBroadcast ? visibleTerminalPaneIDs() : [activeRichInputPaneID].compactMap(\.self)
+        guard !paneIDs.isEmpty else { return }
+        RichInputSubmitter.submit(richInput: richInput, paneIDs: paneIDs, appendReturn: appendReturn)
+    }
+
+    private func visibleTerminalPaneIDs() -> [UUID] {
+        guard let project = activeProject,
+              let root = appState.workspaceRoot(for: project.id)
+        else { return [] }
+        return root.allAreas().compactMap { $0.activeTab?.content.pane?.id }
+    }
+
+    private var activeVCSState: VCSTabState? {
+        guard let project = activeProject,
+              appState.activeWorktreeKey(for: project.id) != nil
+        else { return nil }
+        return VCSStateStore.shared.state(for: activeWorktreePath(for: project))
     }
 
     private func activeWorktreePath(for project: Project) -> String {
@@ -1355,11 +1901,6 @@ struct MainWindow: View {
                 toggleAttachedVCSPanel()
             }
         )
-    }
-
-    private func pruneVCSStates() {
-        let validKeys = validVCSKeys()
-        vcsStates = vcsStates.filter { validKeys.contains($0.key) }
     }
 
     private func validVCSKeys() -> Set<WorktreeKey> {
@@ -1472,6 +2013,33 @@ struct MainWindow: View {
             appState.pendingSaveErrorMessage = nil
         }
     }
+
+    private func presentLayoutApplyConfirmation(pending: AppState.PendingLayoutApply) {
+        guard let window = NSApp.keyWindow ?? NSApp.mainWindow,
+              window.attachedSheet == nil
+        else {
+            appState.cancelApplyLayout()
+            return
+        }
+
+        let alert = NSAlert()
+        alert.messageText = "Apply Layout '\(pending.layoutName)'?"
+        alert.informativeText = "All terminals and tabs in this worktree will be closed and replaced with the layout."
+        alert.alertStyle = .warning
+        alert.icon = NSApp.applicationIconImage
+        alert.addButton(withTitle: "Apply")
+        alert.addButton(withTitle: "Cancel")
+        alert.buttons[0].keyEquivalent = "\r"
+        alert.buttons[1].keyEquivalent = "\u{1b}"
+
+        alert.beginSheetModal(for: window) { response in
+            if response == .alertFirstButtonReturn {
+                appState.confirmApplyLayout()
+            } else {
+                appState.cancelApplyLayout()
+            }
+        }
+    }
 }
 
 private struct WindowTitleUpdater: NSViewRepresentable {
@@ -1508,6 +2076,21 @@ private struct FileTreeSelectionSync: ViewModifier {
     }
 }
 
+private struct FileTreeSourceObserver: ViewModifier {
+    let activeTerminalCWD: String?
+    let activeTerminalID: UUID?
+    let sourceRaw: String
+    let onTerminalChange: () -> Void
+    let onSourceChange: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: activeTerminalCWD) { _, _ in onTerminalChange() }
+            .onChange(of: activeTerminalID) { _, _ in onTerminalChange() }
+            .onChange(of: sourceRaw) { _, _ in onSourceChange() }
+    }
+}
+
 private struct RemoteSpaceThemeSync: ViewModifier {
     let projectID: UUID?
     let activeSpace: RemoteSpace?
@@ -1538,9 +2121,9 @@ private struct NavigationArrowButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: UIMetrics.fontBody, weight: .semibold))
                 .foregroundStyle(foregroundColor)
-                .frame(width: 22, height: 22)
+                .frame(width: UIMetrics.scaled(22), height: UIMetrics.scaled(22))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -1553,28 +2136,6 @@ private struct NavigationArrowButton: View {
     private var foregroundColor: Color {
         guard isEnabled else { return MuxyTheme.fgMuted.opacity(0.35) }
         return hovered ? MuxyTheme.fg : MuxyTheme.fgMuted
-    }
-}
-
-private struct UtilityOverlay<Content: View>: View {
-    let onDismiss: () -> Void
-    @ViewBuilder let content: () -> Content
-
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.001)
-                .ignoresSafeArea()
-                .onTapGesture(perform: onDismiss)
-
-            content()
-                .background(MuxyTheme.bg, in: RoundedRectangle(cornerRadius: 14))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(MuxyTheme.border, lineWidth: 1)
-                )
-                .shadow(color: Color.black.opacity(0.28), radius: 24, x: 0, y: 18)
-        }
-        .onExitCommand(perform: onDismiss)
     }
 }
 
@@ -1693,5 +2254,148 @@ private final class ShortcutInterceptingView: NSView {
         guard let mouseMonitor else { return }
         NSEvent.removeMonitor(mouseMonitor)
         self.mouseMonitor = nil
+    }
+}
+
+private struct WindowOpenReceiver: View {
+    let openWindow: OpenWindowAction
+
+    var body: some View {
+        Color.clear
+            .frame(width: 0, height: 0)
+            .onReceive(NotificationCenter.default.publisher(for: .openVCSWindow)) { _ in
+                openWindow(id: "vcs")
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .openHelpWindow)) { _ in
+                openWindow(id: "help")
+            }
+    }
+}
+
+private struct SidePanelNotificationListeners: ViewModifier {
+    let onToggleAttachedVCS: () -> Void
+    let onToggleFileTree: () -> Void
+    let onToggleRichInput: () -> Void
+    let onToggleVoiceRecording: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .onReceive(NotificationCenter.default.publisher(for: .toggleAttachedVCS)) { _ in
+                onToggleAttachedVCS()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleFileTree)) { _ in
+                onToggleFileTree()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleRichInput)) { _ in
+                onToggleRichInput()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleVoiceRecording)) { _ in
+                onToggleVoiceRecording()
+            }
+    }
+}
+
+private struct SentryConsentPrompter: ViewModifier {
+    @State private var hasPrompted = false
+
+    func body(content: Content) -> some View {
+        content.task {
+            guard !hasPrompted, SentryService.shared.needsPrompt else { return }
+            hasPrompted = true
+            await presentWhenWindowReady()
+        }
+    }
+
+    @MainActor
+    private func presentWhenWindowReady() async {
+        if let window = readyWindow() {
+            present(on: window)
+            return
+        }
+        await waitForKeyWindow()
+        if let window = readyWindow() {
+            present(on: window)
+        }
+    }
+
+    @MainActor
+    private func waitForKeyWindow() async {
+        let center = NotificationCenter.default
+        let holder = ObserverHolder()
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            holder.token = center.addObserver(
+                forName: NSWindow.didBecomeKeyNotification,
+                object: nil,
+                queue: .main
+            ) { _ in
+                MainActor.assumeIsolated {
+                    guard NSApp.keyWindow ?? NSApp.mainWindow != nil else { return }
+                    if let token = holder.token {
+                        center.removeObserver(token)
+                        holder.token = nil
+                        continuation.resume()
+                    }
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func readyWindow() -> NSWindow? {
+        guard let window = NSApp.keyWindow ?? NSApp.mainWindow else { return nil }
+        return window.attachedSheet == nil ? window : nil
+    }
+
+    @MainActor
+    private func present(on window: NSWindow) {
+        let alert = NSAlert()
+        alert.messageText = "Help improve Muxy?"
+        alert.informativeText = """
+        Muxy can send anonymous crash and error reports so we can fix bugs faster. \
+        No personal data, no project contents, no file paths are sent — only crash \
+        details and an anonymous installation ID.
+
+        You can change this anytime in Settings → General → Diagnostics.
+        """
+        alert.alertStyle = .informational
+        alert.icon = NSApp.applicationIconImage
+        alert.addButton(withTitle: "Allow")
+        alert.addButton(withTitle: "Don't Allow")
+        alert.buttons[0].keyEquivalent = "\r"
+        alert.buttons[1].keyEquivalent = "\u{1b}"
+
+        alert.beginSheetModal(for: window) { response in
+            let consent: SentryConsent = response == .alertFirstButtonReturn ? .allowed : .denied
+            SentryService.shared.setConsent(consent)
+        }
+    }
+}
+
+@MainActor
+private final class ObserverHolder {
+    var token: NSObjectProtocol?
+}
+
+private struct OverlayExitTracker: ViewModifier {
+    let showQuickOpen: Bool
+    let showFindInFiles: Bool
+    let showWorktreeSwitcher: Bool
+    let showProjectPicker: Bool
+    let onAnimatingOut: (Bool) -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: showQuickOpen) { _, visible in trackExit(visible) }
+            .onChange(of: showFindInFiles) { _, visible in trackExit(visible) }
+            .onChange(of: showWorktreeSwitcher) { _, visible in trackExit(visible) }
+            .onChange(of: showProjectPicker) { _, visible in trackExit(visible) }
+    }
+
+    private func trackExit(_ visible: Bool) {
+        guard !visible else { return }
+        onAnimatingOut(true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            onAnimatingOut(false)
+        }
     }
 }

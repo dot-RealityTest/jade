@@ -118,6 +118,12 @@ struct MuxyCommands: Commands {
             }
             .shortcut(for: .quickOpen, store: keyBindings)
 
+            Button("Find in Files") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.findInFiles)
+            }
+            .shortcut(for: .findInFiles, store: keyBindings)
+
             Button("Save") {
                 guard isMainWindowFocused else { return }
                 performShortcutAction(.saveFile)
@@ -134,6 +140,99 @@ struct MuxyCommands: Commands {
                 performShortcutAction(.closeTab)
             }
             .shortcut(for: .closeTab, store: keyBindings)
+
+            Divider()
+
+            Button("Rename Tab") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.renameTab)
+            }
+            .shortcut(for: .renameTab, store: keyBindings)
+
+            Button("Pin/Unpin Tab") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.pinUnpinTab)
+            }
+            .shortcut(for: .pinUnpinTab, store: keyBindings)
+
+            Divider()
+
+            Button("Split Right") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.splitRight)
+            }
+            .shortcut(for: .splitRight, store: keyBindings)
+
+            Button("Split Down") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.splitDown)
+            }
+            .shortcut(for: .splitDown, store: keyBindings)
+
+            Button("Close Pane") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.closePane)
+            }
+            .shortcut(for: .closePane, store: keyBindings)
+
+            Button("Focus Pane Left") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.focusPaneLeft)
+            }
+            .shortcut(for: .focusPaneLeft, store: keyBindings)
+
+            Button("Focus Pane Right") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.focusPaneRight)
+            }
+            .shortcut(for: .focusPaneRight, store: keyBindings)
+
+            Button("Focus Pane Up") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.focusPaneUp)
+            }
+            .shortcut(for: .focusPaneUp, store: keyBindings)
+
+            Button("Focus Pane Down") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.focusPaneDown)
+            }
+            .shortcut(for: .focusPaneDown, store: keyBindings)
+
+            Button("Cycle Next Tab (All Panes)") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.cycleNextTabAcrossPanes)
+            }
+            .shortcut(for: .cycleNextTabAcrossPanes, store: keyBindings)
+
+            Button("Cycle Previous Tab (All Panes)") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.cyclePreviousTabAcrossPanes)
+            }
+            .shortcut(for: .cyclePreviousTabAcrossPanes, store: keyBindings)
+        }
+
+        CommandGroup(after: .toolbar) {
+            Button("Zoom In Markdown Preview") {
+                guard isMainWindowFocused, isMarkdownPreviewActive else { return }
+                adjustMarkdownPreviewZoom(by: EditorSettings.markdownPreviewZoomStep)
+            }
+            .keyboardShortcut("=", modifiers: .command)
+            .disabled(!isMarkdownPreviewActive)
+
+            Button("Zoom Out Markdown Preview") {
+                guard isMainWindowFocused, isMarkdownPreviewActive else { return }
+                adjustMarkdownPreviewZoom(by: -EditorSettings.markdownPreviewZoomStep)
+            }
+            .keyboardShortcut("-", modifiers: .command)
+            .disabled(!isMarkdownPreviewActive)
+
+            Button("Reset Markdown Preview Zoom") {
+                guard isMainWindowFocused, isMarkdownPreviewActive else { return }
+                EditorSettings.shared.markdownPreviewFontScale = EditorSettings.defaultMarkdownPreviewFontScale
+            }
+            .keyboardShortcut("0", modifiers: .command)
+            .disabled(!isMarkdownPreviewActive)
         }
 
         CommandGroup(after: .windowList) {
@@ -156,6 +255,94 @@ struct MuxyCommands: Commands {
                 performShortcutAction(.toggleSidebar)
             }
             .shortcut(for: .toggleSidebar, store: keyBindings)
+
+            Button("Toggle Rich Input") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.toggleRichInput)
+            }
+            .shortcut(for: .toggleRichInput, store: keyBindings)
+
+            Divider()
+
+            Button("Open Switcher...") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.switchWorktree)
+            }
+            .shortcut(for: .switchWorktree, store: keyBindings)
+
+            Divider()
+
+            Button("Next Project") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.nextProject)
+            }
+            .shortcut(for: .nextProject, store: keyBindings)
+
+            Button("Previous Project") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.previousProject)
+            }
+            .shortcut(for: .previousProject, store: keyBindings)
+
+            Divider()
+
+            ForEach(1 ... 9, id: \.self) { index in
+                if let action = ShortcutAction.projectAction(for: index) {
+                    Button("Project \(index)") {
+                        guard isMainWindowFocused else { return }
+                        performShortcutAction(action)
+                    }
+                    .shortcut(for: action, store: keyBindings)
+                }
+            }
+
+            Divider()
+
+            Button("Theme Picker") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.toggleThemePicker)
+            }
+            .shortcut(for: .toggleThemePicker, store: keyBindings)
+
+            Button("AI Usage") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.toggleAIUsage)
+            }
+            .shortcut(for: .toggleAIUsage, store: keyBindings)
         }
+
+        CommandGroup(replacing: .help) {
+            Button("Muxy Help") {
+                openHelpWindow()
+            }
+
+            Divider()
+
+            Button("Documentation") {
+                HelpLinks.openDocs()
+            }
+
+            Button("GitHub Repository") {
+                HelpLinks.openRepo()
+            }
+
+            Button("Mobile App Repository") {
+                HelpLinks.openMobileRepo()
+            }
+
+            Button("Discord") {
+                HelpLinks.openDiscord()
+            }
+
+            Divider()
+
+            Button("Report an Issue...") {
+                HelpLinks.openIssues()
+            }
+        }
+    }
+
+    private func openHelpWindow() {
+        NotificationCenter.default.post(name: .openHelpWindow, object: nil)
     }
 }
