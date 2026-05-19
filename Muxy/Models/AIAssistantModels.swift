@@ -1,18 +1,19 @@
 import Foundation
 
-struct AIAssistantMessage: Identifiable, Equatable {
+struct AIAssistantMessage: Identifiable, Equatable, Codable {
     enum Role: String, Codable {
         case user
         case assistant
         case system
     }
 
-    let id = UUID()
+    let id: UUID
     let role: Role
     var content: String
     let timestamp: Date
 
     init(role: Role, content: String, timestamp: Date = Date()) {
+        self.id = UUID()
         self.role = role
         self.content = content
         self.timestamp = timestamp

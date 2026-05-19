@@ -26,7 +26,7 @@ final class AIAssistantService {
         dataLoader: @escaping @Sendable (URLRequest) async throws -> Data = { request in
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse,
-                  200..<300 ~= http.statusCode
+                  200 ..< 300 ~= http.statusCode
             else {
                 throw AIAssistantError.backendFailed
             }
@@ -116,7 +116,7 @@ final class AIAssistantService {
 
         let (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
         guard let http = response as? HTTPURLResponse,
-              200..<300 ~= http.statusCode
+              200 ..< 300 ~= http.statusCode
         else {
             throw AIAssistantError.backendFailed
         }

@@ -229,13 +229,20 @@ private struct MarkdownMessageContent: View {
     }
 
     private func codeBlockView(_ code: String) -> some View {
-        Text(code)
-            .font(.system(size: 11, design: .monospaced))
-            .foregroundStyle(MuxyTheme.fg)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 6)
-            .background(MuxyTheme.hover, in: RoundedRectangle(cornerRadius: 6))
-            .frame(maxWidth: .infinity, alignment: .leading)
+        ZStack(alignment: .topTrailing) {
+            Text(code)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(MuxyTheme.fg)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .padding(.top, 20)
+                .background(MuxyTheme.hover, in: RoundedRectangle(cornerRadius: 6))
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            CopyCodeButton(code: code)
+                .padding(.trailing, 4)
+                .padding(.top, 2)
+        }
     }
 
     private func bulletListView(_ items: [String]) -> some View {
@@ -489,6 +496,35 @@ private enum InlineParser {
             segments.append(InlineSegment(kind: .plain, text: text))
         }
         return segments
+    }
+}
+
+private struct CopyCodeButton: View {
+    let code: String
+    @State private var copied = false
+
+    var body: some View {
+        Button {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(code, forType: .string)
+            copied = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                copied = false
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                    .font(.system(size: 9, weight: .semibold))
+                Text(copied ? "Copied" : "Copy")
+                    .font(.system(size: 9, weight: .medium))
+            }
+            .foregroundStyle(copied ? MuxyTheme.diffAddFg : MuxyTheme.fgMuted)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(MuxyTheme.bg.opacity(0.8), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .help("Copy code to clipboard")
     }
 }
 

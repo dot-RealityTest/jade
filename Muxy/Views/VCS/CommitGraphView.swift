@@ -43,7 +43,8 @@ struct CommitGraphView: View {
                 DiagonalLine(direction: .downRight, color: color)
             case "/":
                 DiagonalLine(direction: .downLeft, color: color)
-            case "-", "_":
+            case "-",
+                 "_":
                 Rectangle()
                     .fill(color)
                     .frame(height: 1.5)

@@ -110,7 +110,7 @@ struct AIAssistantSettingsView: View {
             request.timeoutInterval = 3
             do {
                 let (data, response) = try await URLSession.shared.data(for: request)
-                guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
+                guard let http = response as? HTTPURLResponse, 200 ..< 300 ~= http.statusCode else {
                     fetchError = "Ollama returned an error"
                     showError = true
                     return
