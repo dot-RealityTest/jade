@@ -169,16 +169,11 @@ private struct MessageBubble: View {
             if message.role == .user {
                 Spacer(minLength: 24)
             }
-            VStack(alignment: .leading, spacing: 4) {
-                Text(message.content)
-                    .font(.system(size: 12))
-                    .foregroundStyle(message.role == .user ? MuxyTheme.fg : MuxyTheme.fg)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(message.role == .user ? MuxyTheme.accentSoft : MuxyTheme.surface)
-            .cornerRadius(8)
+            ParsedMessageContent(text: message.content, isUser: message.role == .user)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(message.role == .user ? MuxyTheme.accentSoft : MuxyTheme.surface)
+                .cornerRadius(8)
             if message.role == .assistant {
                 Spacer(minLength: 24)
             }
@@ -186,4 +181,79 @@ private struct MessageBubble: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
     }
+}
+
+private struct ParsedMessageContent: View {
+    let text: String
+    let isUser: Bool
+
+    var body: some View {
+        let segments = parseSegments(from: text)
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(segments.indices, id: \.self) { index in
+                segmentView(for: segments[index])
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func segmentView(for segment: MessageSegment) -> some View {
+        switch segment.kind {
+        case .text:
+            Text(segment.content)
+                .font(.system(size: 12))
+                .foregroundStyle(isUser ? MuxyTheme.fg : MuxyTheme.fg)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        case .code:
+            Text(segment.content)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(isUser ? MuxyTheme.fg : MuxyTheme.fg)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(MuxyTheme.hover, in: RoundedRectangle(cornerRadius: 6))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func parseSegments(from text: String) -> [MessageSegment] {
+        var segments: [MessageSegment] = []
+        var remaining = text
+        while true {
+            guard let start = remaining.range(of: "\n```") else {
+                if !remaining.isEmpty {
+                    segments.append(MessageSegment(kind: .text, content: remaining))
+                }
+                break
+            }
+            let before = String(remaining[..<start.lowerBound])
+            if !before.isEmpty {
+                segments.append(MessageSegment(kind: .text, content: before))
+            }
+            let afterStart = remaining[start.upperBound...]
+            var codeContent = String(afterStart)
+            if let newline = afterStart.firstIndex(of: "\n") {
+                codeContent = String(afterStart[newline...].dropFirst())
+            }
+            guard let end = codeContent.range(of: "\n```") else {
+                segments.append(MessageSegment(kind: .text, content: remaining))
+                break
+            }
+            let code = String(codeContent[..<end.lowerBound])
+            segments.append(MessageSegment(kind: .code, content: code))
+            remaining = String(codeContent[end.upperBound...])
+        }
+        return segments
+    }
+}
+
+private struct MessageSegment: Identifiable {
+    enum Kind {
+        case text
+        case code
+    }
+
+    let id = UUID()
+    let kind: Kind
+    let content: String
 }

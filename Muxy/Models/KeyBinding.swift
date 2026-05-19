@@ -296,6 +296,7 @@ struct KeyBinding: Codable, Identifiable {
         Self(action: .toggleProjectNotesPanel, combo: KeyCombo(key: "j", command: true, shift: true)),
         Self(action: .toggleProjectTodoPanel, combo: KeyCombo(key: "j", command: true, option: true)),
         Self(action: .toggleAIUsage, combo: KeyCombo(key: "l", command: true)),
+        Self(action: .toggleAIAssistant, combo: KeyCombo(key: "a", command: true, control: true)),
         Self(action: .navigateBack, combo: KeyCombo(key: KeyCombo.leftArrowKey, command: true, control: true)),
         Self(action: .navigateForward, combo: KeyCombo(key: KeyCombo.rightArrowKey, command: true, control: true)),
     ]
