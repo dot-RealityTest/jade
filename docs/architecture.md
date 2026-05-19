@@ -66,6 +66,8 @@ Muxy/
     TerminalSettings.swift    Terminal preference keys and quick-select label layout helpers
     Snippet.swift             Saved workflow snippet model with description, tags, and {variable} placeholders
     SnippetScope.swift        Shared or remote-space snippet persistence target, including local and remote starter snippets
+    AIAssistantModels.swift     AIAssistantMessage (role/content/timestamp)
+    AIAssistantStore.swift      @Observable per-project conversation history + streaming task tracking
     ProjectInspectorDocument.swift  Per-project notes/todo document model
     RemoteSpace.swift         Named remote machine profile with SSH fields, generated command, tab color, theme name, and backing directory
     ProjectLifecyclePreferences.swift  Project lifecycle preferences (keep-open-when-no-tabs)
@@ -83,6 +85,7 @@ Muxy/
     NotificationStore.swift      @Observable notification store singleton (persisted to notifications.json)
     NotificationNavigator.swift  Pane context resolution + click-to-navigate dispatch
     NotificationSocketServer.swift  Unix domain socket IPC for external tool notifications
+    AIAssistantService.swift     Ollama chat streaming with workspace context injection
     ProjectInspectorStore.swift  Per-project notes and todo persistence for the inspector panel
     IDEIntegrationService.swift   Discovers installed IDE-like apps, remembers the selected target, and launches the active project or file in external editors
     AIProviderIntegration.swift  Protocol + AIProviderRegistry (notification-hook integrations, usage provider registry)
@@ -174,6 +177,7 @@ Muxy/
     WelcomeView.swift         Empty state view
     Inspector/
       ProjectInspectorPanel.swift Right-side inspector shell that can show Notes, Todo, or both project tools
+      AIAssistantPanel.swift    Chat-style AI assistant with streaming messages and workspace context
     Snippets/
       SnippetsPanel.swift     Snippets/workflows panel with inline create, edit, and variable-run views
     Components/
@@ -633,6 +637,34 @@ premium) and secondary (weekly / monthly / daily / billing) buckets by label
 prefix. By default the UI only shows primary rows; the "Show Secondary Limits"
 settings toggle opts in to the full list. Dollar-denominated detail strings
 are filtered out so the sidebar stays focused on usage quotas.
+
+## AI Assistant
+
+A chat-style AI assistant panel is available in the right sidebar (toggled via `⌃⌘A` or Command Palette). It uses the same Ollama backend as the natural-language command generator and streams responses in real time.
+
+### Architecture
+
+```
+AIAssistantPanel (SwiftUI)
+     │
+     ├── AIAssistantStore (@Observable, @MainActor singleton)
+     │     └── per-project [AIAssistantMessage] conversation history
+     │
+     └── AIAssistantService
+           ├── Builds system prompt with project path + active file context
+           ├── Streams via Ollama /api/chat (SSE)
+           └── Updates store incrementally as chunks arrive
+```
+
+Messages are keyed by `projectID` so each project maintains its own conversation thread. The system prompt includes the active project path and currently open file path (if any) to ground responses in the user's actual workspace.
+
+### UI
+
+The panel lives in the right-side inspector slot alongside Notes/Todo. It renders a scrollable message list with user messages right-aligned (accent background) and assistant messages left-aligned (surface background). An input bar at the bottom supports multi-line text and submits on Enter. A clear button resets the current project's conversation and cancels any in-flight stream.
+
+### Backend
+
+`AIAssistantService` reuses the Ollama URL and model from `NaturalCommandSettings` (`naturalCommands.ollamaBaseURL` and `naturalCommands.ollamaModel`) so no separate configuration is needed. The service sends the full conversation history on every turn, prefixed with a system message containing workspace context.
 
 ## Remote Server (MuxyServer)
 

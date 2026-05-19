@@ -67,6 +67,7 @@ struct MainWindow: View {
     @State private var showThemePicker = false
     @State private var showNotificationPanel = false
     @State private var showLocalPorts = false
+    @State private var aiAssistantPanelVisible = false
     @State private var isFullScreen = false
     @State private var sidebarExpanded = UserDefaults.standard.bool(forKey: "muxy.sidebarExpanded")
     @AppStorage(SidebarCollapsedStyle.storageKey) private var sidebarCollapsedStyleRaw = SidebarCollapsedStyle.defaultValue.rawValue
@@ -160,6 +161,9 @@ struct MainWindow: View {
             .onReceive(NotificationCenter.default.publisher(for: .toggleProjectTodoPanel)) { _ in
                 toggleTodoPanel()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleAIAssistant)) { _ in
+                aiAssistantPanelVisible.toggle()
+            }
             .onReceive(NotificationCenter.default.publisher(for: .toggleThemePicker)) { _ in
                 showThemePicker.toggle()
             }
@@ -242,6 +246,7 @@ struct MainWindow: View {
             activeWorkspaceContent
             attachedSidePanel
             snippetsSidePanel
+            aiAssistantSidePanel
             inspectorSidePanel
         }
     }
@@ -337,6 +342,17 @@ struct MainWindow: View {
     private var snippetsSidePanel: some View {
         if snippetsPanelVisible {
             SnippetsPanel(scope: activeSnippetScope)
+        }
+    }
+
+    @ViewBuilder
+    private var aiAssistantSidePanel: some View {
+        if aiAssistantPanelVisible {
+            AIAssistantPanel(
+                projectID: appState.activeProjectID,
+                projectPath: activeProject?.path,
+                activeFile: appState.activeTab(for: appState.activeProjectID ?? UUID())?.content.editorState?.filePath
+            )
         }
     }
 
@@ -735,6 +751,12 @@ struct MainWindow: View {
                 symbolName: "checklist",
                 subtitle: "Show or hide the project todo list",
                 aliases: ["todo", "tasks", "inspector"]
+            ),
+            commandItem(
+                .toggleAIAssistant,
+                symbolName: "bubble.left.and.bubble.right.fill",
+                subtitle: "Show or hide the AI assistant",
+                aliases: ["ai", "chat", "claude", "assistant", "ask"]
             ),
             commandItem(
                 .quickOpen,
