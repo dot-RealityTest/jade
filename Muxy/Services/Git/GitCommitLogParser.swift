@@ -3,8 +3,9 @@ import Foundation
 enum GitCommitLogParser {
     static let fieldSeparator = "\u{1F}"
     static let recordSeparator = "\u{1E}"
+    static let graphMarker = "\u{00}"
 
-    static let logFormat = [
+    static let logFormat = "%x00" + [
         "%H", "%h", "%s", "%an", "%aI", "%D", "%P",
     ].joined(separator: fieldSeparator) + recordSeparator
 
@@ -14,7 +15,12 @@ enum GitCommitLogParser {
         dateFormatter.formatOptions = [.withInternetDateTime]
 
         return records.compactMap { record in
-            let fields = record.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmed = record.trimmingCharacters(in: .whitespacesAndNewlines)
+            let graphSplit = trimmed.split(separator: Character(graphMarker), maxSplits: 1, omittingEmptySubsequences: false)
+            guard graphSplit.count == 2 else { return nil }
+            let graphPrefix = String(graphSplit[0])
+
+            let fields = String(graphSplit[1])
                 .split(separator: Character(fieldSeparator), maxSplits: 6, omittingEmptySubsequences: false)
             guard fields.count >= 7 else { return nil }
 
@@ -37,7 +43,8 @@ enum GitCommitLogParser {
                 authorName: authorName,
                 authorDate: date,
                 refs: refs,
-                parentHashes: parents
+                parentHashes: parents,
+                graphPrefix: graphPrefix
             )
         }
     }

@@ -109,7 +109,10 @@ struct CommandPaletteOverlay: View {
         )
         let elapsed = start.duration(to: clock.now)
         if elapsed > .milliseconds(20) {
-            paletteLogger.debug("Palette search for '\(query, privacy: .public)' returned \(filtered.count) items in \(String(describing: elapsed), privacy: .public)")
+            let elapsedDesc = String(describing: elapsed)
+            paletteLogger.debug(
+                "Palette search for '\(query, privacy: .public)' returned \(filtered.count) items in \(elapsedDesc, privacy: .public)"
+            )
         }
         return filtered
     }

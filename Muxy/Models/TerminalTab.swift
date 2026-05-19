@@ -104,7 +104,10 @@ final class TerminalTab: Identifiable {
             content = .terminal(TerminalPaneState(
                 projectPath: snapshot.projectPath,
                 title: snapshot.paneTitle,
-                initialWorkingDirectory: snapshot.currentWorkingDirectory
+                initialWorkingDirectory: snapshot.currentWorkingDirectory,
+                startupCommand: snapshot.startupCommand,
+                startupCommandInteractive: snapshot.startupCommandInteractive,
+                externalEditorFilePath: snapshot.externalEditorFilePath
             ))
         case .vcs:
             content = .vcs(VCSTabState(projectPath: snapshot.projectPath))
@@ -112,10 +115,24 @@ final class TerminalTab: Identifiable {
             if let filePath = snapshot.filePath {
                 content = .editor(EditorTabState(projectPath: snapshot.projectPath, filePath: filePath))
             } else {
-                content = .terminal(TerminalPaneState(projectPath: snapshot.projectPath, title: snapshot.paneTitle))
+                content = .terminal(TerminalPaneState(
+                    projectPath: snapshot.projectPath,
+                    title: snapshot.paneTitle,
+                    initialWorkingDirectory: snapshot.currentWorkingDirectory,
+                    startupCommand: snapshot.startupCommand,
+                    startupCommandInteractive: snapshot.startupCommandInteractive,
+                    externalEditorFilePath: snapshot.externalEditorFilePath
+                ))
             }
         case .diffViewer:
-            content = .terminal(TerminalPaneState(projectPath: snapshot.projectPath, title: snapshot.paneTitle))
+            content = .terminal(TerminalPaneState(
+                projectPath: snapshot.projectPath,
+                title: snapshot.paneTitle,
+                initialWorkingDirectory: snapshot.currentWorkingDirectory,
+                startupCommand: snapshot.startupCommand,
+                startupCommandInteractive: snapshot.startupCommandInteractive,
+                externalEditorFilePath: snapshot.externalEditorFilePath
+            ))
         }
     }
 
@@ -128,7 +145,10 @@ final class TerminalTab: Identifiable {
             projectPath: content.projectPath,
             paneTitle: content.pane?.title,
             filePath: content.editorState?.filePath,
-            currentWorkingDirectory: content.pane?.currentWorkingDirectory
+            currentWorkingDirectory: content.pane?.currentWorkingDirectory,
+            startupCommand: content.pane?.startupCommand,
+            startupCommandInteractive: content.pane?.startupCommandInteractive ?? false,
+            externalEditorFilePath: content.pane?.externalEditorFilePath
         )
     }
 }

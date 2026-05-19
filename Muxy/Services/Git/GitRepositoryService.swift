@@ -991,6 +991,8 @@ struct GitRepositoryService {
             repoPath: repoPath,
             arguments: [
                 "log",
+                "--graph",
+                "--no-color",
                 "--decorate=full",
                 "--format=\(GitCommitLogParser.logFormat)",
                 "--max-count=\(maxCount)",

@@ -60,6 +60,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
     case toggleProjectTodoPanel
     case toggleInspectorPanel
     case toggleAIUsage
+    case toggleAIAssistant
     case navigateBack
     case navigateForward
 
@@ -114,6 +115,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         .toggleProjectNotesPanel,
         .toggleProjectTodoPanel,
         .toggleAIUsage,
+        .toggleAIAssistant,
         .navigateBack,
         .navigateForward,
     ]
@@ -170,6 +172,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         case .toggleProjectTodoPanel: ShortcutMetadata(displayName: "Toggle Todo", category: "App", scope: .mainWindow)
         case .toggleInspectorPanel: ShortcutMetadata(displayName: "Toggle Notes", category: "App", scope: .mainWindow)
         case .toggleAIUsage: ShortcutMetadata(displayName: "Toggle AI Usage", category: "App", scope: .mainWindow)
+        case .toggleAIAssistant: ShortcutMetadata(displayName: "Toggle AI Assistant", category: "App", scope: .mainWindow)
         case .navigateBack: ShortcutMetadata(displayName: "Navigate Back", category: "Navigation", scope: .mainWindow)
         case .navigateForward: ShortcutMetadata(displayName: "Navigate Forward", category: "Navigation", scope: .mainWindow)
         case .toggleThemePicker: ShortcutMetadata(displayName: "Theme Picker", category: "App", scope: .mainWindow)

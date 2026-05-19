@@ -72,6 +72,7 @@ struct GitCommit: Identifiable {
     let authorDate: Date
     let refs: [GitRef]
     let parentHashes: [String]
+    let graphPrefix: String
 
     var id: String { hash }
     var isMerge: Bool { parentHashes.count > 1 }

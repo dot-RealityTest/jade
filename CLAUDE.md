@@ -46,7 +46,7 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 
 - **Projects:** `~/Library/Application Support/Muxy/projects.json`
 - **Ghostty config:** `~/.config/ghostty/config`
-- **Terminal state (tabs, splits):** in-memory only, lost on app close
+- **Terminal state (tabs, splits):** persisted to `~/Library/Application Support/Muxy/workspaces.json` and restored on launch. Working directories are captured and replayed. Actual shell process state (running commands, scrollback) remains in-memory only.
 
 ## CLI
 

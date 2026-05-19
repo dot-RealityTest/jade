@@ -232,7 +232,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ThemeService.shared.migrateToPairedThemeIfNeeded()
         observeSystemAppearanceChanges()
         consumeLaunchArguments()
-        startupLogger.debug("Core launch setup completed in \(String(describing: launchStart.duration(to: launchClock.now)), privacy: .public)")
+        let launchDuration = String(describing: launchStart.duration(to: launchClock.now))
+        startupLogger.debug("Core launch setup completed in \(launchDuration, privacy: .public)")
 
         DispatchQueue.main.async {
             let deferredStart = launchClock.now
@@ -241,7 +242,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NotificationSocketServer.shared.start()
             AIProviderRegistry.shared.installAll()
             _ = AIUsageSettingsStore.isUsageEnabled()
-            startupLogger.debug("Deferred startup services completed in \(String(describing: deferredStart.duration(to: launchClock.now)), privacy: .public)")
+            let deferredDuration = String(describing: deferredStart.duration(to: launchClock.now))
+            startupLogger.debug("Deferred startup services completed in \(deferredDuration, privacy: .public)")
         }
     }
 

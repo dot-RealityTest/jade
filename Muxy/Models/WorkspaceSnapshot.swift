@@ -106,6 +106,9 @@ struct TerminalTabSnapshot: Codable {
     let paneTitle: String
     let filePath: String?
     let currentWorkingDirectory: String?
+    let startupCommand: String?
+    let startupCommandInteractive: Bool
+    let externalEditorFilePath: String?
 
     init(
         kind: TerminalTab.Kind,
@@ -115,7 +118,10 @@ struct TerminalTabSnapshot: Codable {
         projectPath: String,
         paneTitle: String?,
         filePath: String? = nil,
-        currentWorkingDirectory: String? = nil
+        currentWorkingDirectory: String? = nil,
+        startupCommand: String? = nil,
+        startupCommandInteractive: Bool = false,
+        externalEditorFilePath: String? = nil
     ) {
         self.kind = kind
         self.customTitle = customTitle
@@ -125,6 +131,9 @@ struct TerminalTabSnapshot: Codable {
         self.paneTitle = paneTitle ?? "Terminal"
         self.filePath = filePath
         self.currentWorkingDirectory = currentWorkingDirectory
+        self.startupCommand = startupCommand
+        self.startupCommandInteractive = startupCommandInteractive
+        self.externalEditorFilePath = externalEditorFilePath
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -136,6 +145,9 @@ struct TerminalTabSnapshot: Codable {
         case paneTitle
         case filePath
         case currentWorkingDirectory
+        case startupCommand
+        case startupCommandInteractive
+        case externalEditorFilePath
     }
 
     init(from decoder: Decoder) throws {
@@ -148,6 +160,9 @@ struct TerminalTabSnapshot: Codable {
         paneTitle = try container.decodeIfPresent(String.self, forKey: .paneTitle) ?? "Terminal"
         filePath = try container.decodeIfPresent(String.self, forKey: .filePath)
         currentWorkingDirectory = try container.decodeIfPresent(String.self, forKey: .currentWorkingDirectory)
+        startupCommand = try container.decodeIfPresent(String.self, forKey: .startupCommand)
+        startupCommandInteractive = try container.decodeIfPresent(Bool.self, forKey: .startupCommandInteractive) ?? false
+        externalEditorFilePath = try container.decodeIfPresent(String.self, forKey: .externalEditorFilePath)
     }
 }
 

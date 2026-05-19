@@ -2,6 +2,7 @@ import SwiftUI
 
 enum GeneralSettingsKeys {
     static let autoExpandWorktreesOnProjectSwitch = "muxy.general.autoExpandWorktreesOnProjectSwitch"
+    static let restoreSessionOnLaunch = "muxy.general.restoreSessionOnLaunch"
 }
 
 struct GeneralSettingsView: View {
@@ -11,6 +12,8 @@ struct GeneralSettingsView: View {
     private var confirmRunningProcess = true
     @AppStorage(ProjectLifecyclePreferences.keepOpenWhenNoTabsKey)
     private var keepProjectsOpenWhenNoTabs = false
+    @AppStorage(GeneralSettingsKeys.restoreSessionOnLaunch)
+    private var restoreSessionOnLaunch = true
     @AppStorage(UpdateChannel.storageKey)
     private var updateChannelRaw = UpdateChannel.stable.rawValue
     @AppStorage(ToolbarAction.storageKey)
@@ -62,6 +65,13 @@ struct GeneralSettingsView: View {
                 SettingsToggleRow(
                     label: "Keep projects open after closing the last tab",
                     isOn: $keepProjectsOpenWhenNoTabs
+                )
+            }
+
+            SettingsSection("Session", showsDivider: false) {
+                SettingsToggleRow(
+                    label: "Restore previous session on launch",
+                    isOn: $restoreSessionOnLaunch
                 )
             }
 

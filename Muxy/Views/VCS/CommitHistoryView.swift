@@ -142,6 +142,11 @@ private struct CommitRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
+            if !commit.graphPrefix.isEmpty {
+                CommitGraphView(prefix: commit.graphPrefix)
+                    .padding(.leading, 4)
+            }
+
             commitDot
 
             VStack(alignment: .leading, spacing: 2) {

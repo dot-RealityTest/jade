@@ -39,6 +39,8 @@ struct SettingsView: View {
             NotificationSettingsView()
         case .connections:
             ConnectionsSettingsView()
+        case .ghostty:
+            GhosttyConfigSettingsView()
         }
     }
 }
@@ -50,6 +52,7 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
     case editor
     case notifications
     case connections
+    case ghostty
 
     var id: String { rawValue }
 
@@ -61,6 +64,7 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
         case .editor: "Editor"
         case .notifications: "Notifications"
         case .connections: "Connections"
+        case .ghostty: "Ghostty"
         }
     }
 
@@ -72,6 +76,7 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
         case .editor: "Files and markdown"
         case .notifications: "Alerts and providers"
         case .connections: "Remote, mobile, usage"
+        case .ghostty: "Terminal emulator config"
         }
     }
 
@@ -83,6 +88,7 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
         case .editor: "pencil.line"
         case .notifications: "bell"
         case .connections: "network"
+        case .ghostty: "terminal"
         }
     }
 }

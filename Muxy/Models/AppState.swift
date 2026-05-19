@@ -92,6 +92,7 @@ final class AppState {
     }
 
     func restoreSelection(projects: [Project], worktrees: [UUID: [Worktree]]) {
+        guard UserDefaults.standard.bool(forKey: GeneralSettingsKeys.restoreSessionOnLaunch) else { return }
         let snapshots: [WorkspaceSnapshot]
         do {
             snapshots = try workspacePersistence.loadWorkspaces()

@@ -35,6 +35,9 @@ struct ShortcutActionDispatcher {
         }
 
         switch action {
+        case .toggleAIAssistant:
+            notificationCenter.post(name: .toggleAIUsage, object: nil)
+            return true
         case .newTab:
             guard let projectID = appState.activeProjectID else { return false }
             if appState.workspaceRoot(for: projectID) == nil {
