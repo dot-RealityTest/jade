@@ -81,6 +81,7 @@ struct AIAssistantPanel: View {
                         ForEach(store.messages(for: pid)) { message in
                             MessageBubble(
                                 message: message,
+                                activeFile: activeFile,
                                 onRetry: message.isError ? { retry() } : nil
                             )
                         }
@@ -201,6 +202,7 @@ struct AIAssistantPanel: View {
 
 private struct MessageBubble: View {
     let message: AIAssistantMessage
+    let activeFile: String?
     let onRetry: (() -> Void)?
 
     var body: some View {
@@ -209,7 +211,7 @@ private struct MessageBubble: View {
                 Spacer(minLength: 24)
             }
             VStack(alignment: .leading, spacing: 6) {
-                MarkdownMessageContent(text: message.content, isUser: message.role == .user)
+                MarkdownMessageContent(text: message.content, isUser: message.role == .user, activeFile: activeFile)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 7)
                     .background(message.role == .user ? MuxyTheme.accentSoft : MuxyTheme.surface)
@@ -245,6 +247,7 @@ private struct MessageBubble: View {
 private struct MarkdownMessageContent: View {
     let text: String
     let isUser: Bool
+    let activeFile: String?
 
     var body: some View {
         let blocks = MarkdownBlockParser.parse(text)
@@ -300,9 +303,14 @@ private struct MarkdownMessageContent: View {
                 .background(MuxyTheme.hover, in: RoundedRectangle(cornerRadius: 6))
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            CopyCodeButton(code: code)
-                .padding(.trailing, 4)
-                .padding(.top, 2)
+            HStack(spacing: 4) {
+                if !isUser, let filePath = activeFile {
+                    ApplyCodeButton(code: code, filePath: filePath)
+                }
+                CopyCodeButton(code: code)
+            }
+            .padding(.trailing, 4)
+            .padding(.top, 2)
         }
     }
 
@@ -632,6 +640,42 @@ private struct CopyCodeButton: View {
         }
         .buttonStyle(.plain)
         .help("Copy code to clipboard")
+    }
+}
+
+private struct ApplyCodeButton: View {
+    let code: String
+    let filePath: String
+    @State private var applied = false
+
+    var body: some View {
+        Button {
+            NotificationCenter.default.post(
+                name: .applyAIAssistantCode,
+                object: nil,
+                userInfo: [
+                    "code": code,
+                    "filePath": filePath,
+                ]
+            )
+            applied = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                applied = false
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: applied ? "checkmark" : "arrow.down.doc")
+                    .font(.system(size: 9, weight: .semibold))
+                Text(applied ? "Applied" : "Apply")
+                    .font(.system(size: 9, weight: .medium))
+            }
+            .foregroundStyle(applied ? MuxyTheme.diffAddFg : MuxyTheme.fgMuted)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(MuxyTheme.bg.opacity(0.8), in: Capsule())
+        }
+        .buttonStyle(.plain)
+        .help("Apply code to editor")
     }
 }
 

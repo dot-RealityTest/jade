@@ -273,6 +273,30 @@ final class AppState {
         dispatch(.createEditorTab(projectID: projectID, areaID: nil, filePath: filePath, suppressInitialFocus: preserveFocus))
     }
 
+    func applyAIAssistantCode(_ code: String, filePath: String, projectID: UUID) {
+        for area in allAreas(for: projectID) {
+            if let tab = area.tabs.first(where: { $0.content.editorState?.filePath == filePath }) {
+                guard let editorState = tab.content.editorState else { return }
+                if editorState.isReadOnly {
+                    ToastState.shared.show("File is read-only")
+                    return
+                }
+                let store = TextBackingStore()
+                store.loadFromText(code)
+                editorState.backingStore = store
+                editorState.backingStoreVersion += 1
+                editorState.isModified = true
+                editorState.isLoading = false
+                editorState.isIncrementalLoading = false
+                dispatch(.selectTab(projectID: projectID, areaID: area.id, tabID: tab.id))
+                let fileName = URL(fileURLWithPath: filePath).lastPathComponent
+                ToastState.shared.show("Applied to \(fileName) — Cmd+Z to undo")
+                return
+            }
+        }
+        ToastState.shared.show("File not open in editor")
+    }
+
     func handleFileMoved(from oldPath: String, to newPath: String) {
         guard oldPath != newPath else { return }
         let oldPrefix = oldPath + "/"

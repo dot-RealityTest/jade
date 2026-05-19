@@ -1,6 +1,7 @@
 import AppKit
-import SwiftUI
 import os
+import SwiftUI
+import UserNotifications
 
 private let startupLogger = Logger(subsystem: "app.muxy", category: "Startup")
 
@@ -139,6 +140,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillFinishLaunching(_ notification: Notification) {
         ProcessInfo.processInfo.processName = AppIdentity.displayName
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        UNUserNotificationCenter.current().delegate = self
     }
 
     func applicationDidUpdate(_ notification: Notification) {
@@ -168,7 +171,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             handler(path)
         }
     }
+}
 
+@MainActor
+extension AppDelegate: @preconcurrency UNUserNotificationCenterDelegate {
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        if response.notification.request.identifier.hasPrefix("ai-response-") {
+            NSApp.activate(ignoringOtherApps: true)
+            NotificationCenter.default.post(name: .toggleAIAssistant, object: nil)
+        }
+        completionHandler()
+    }
+}
+
+extension AppDelegate {
     nonisolated static func resolveProjectPath(from url: URL) -> String? {
         if url.isFileURL {
             let standardized = url.standardizedFileURL.path

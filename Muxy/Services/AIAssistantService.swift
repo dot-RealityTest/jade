@@ -1,5 +1,7 @@
+import AppKit
 import Foundation
 import os
+import UserNotifications
 
 private let logger = Logger(subsystem: "app.muxy", category: "AIAssistantService")
 
@@ -83,6 +85,9 @@ final class AIAssistantService {
                 )
             }
             store.setStreaming(false, projectID: projectID)
+            if !NSApplication.shared.isActive {
+                postResponseNotification(projectID: projectID)
+            }
         }
 
         store.setTask(task, projectID: projectID)
@@ -133,6 +138,19 @@ final class AIAssistantService {
             store.updateLastAssistantMessage(content: accumulated, projectID: projectID)
             if chunk.done == true { break }
         }
+    }
+
+    private func postResponseNotification(projectID: UUID) {
+        let content = UNMutableNotificationContent()
+        content.title = "Jade AI Assistant"
+        content.body = "Response ready"
+        content.sound = .default
+        let request = UNNotificationRequest(
+            identifier: "ai-response-\(projectID.uuidString)",
+            content: content,
+            trigger: nil
+        )
+        UNUserNotificationCenter.current().add(request)
     }
 
     private static func buildSystemPrompt(projectPath: String?, activeFile: String?) -> String {

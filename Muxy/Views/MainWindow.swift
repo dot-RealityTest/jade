@@ -204,6 +204,9 @@ struct MainWindow: View {
             .background(WindowConfigurator(configVersion: ghostty.configVersion))
             .background(WindowTitleUpdater(title: windowTitle))
             .ignoresSafeArea(.container, edges: .top)
+            .onReceive(NotificationCenter.default.publisher(for: .applyAIAssistantCode)) { notification in
+                handleApplyAIAssistantCode(notification: notification)
+            }
     }
 
     private var windowLayer: some View {
@@ -1304,6 +1307,14 @@ struct MainWindow: View {
             projectPath: activeProject?.path,
             activeFile: filePath
         )
+    }
+
+    private func handleApplyAIAssistantCode(notification: Notification) {
+        guard let code = notification.userInfo?["code"] as? String,
+              let filePath = notification.userInfo?["filePath"] as? String,
+              let projectID = appState.activeProjectID
+        else { return }
+        appState.applyAIAssistantCode(code, filePath: filePath, projectID: projectID)
     }
 
     private func syncProjectInspectorStore() {
