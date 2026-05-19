@@ -10,6 +10,7 @@ private final class CodeEditorTextView: NSTextView {
     var onRedoRequest: (() -> Bool)?
     var canUndoRequest: (() -> Bool)?
     var canRedoRequest: (() -> Bool)?
+    var onExplainWithAI: ((String) -> Void)?
 
     override func paste(_ sender: Any?) {
         pasteAsPlainText(sender)
@@ -39,6 +40,29 @@ private final class CodeEditorTextView: NSTextView {
             return canRedoRequest()
         }
         return super.validateUserInterfaceItem(item)
+    }
+
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = super.menu(for: event) ?? NSMenu()
+        guard selectedRange().length > 0 else { return menu }
+        let selection = (string as NSString).substring(with: selectedRange())
+        guard !selection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return menu }
+
+        let explainItem = NSMenuItem(
+            title: "Explain with AI",
+            action: #selector(explainSelection),
+            keyEquivalent: ""
+        )
+        explainItem.target = self
+        menu.insertItem(explainItem, at: 0)
+        menu.insertItem(NSMenuItem.separator(), at: 1)
+        return menu
+    }
+
+    @objc
+    private func explainSelection() {
+        let selection = (string as NSString).substring(with: selectedRange())
+        onExplainWithAI?(selection)
     }
 
     override func scrollRangeToVisible(_ range: NSRange) {
@@ -261,6 +285,17 @@ struct CodeEditorView: NSViewRepresentable {
         textView.canRedoRequest = { [weak coordinator] in
             coordinator?.canPerformRedoRequest() ?? false
         }
+        textView.onExplainWithAI = { [weak coordinator] selection in
+            guard let coordinator else { return }
+            NotificationCenter.default.post(
+                name: .explainSelectionWithAI,
+                object: nil,
+                userInfo: [
+                    "selection": selection,
+                    "filePath": coordinator.state.filePath,
+                ]
+            )
+        }
         coordinator.setScrollObserver(for: scrollView)
         textView.undoManager?.removeAllActions()
 
@@ -278,6 +313,7 @@ struct CodeEditorView: NSViewRepresentable {
                 codeTextView.onRedoRequest = nil
                 codeTextView.canUndoRequest = nil
                 codeTextView.canRedoRequest = nil
+                codeTextView.onExplainWithAI = nil
             }
         }
         coordinator.textView?.delegate = nil

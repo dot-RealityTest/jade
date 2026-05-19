@@ -164,6 +164,9 @@ struct MainWindow: View {
             .onReceive(NotificationCenter.default.publisher(for: .toggleAIAssistant)) { _ in
                 aiAssistantPanelVisible.toggle()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .explainSelectionWithAI)) { notification in
+                handleExplainSelection(notification: notification)
+            }
             .onReceive(NotificationCenter.default.publisher(for: .toggleThemePicker)) { _ in
                 showThemePicker.toggle()
             }
@@ -1271,6 +1274,21 @@ struct MainWindow: View {
     private func showTodoPanel() {
         todoPanelVisible = true
         UserDefaults.standard.set(true, forKey: "muxy.todoPanelVisible")
+    }
+
+    private func handleExplainSelection(notification: Notification) {
+        guard let selection = notification.userInfo?["selection"] as? String,
+              let filePath = notification.userInfo?["filePath"] as? String,
+              let projectID = appState.activeProjectID
+        else { return }
+        aiAssistantPanelVisible = true
+        let prompt = "Explain this code from \(URL(fileURLWithPath: filePath).lastPathComponent):\n\n```\n\(selection)\n```"
+        AIAssistantService.shared.send(
+            prompt: prompt,
+            projectID: projectID,
+            projectPath: activeProject?.path,
+            activeFile: filePath
+        )
     }
 
     private func syncProjectInspectorStore() {
