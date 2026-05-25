@@ -99,7 +99,7 @@ struct JourneyStepReviewOverlay: View {
     private var footer: some View {
         HStack(spacing: 8) {
             Button("Cancel", action: onCancel)
-            Button("Not now", action: onNotNow)
+            Button("Defer", action: onNotNow)
             Spacer()
             if proposal.requiresOverrideToConfirm {
                 Button("Change step", action: onCancel)
@@ -108,7 +108,7 @@ struct JourneyStepReviewOverlay: View {
                 }
                 .foregroundStyle(MuxyTheme.warning)
             } else {
-                Button("Do it") {
+                Button("Start") {
                     onConfirm(false)
                 }
                 .keyboardShortcut(.return, modifiers: [])

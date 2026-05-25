@@ -132,7 +132,7 @@ Muxy/
     NaturalCommand{Settings,Generator}.swift  Review-first natural-language shell command generation with Apple Intelligence and Ollama backends
     ObsidianMCPSettingsStore.swift  UserDefaults-backed obsidian-codex-mcp configuration (vault, Python, server.py, inbox folder)
     ObsidianSendService.swift  Send-to-Obsidian command via MCP stdio `create_note`
-    ObsidianJourneyLogService.swift  Story-shaped journey session logs to Obsidian via MCP `create_note`
+    ObsidianJourneyLogService.swift  Project session logs to Obsidian via MCP `create_note`
     JadeJourneyBootstrapService.swift  Creates `.jade/` plus optional project-root `goals.md`, `todo.md`, `project-map.md` scaffolds
     JadeProjectContextFiles.swift  Locates project markdown context files in the repo root
     JadeProjectContextReader.swift  Parses structured context from todo, goals, AGENTS, project-map markdown
@@ -202,7 +202,7 @@ Muxy/
       UUIDFramePreferenceKey.swift  Generic PreferenceKey for frame tracking
       NotificationBadge.swift Unread count badge for sidebar project icons
       QuickOpenOverlay.swift  Cmd+P file search overlay (name substring match via find)
-      CommandPaletteOverlay.swift  Cmd+K unified command palette for app actions, Obsidian MCP tools, Jade journey commands (initialize, next step, complete), remote commands, remote spaces, snippets, files, worktrees, and natural-language command generation with accessible rows and inline confirmation states
+      CommandPaletteOverlay.swift  Cmd+K unified command palette for app actions, Obsidian MCP tools, project log commands (set up, confirm step, complete), remote commands, remote spaces, snippets, files, worktrees, and natural-language command generation with accessible rows and inline confirmation states
       NaturalCommandReviewView.swift  Palette-style review surface for generated shell commands with Run, Copy, and Save as Snippet actions
       AppBundleIconView.swift Renders and caches installed app bundle icons for menus and launcher controls
       OpenInIDEControl.swift  Split button for opening the active project or editor file in the remembered or selected IDE

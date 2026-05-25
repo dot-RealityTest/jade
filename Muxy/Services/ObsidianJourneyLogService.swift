@@ -19,7 +19,7 @@ enum ObsidianJourneyLogService {
         let slug = ObsidianNotePathBuilder.slugify(projectName)
         let stepSlug = ObsidianNotePathBuilder.slugify(proposal.title)
         let timestamp = ObsidianNotePathBuilder.sessionTimestamp()
-        let notePath = "Jade/Journeys/\(slug)/sessions/\(timestamp)-\(stepSlug).md"
+        let notePath = "Jade/Logs/\(slug)/sessions/\(timestamp)-\(stepSlug).md"
         let context = JadeProjectContextReader.load(projectPath: projectPath)
         let content = JadeJourneyLogFormatter.sessionNote(
             input: JadeJourneyLogFormatter.SessionNoteInput(
@@ -39,7 +39,6 @@ enum ObsidianJourneyLogService {
                 environment: settings.serverEnvironment
             )
             var tags = settings.defaultTags
-            tags.append("journey")
             tags.append("project-log")
             tags.append("session-log")
             tags.append(slug)

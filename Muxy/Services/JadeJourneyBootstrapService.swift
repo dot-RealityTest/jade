@@ -80,16 +80,16 @@ enum JadeJourneyBootstrapService {
 
     private static func journeyTemplate(projectName: String) -> String {
         """
-        # Journey — \(projectName)
+        # Project log — \(projectName)
 
-        ## Where you are
-        You just started. Jade will propose one step at a time and log progress to Obsidian.
+        ## Current focus
+        Project started. Jade proposes one step at a time and logs each session to Obsidian.
 
         ## Next step
         Describe the first thing you want this project to do.
 
         ### Why
-        One clear goal keeps the journey moving.
+        One clear goal keeps the work focused.
 
         ## Done
         """

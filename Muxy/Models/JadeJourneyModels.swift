@@ -118,8 +118,8 @@ enum JadeJourneyError: Error, LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noProject: "Open a project first."
-        case .alreadyInitialized: "This project already has a Jade journey."
-        case .notInitialized: "Add todo.md or goals.md in the project root, or initialize .jade/journey.md."
+        case .alreadyInitialized: "This project already has a project log (.jade/)."
+        case .notInitialized: "Add todo.md or goals.md, or run Set Up Project Log for .jade/journey.md."
         case .noNextStep: "Add an open `- [ ]` item to todo.md, a goal in goals.md, or a ## Next step in .jade/journey.md."
         case let .writeFailed(message): message
         }

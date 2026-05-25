@@ -853,31 +853,31 @@ struct MainWindow: View {
             ),
             CommandPaletteItem(
                 id: "journey-initialize",
-                title: "Initialize Journey",
-                subtitle: "Create .jade folder, rules, and journey.md",
+                title: "Set Up Project Log",
+                subtitle: "Create .jade scaffold and project markdown when missing",
                 symbolName: "map",
                 section: .app,
-                searchText: "journey bootstrap start vibe rules md obsidian log",
+                searchText: "log session project bootstrap rules md obsidian goals todo project-map setup",
                 target: .journeyInitialize,
                 sortPriority: 8
             ),
             CommandPaletteItem(
                 id: "journey-next-step",
-                title: "Next Journey Step",
-                subtitle: "Review and confirm the next step from .jade/journey.md",
+                title: "Confirm Next Step",
+                subtitle: "Review focus from todo.md, goals.md, or .jade/journey.md",
                 symbolName: "arrow.right.circle",
                 section: .app,
-                searchText: "journey next step confirm progress vibe forward",
+                searchText: "log next step confirm session todo goals project markdown focus",
                 target: .journeyNextStep,
                 sortPriority: 9
             ),
             CommandPaletteItem(
                 id: "journey-complete-step",
-                title: "Complete Journey Step",
-                subtitle: "Mark the current step done and log an achievement",
+                title: "Complete Step",
+                subtitle: "Mark the current step done and log the session to Obsidian",
                 symbolName: "checkmark.seal",
                 section: .app,
-                searchText: "journey complete done achievement win log obsidian",
+                searchText: "log complete done step session obsidian achievement",
                 target: .journeyCompleteStep,
                 sortPriority: 9
             ),
@@ -1255,7 +1255,7 @@ struct MainWindow: View {
         let path = activeWorktreePath(for: project)
         do {
             try JadeJourneyBootstrapService.bootstrap(projectPath: path, projectName: project.name)
-            ToastState.shared.show("Journey initialized (.jade/ + project markdown)")
+            ToastState.shared.show("Project log ready (.jade/ + project markdown)")
         } catch {
             ToastState.shared.show(error.localizedDescription)
         }
@@ -1293,7 +1293,7 @@ struct MainWindow: View {
             proposal: proposal,
             project: project,
             overrideBlocker: overrideBlocker,
-            successMessage: overrideBlocker ? "Step started (override logged)" : "Step started — logged to Obsidian"
+            successMessage: overrideBlocker ? "Session logged (override noted)" : "Session logged to Obsidian"
         )
     }
 
@@ -1305,7 +1305,7 @@ struct MainWindow: View {
             proposal: proposal,
             project: project,
             overrideBlocker: false,
-            successMessage: "Step snoozed"
+            successMessage: "Step deferred — session logged"
         )
     }
 
@@ -1335,7 +1335,7 @@ struct MainWindow: View {
                 proposal: proposal,
                 project: project,
                 overrideBlocker: false,
-                successMessage: "Step completed — journey updated"
+                successMessage: "Step completed — log updated"
             )
         } catch {
             ToastState.shared.show(error.localizedDescription)
