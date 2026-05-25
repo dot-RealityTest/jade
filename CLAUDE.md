@@ -100,7 +100,7 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 
 ## Learned User Preferences
 
-- Prefer minimal top window chrome for Jade: one compact workspace chrome row (~32pt) under the native title bar; keep the trailing icon row sparse (Snippets, AI, etc.) — no Notes/Todo chrome toggles or in-panel Send/Notes segmented control; open Rich Input in Send or Notes via shortcuts/commands only.
+- Prefer minimal top window chrome for Jade: one compact workspace chrome row (~32pt) under the native title bar; keep the trailing icon row sparse (Snippets, AI, etc.) — no Notes/Todo chrome toggles or in-panel Send/Notes segmented control; open Rich Input (including popup/preview capture) via shortcuts/commands, not inspector chrome; command palette omits Todos and notes/todo panel entries, groups MCP actions (e.g. Obsidian) under MCP, and prioritizes Rich Input, Find in Files, and Toggle Sidebar.
 - User-visible copy must say **Jade** (quit dialog, menus, settings); keep `muxy`/`Muxy` only for compatibility (bundle id, URL scheme, CLI alias, Application Support paths, internal types).
 - When polishing Jade UI, aim for a finer, smaller, premium feel rather than chunky controls or extra vertical bands.
 - For UI screenshot feedback, confirm the target is Jade/muxy before changing code; the user also has a separate PiecesTask app and has corrected mistaken cross-repo polish.
@@ -116,4 +116,6 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 - Upstream repo: https://github.com/muxy-app/muxy
 - Bundled Moltis is opt-in at build time via `MUXY_BUNDLE_MOLTIS=1`; default release builds omit the ~149MB Moltis bundle.
 - Moltis gateway state/config lives under `~/Library/Application Support/Muxy/moltis/`; Jade wires Ollama URL/model into Moltis from `NaturalCommandSettings`.
-- Right-rail panels use `SidePanelPolicy` mutual exclusion (Snippets, AI, Notes/Todo inspector — one primary panel at a time).
+- Right-rail panels use `SidePanelPolicy` mutual exclusion (Snippets, AI, Notes/Todo inspector — one primary panel at a time); notes/tasks UX prefers Rich Input over chrome or palette toggles.
+- MCP catalog reference for Jade integrations: `/Users/kika_hub/Documents/CODEX tools/MCPS.md`.
+- Open-source reference repos live under `/Users/kika_hub/Documents/OPEN-Source-REPOS/` (e.g. Warp at `repos/warpdotdev/`); study patterns only — Warp is AGPL, do not copy its code into Jade.

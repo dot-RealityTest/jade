@@ -195,7 +195,7 @@ Muxy/
       UUIDFramePreferenceKey.swift  Generic PreferenceKey for frame tracking
       NotificationBadge.swift Unread count badge for sidebar project icons
       QuickOpenOverlay.swift  Cmd+P file search overlay (name substring match via find)
-      CommandPaletteOverlay.swift  Cmd+K unified command palette for app actions, project todos, remote commands, remote spaces, snippets, files, worktrees, and natural-language command generation with accessible rows and inline confirmation states
+      CommandPaletteOverlay.swift  Cmd+K unified command palette for app actions, Obsidian MCP tools, remote commands, remote spaces, snippets, files, worktrees, and natural-language command generation with accessible rows and inline confirmation states
       NaturalCommandReviewView.swift  Palette-style review surface for generated shell commands with Run, Copy, and Save as Snippet actions
       AppBundleIconView.swift Renders and caches installed app bundle icons for menus and launcher controls
       OpenInIDEControl.swift  Split button for opening the active project or editor file in the remembered or selected IDE

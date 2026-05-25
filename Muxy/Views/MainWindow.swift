@@ -803,86 +803,118 @@ struct MainWindow: View {
 
     private var commandPaletteAppItems: [CommandPaletteItem] {
         [
-            commandItem(.newTab, symbolName: "plus.square", subtitle: "Create a new terminal tab", aliases: ["shell", "terminal"]),
+            commandItem(
+                .newTab,
+                symbolName: "plus.square",
+                subtitle: "Create a new terminal tab",
+                aliases: ["shell", "terminal"],
+                sortPriority: 0
+            ),
             commandItem(
                 .splitRight,
                 symbolName: "rectangle.split.2x1",
                 subtitle: "Split the focused pane to the right",
-                aliases: ["pane", "layout", "right"]
+                aliases: ["pane", "layout", "right"],
+                sortPriority: 1
             ),
             commandItem(
                 .splitDown,
                 symbolName: "rectangle.split.1x2",
                 subtitle: "Split the focused pane down",
-                aliases: ["pane", "layout", "below", "bottom"]
+                aliases: ["pane", "layout", "below", "bottom"],
+                sortPriority: 2
             ),
             commandItem(
-                .openVCSTab,
-                symbolName: "point.3.connected.trianglepath.dotted",
-                subtitle: "Open source control",
-                aliases: ["git", "vcs", "changes", "commit", "diff"]
-            ),
-            commandItem(
-                .toggleFileTree,
-                symbolName: "sidebar.left",
-                subtitle: "Show or hide the file tree",
-                aliases: ["files", "finder", "explorer", "sidebar", "tree"]
-            ),
-            commandItem(
-                .toggleSnippetsPanel,
-                symbolName: "curlybraces",
-                subtitle: "Show or hide snippets",
-                aliases: ["commands", "vault", "scripts", "shell", "snippets"]
-            ),
-            commandItem(
-                .toggleRichInputPreview,
-                symbolName: "eye",
-                subtitle: "Quick preview of notes and tasks",
-                aliases: ["preview", "notes", "tasks", "rich input", "workspace"]
-            ),
-            commandItem(
-                .sendToObsidian,
-                symbolName: "note.text.badge.plus",
-                subtitle: "Send selection or clipboard to Obsidian inbox",
-                aliases: ["obsidian", "vault", "note", "capture", "mcp"]
-            ),
-            commandItem(
-                .toggleProjectNotesPanel,
-                symbolName: "note.text",
-                subtitle: "Show or hide project notes",
-                aliases: ["notes", "inspector", "scratchpad"]
-            ),
-            commandItem(
-                .toggleProjectTodoPanel,
-                symbolName: "checklist",
-                subtitle: "Show or hide the project todo list",
-                aliases: ["todo", "tasks", "inspector"]
-            ),
-            commandItem(
-                .toggleAIAssistant,
-                symbolName: "bubble.left.and.bubble.right.fill",
-                subtitle: "Show or hide the AI assistant",
-                aliases: ["ai", "chat", "claude", "assistant", "ask"]
-            ),
-            commandItem(
-                .quickOpen,
-                symbolName: "doc.text.magnifyingglass",
-                subtitle: "Search files in the current project",
-                aliases: ["files", "open", "finder", "go to file"]
+                .openProject,
+                symbolName: "folder",
+                subtitle: "Open a project folder",
+                aliases: ["folder", "workspace"],
+                sortPriority: 10
             ),
             commandItem(
                 .switchWorktree,
                 symbolName: "arrow.triangle.branch",
                 subtitle: "Switch project worktree",
-                aliases: ["branch", "workspace", "git"]
+                aliases: ["branch", "workspace", "git"],
+                sortPriority: 11
+            ),
+            commandItem(
+                .toggleSnippetsPanel,
+                symbolName: "curlybraces",
+                subtitle: "Show or hide snippets",
+                aliases: ["commands", "vault", "scripts", "shell", "snippets"],
+                sortPriority: 20
+            ),
+            commandItem(
+                .toggleAIAssistant,
+                symbolName: "bubble.left.and.bubble.right.fill",
+                subtitle: "Show or hide the AI assistant",
+                aliases: ["ai", "chat", "claude", "assistant", "ask"],
+                sortPriority: 21
+            ),
+            commandItem(
+                .toggleRichInput,
+                symbolName: "text.bubble",
+                subtitle: "Open Rich Input for notes, tasks, and captures",
+                aliases: ["rich input", "notes", "tasks", "capture", "send"],
+                sortPriority: 22
+            ),
+            commandItem(
+                .toggleRichInputPreview,
+                symbolName: "eye",
+                subtitle: "Quick markdown preview overlay",
+                aliases: ["preview", "markdown", "rich input"],
+                sortPriority: 23
+            ),
+            commandItem(
+                .quickOpen,
+                symbolName: "doc.text.magnifyingglass",
+                subtitle: "Search files in the current project",
+                aliases: ["files", "open", "finder", "go to file"],
+                sortPriority: 30
+            ),
+            commandItem(
+                .findInFiles,
+                symbolName: "text.magnifyingglass",
+                subtitle: "Search file contents in the current project",
+                aliases: ["grep", "search", "text", "content"],
+                sortPriority: 31
+            ),
+            commandItem(
+                .openVCSTab,
+                symbolName: "point.3.connected.trianglepath.dotted",
+                subtitle: "Open source control",
+                aliases: ["git", "vcs", "changes", "commit", "diff"],
+                sortPriority: 32
+            ),
+            commandItem(
+                .toggleFileTree,
+                symbolName: "sidebar.left",
+                subtitle: "Show or hide the file tree",
+                aliases: ["files", "finder", "explorer", "sidebar", "tree"],
+                sortPriority: 33
+            ),
+            commandItem(
+                .toggleSidebar,
+                symbolName: "sidebar.leading",
+                subtitle: "Show or hide the project sidebar",
+                aliases: ["projects", "sidebar", "navigation"],
+                sortPriority: 34
             ),
             commandItem(
                 .toggleThemePicker,
                 symbolName: "paintpalette",
                 subtitle: "Open the theme picker",
-                aliases: ["appearance", "colors", "theme"]
+                aliases: ["appearance", "colors", "theme"],
+                sortPriority: 50
             ),
-            commandItem(.toggleAIUsage, symbolName: "chart.bar", subtitle: "Open AI usage", aliases: ["tokens", "usage", "cost"]),
+            commandItem(
+                .toggleAIUsage,
+                symbolName: "chart.bar",
+                subtitle: "Open AI usage",
+                aliases: ["tokens", "usage", "cost"],
+                sortPriority: 51
+            ),
             CommandPaletteItem(
                 id: "app-local-ports",
                 title: "Local Ports",
@@ -890,32 +922,17 @@ struct MainWindow: View {
                 symbolName: "network",
                 section: .app,
                 searchText: "active ports dead ports listening localhost tcp services processes lsof",
-                target: .localPorts
+                target: .localPorts,
+                sortPriority: 52
             ),
-            commandItem(.openProject, symbolName: "folder", subtitle: "Open a project folder", aliases: ["folder", "workspace"]),
             commandItem(
                 .reloadConfig,
                 symbolName: "arrow.clockwise",
                 subtitle: "Reload terminal configuration",
-                aliases: ["refresh", "ghostty", "config"]
+                aliases: ["refresh", "ghostty", "config"],
+                sortPriority: 53
             ),
-        ] + commandPaletteTodoItems
-    }
-
-    private var commandPaletteTodoItems: [CommandPaletteItem] {
-        guard let activeProject else { return [] }
-        return projectInspectorStore.sortedTodos.enumerated().map { index, item in
-            CommandPaletteItem(
-                id: "project-todo-\(item.id.uuidString)",
-                title: item.title,
-                subtitle: item.isDone ? "Done todo in \(activeProject.name)" : "Open todo in \(activeProject.name)",
-                symbolName: item.isDone ? "checkmark.circle" : "circle",
-                section: .todo,
-                searchText: "todo task project \(activeProject.name)",
-                target: .projectTodo(item.id),
-                sortPriority: index
-            )
-        }
+        ]
     }
 
     private var activeCommandPaletteProjectPath: String? {
@@ -934,7 +951,8 @@ struct MainWindow: View {
         _ action: ShortcutAction,
         symbolName: String,
         subtitle: String,
-        aliases: [String] = []
+        aliases: [String] = [],
+        sortPriority: Int = 0
     ) -> CommandPaletteItem {
         CommandPaletteItem(
             id: "shortcut-\(action.rawValue)",
@@ -943,7 +961,8 @@ struct MainWindow: View {
             symbolName: symbolName,
             section: .app,
             searchText: ([action.category] + aliases).joined(separator: " "),
-            target: .shortcut(action)
+            target: .shortcut(action),
+            sortPriority: sortPriority
         )
     }
 
@@ -1167,8 +1186,6 @@ struct MainWindow: View {
             return
         case .localPorts:
             showLocalPorts = true
-        case .projectTodo:
-            showTodoPanel()
         case let .obsidianMCPTool(action, query):
             performObsidianMCPTool(action, query: query)
         }
