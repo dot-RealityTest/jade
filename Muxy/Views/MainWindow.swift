@@ -248,6 +248,8 @@ struct MainWindow: View {
             onToggleRichInputPreview: toggleRichInputPreview,
             onToggleVoiceRecording: { _ = openVoiceRecorder() },
             onSendToObsidian: sendToObsidian,
+            onRunObsidianMCPTool: performObsidianMCPTool,
+            onPromptObsidianSearch: promptObsidianSearch,
             onExplainSelection: handleExplainSelection,
             onApplyAIAssistantCode: handleApplyAIAssistantCode
         )
@@ -1197,6 +1199,25 @@ struct MainWindow: View {
         case .getFolderStructure:
             runObsidianMCPTool(action) { _ in [:] }
         }
+    }
+
+    private func promptObsidianSearch() {
+        let alert = NSAlert()
+        alert.messageText = "Search Obsidian Notes"
+        alert.informativeText = "Search titles, content, and tags in your vault."
+        alert.addButton(withTitle: "Search")
+        alert.addButton(withTitle: "Cancel")
+        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
+        input.placeholderString = "Search query"
+        alert.accessoryView = input
+        alert.window.initialFirstResponder = input
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let trimmed = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            ToastState.shared.show("Enter a search query")
+            return
+        }
+        performObsidianMCPTool(.searchNotes, query: trimmed)
     }
 
     private func runObsidianMCPTool(

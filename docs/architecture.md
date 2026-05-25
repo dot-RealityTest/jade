@@ -183,7 +183,6 @@ Muxy/
     ThemePicker.swift         Theme selection popover (utility overlay, syncs selection to HEX)
     WelcomeView.swift         Empty state view
     Inspector/
-      ProjectInspectorPanel.swift Right-side inspector shell that can show Notes, Todo, or both project tools
       AIAssistantPanel.swift    Chat-style AI assistant with streaming messages and workspace context
     Snippets/
       SnippetsPanel.swift     Snippets/workflows panel with inline create, edit, and variable-run views

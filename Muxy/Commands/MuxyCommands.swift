@@ -55,25 +55,6 @@ struct MuxyCommands: Commands {
     var body: some Commands {
         CommandGroup(after: .appSettings) {
             Button {
-                NSWorkspace.shared.open(
-                    [config.ghosttyConfigURL],
-                    withApplicationAt: URL(fileURLWithPath: "/System/Applications/TextEdit.app"),
-                    configuration: NSWorkspace.OpenConfiguration()
-                )
-            } label: {
-                Label("Open Configuration...", systemImage: "doc.text")
-            }
-
-            Button {
-                performShortcutAction(.reloadConfig)
-            } label: {
-                Label("Reload Configuration", systemImage: "arrow.clockwise")
-            }
-            .shortcut(for: .reloadConfig, store: keyBindings)
-
-            Divider()
-
-            Button {
                 CLIAccessor.installCLI()
             } label: {
                 Label("Install CLI", systemImage: "terminal")
@@ -85,7 +66,36 @@ struct MuxyCommands: Commands {
                 Label("Check for Updates...", systemImage: "arrow.triangle.2.circlepath")
             }
             .disabled(!updateService.canCheckForUpdates)
+
+            Divider()
+
+            Button {
+                ObsidianMCPMenuTrigger.run(.openSettings)
+            } label: {
+                Label("Obsidian MCP Settings...", systemImage: "puzzlepiece.extension")
+            }
+
+            Divider()
+
+            Button {
+                NSWorkspace.shared.open(
+                    [config.ghosttyConfigURL],
+                    withApplicationAt: URL(fileURLWithPath: "/System/Applications/TextEdit.app"),
+                    configuration: NSWorkspace.OpenConfiguration()
+                )
+            } label: {
+                Label("Open Ghostty Configuration...", systemImage: "doc.text")
+            }
+
+            Button {
+                performShortcutAction(.reloadConfig)
+            } label: {
+                Label("Reload Ghostty Configuration", systemImage: "arrow.clockwise")
+            }
+            .shortcut(for: .reloadConfig, store: keyBindings)
         }
+
+        ObsidianMenuCommands(keyBindings: keyBindings)
 
         CommandGroup(replacing: .pasteboard) {
             Button("Cut") { NSApp.sendAction(#selector(NSText.cut(_:)), to: nil, from: nil) }
@@ -270,6 +280,20 @@ struct MuxyCommands: Commands {
             }
             .shortcut(for: .toggleSidebar, store: keyBindings)
 
+            Button("Toggle Snippets Panel") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.toggleSnippetsPanel)
+            }
+            .shortcut(for: .toggleSnippetsPanel, store: keyBindings)
+
+            Button("Toggle AI Assistant") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.toggleAIAssistant)
+            }
+            .shortcut(for: .toggleAIAssistant, store: keyBindings)
+
+            Divider()
+
             Button("Toggle Rich Input") {
                 guard isMainWindowFocused else { return }
                 performShortcutAction(.toggleRichInput)
@@ -282,12 +306,6 @@ struct MuxyCommands: Commands {
             }
             .shortcut(for: .toggleRichInputPreview, store: keyBindings)
 
-            Button("Send to Obsidian") {
-                guard isMainWindowFocused else { return }
-                performShortcutAction(.sendToObsidian)
-            }
-            .shortcut(for: .sendToObsidian, store: keyBindings)
-
             Divider()
 
             Button("Open Switcher...") {
@@ -295,8 +313,6 @@ struct MuxyCommands: Commands {
                 performShortcutAction(.switchWorktree)
             }
             .shortcut(for: .switchWorktree, store: keyBindings)
-
-            Divider()
 
             Button("Next Project") {
                 guard isMainWindowFocused else { return }

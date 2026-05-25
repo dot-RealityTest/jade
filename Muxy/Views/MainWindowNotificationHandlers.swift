@@ -23,6 +23,8 @@ struct MainWindowNotificationHandlers: ViewModifier {
     let onToggleRichInputPreview: () -> Void
     let onToggleVoiceRecording: () -> Void
     let onSendToObsidian: () -> Void
+    let onRunObsidianMCPTool: (ObsidianMCPToolAction, String?) -> Void
+    let onPromptObsidianSearch: () -> Void
     let onExplainSelection: (Notification) -> Void
     let onApplyAIAssistantCode: (Notification) -> Void
 
@@ -68,5 +70,12 @@ struct MainWindowNotificationHandlers: ViewModifier {
             .onReceive(NotificationCenter.default.publisher(for: .toggleRichInputPreview)) { _ in onToggleRichInputPreview() }
             .onReceive(NotificationCenter.default.publisher(for: .toggleVoiceRecording)) { _ in onToggleVoiceRecording() }
             .onReceive(NotificationCenter.default.publisher(for: .sendToObsidian)) { _ in onSendToObsidian() }
+            .onReceive(NotificationCenter.default.publisher(for: .runObsidianMCPTool)) { notification in
+                guard let action = ObsidianMCPMenuTrigger.decodedAction(from: notification) else { return }
+                onRunObsidianMCPTool(action, ObsidianMCPMenuTrigger.decodedQuery(from: notification))
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .promptObsidianSearch)) { _ in
+                onPromptObsidianSearch()
+            }
     }
 }

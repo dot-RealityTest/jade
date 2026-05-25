@@ -38,6 +38,8 @@ extension Notification.Name {
     static let toggleVoiceRecording = Notification.Name("MuxyToggleVoiceRecording")
     static let sendToObsidian = Notification.Name("MuxySendToObsidian")
     static let focusMCPToolsSettings = Notification.Name("MuxyFocusMCPToolsSettings")
+    static let runObsidianMCPTool = Notification.Name("MuxyRunObsidianMCPTool")
+    static let promptObsidianSearch = Notification.Name("MuxyPromptObsidianSearch")
 }
 
 enum ExternalDragHoverUserInfoKey {

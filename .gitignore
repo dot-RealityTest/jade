@@ -27,3 +27,5 @@ appcast*.xml
 .muxy/
 .omx/
 /muxy-markdown-remote-image-urlcache
+.cursor/hooks/state/
+.project-cleanup-backups/

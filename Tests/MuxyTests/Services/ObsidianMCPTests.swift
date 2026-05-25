@@ -68,6 +68,23 @@ struct ObsidianMCPSettingsTests {
     }
 }
 
+@Suite("Obsidian MCP Menu")
+struct ObsidianMCPMenuTests {
+    @Test("menu trigger encodes action")
+    func menuTriggerEncodesAction() {
+        let notification = Notification(
+            name: .runObsidianMCPTool,
+            object: nil,
+            userInfo: [
+                ObsidianMCPToolUserInfoKey.action: ObsidianMCPToolAction.listInboxNotes.rawValue,
+                ObsidianMCPToolUserInfoKey.query: "hello",
+            ]
+        )
+        #expect(ObsidianMCPMenuTrigger.decodedAction(from: notification) == .listInboxNotes)
+        #expect(ObsidianMCPMenuTrigger.decodedQuery(from: notification) == "hello")
+    }
+}
+
 @Suite("MCP JSON-RPC")
 struct MCPJSONRPCTests {
     @Test("encode request appends newline")

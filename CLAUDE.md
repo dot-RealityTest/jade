@@ -85,9 +85,13 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 - Avoid long PR descriptions. It is for humans and keep it in 3 lines maximum.
 - Upload screenshots or recordings for the PRs.
 - Never answer any question without a proper investigation and exploring the codebase.
-- Do not push this repo unless the user explicitly asks. Commits are local by default.
 - Prioritize problem comprehension over premature implementation. Validate the approach before execution to avoid rework
 - Plan properly before executing to not double work
+
+## Git
+
+- Commits are local by default — create commits when the user asks or when work should be saved on disk.
+- Do not push this repo, publish branches, or open PRs unless the user explicitly asks.
 
 ## Code Review
 
@@ -96,7 +100,8 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 
 ## Learned User Preferences
 
-- Prefer minimal top window chrome for Jade: one compact workspace chrome row (~32pt) under the native title bar; put inspector toggles (Notes, Todo, Snippets, AI) on that row, not a separate SwiftUI toolbar band.
+- Prefer minimal top window chrome for Jade: one compact workspace chrome row (~32pt) under the native title bar; keep the trailing icon row sparse (Snippets, AI, etc.) — no Notes/Todo chrome toggles or in-panel Send/Notes segmented control; open Rich Input in Send or Notes via shortcuts/commands only.
+- User-visible copy must say **Jade** (quit dialog, menus, settings); keep `muxy`/`Muxy` only for compatibility (bundle id, URL scheme, CLI alias, Application Support paths, internal types).
 - When polishing Jade UI, aim for a finer, smaller, premium feel rather than chunky controls or extra vertical bands.
 - For UI screenshot feedback, confirm the target is Jade/muxy before changing code; the user also has a separate PiecesTask app and has corrected mistaken cross-repo polish.
 - Inspector AI defaults to Ollama direct; bundled Moltis (Ollama-backed gateway) is dev-only when built with `MUXY_BUNDLE_MOLTIS=1` — keep Ghostty terminal PTYs independent from Moltis agent/exec.
@@ -105,7 +110,7 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 
 ## Learned Workspace Facts
 
-- Launch Jade locally with `./scripts/run-jade.sh` after build (Sparkle-aware `.app` bundle); bare `.build/arm64-apple-macosx/debug/Muxy` alone is unreliable for windowed launches.
+- Launch Jade locally with `./scripts/run-jade.sh` or `open .build/.../Jade.app` after build; the bare SwiftPM `Muxy` binary can spawn a duplicate instance separate from an installed or bundled `Jade.app`.
 - PiecesTask is a separate project at `/Users/kika_hub/Projects/PiecesTask`, not part of the muxy/Jade repo.
 - Jade main-window HIG work favors incremental changes (native title bar, consolidated chrome, `WindowLayoutMetrics`) over a full `NavigationSplitView` / single-inspector refactor unless the user widens scope.
 - Upstream repo: https://github.com/muxy-app/muxy
