@@ -107,6 +107,7 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 - Inspector AI defaults to Ollama direct; bundled Moltis (Ollama-backed gateway) is dev-only when built with `MUXY_BUNDLE_MOLTIS=1` — keep Ghostty terminal PTYs independent from Moltis agent/exec.
 - When Jade scope grows (AI, chrome, panels), prefer trimming over-engineering and delaying platform features until the shell UX converges.
 - When implementing an attached plan, do not edit the plan file; use existing todos and mark them in progress.
+- Jade Journey UX targets vibe-coder forward motion: next step from project markdown (`todo.md`, then `goals.md`, then `.jade/journey.md` fallback) with no mood/energy prompts; confirm/cancel each step, soft blockers when `.jade/rules.md` disagrees (with override logging), and story-shaped Obsidian session notes aligned with vault `Templates/` (e.g. Project Session Log).
 
 ## Learned Workspace Facts
 
@@ -119,3 +120,6 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 - Right-rail panels use `SidePanelPolicy` mutual exclusion (Snippets, AI, Notes/Todo inspector — one primary panel at a time); notes/tasks UX prefers Rich Input over chrome or palette toggles.
 - MCP catalog reference for Jade integrations: `/Users/kika_hub/Documents/CODEX tools/MCPS.md`.
 - Open-source reference repos live under `/Users/kika_hub/Documents/OPEN-Source-REPOS/` (e.g. Warp at `repos/warpdotdev/`); study patterns only — Warp is AGPL, do not copy its code into Jade.
+- Obsidian vault for Jade MCP: `/Users/kika_hub/_KIKA_MAIN/Kika's_Obsidian/`; local MCP server at `/Users/kika_hub/Projects/obsidian-mcp/` (`.venv/bin/python`, `server.py`).
+- Per-project Jade Journey scaffold lives in `.jade/` (`journey.md`, `rules.md`, log folders) plus optional project-root `goals.md`, `todo.md`, `project-map.md` created only when missing; `JadeProjectContextReader` parses structured context from those files; session notes write to Obsidian under `Jade/Journeys/{project}/sessions/`.
+- Continual learning for this repo updates learned sections in `AGENTS.md` / `CLAUDE.md` and `.cursor/hooks/state/continual-learning-index.json` only — never the plugin-cache global continual-learning index.

@@ -121,6 +121,8 @@ struct MainWindow: View {
     @State private var showThemePicker = false
     @State private var showNotificationPanel = false
     @State private var showLocalPorts = false
+    @State private var pendingJourneyProposal: JourneyStepProposal?
+    @State private var showJourneyStepReview = false
     @AppStorage("muxy.aiAssistantPanelVisible") private var aiAssistantPanelVisible = false
     @State private var mainWindowWidth: CGFloat = WindowLayoutMetrics.mainDefaultWidth
     @State private var isFullScreen = false
@@ -163,7 +165,8 @@ struct MainWindow: View {
         .environment(
             \.overlayActive,
             showQuickOpen || showFindInFiles || showWorktreeSwitcher || showProjectPicker || overlayAnimatingOut || showCommandPalette ||
-                showRichInputPreview || showThemePicker || showNotificationPanel || showLocalPorts || voiceRecording.isPanelVisible
+                showRichInputPreview || showThemePicker || showNotificationPanel || showLocalPorts || voiceRecording.isPanelVisible ||
+                showJourneyStepReview
         )
         .overlay(alignment: .bottom) {
             if voiceRecording.isPanelVisible {
@@ -394,6 +397,23 @@ struct MainWindow: View {
                 onRunNaturalCommand: runNaturalCommandPlan,
                 onSaveNaturalCommand: saveNaturalCommandPlan,
                 onDismiss: dismissCommandPalette
+            )
+            .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        }
+
+        if showJourneyStepReview, let proposal = pendingJourneyProposal, let project = activeProject {
+            JourneyStepReviewOverlay(
+                proposal: proposal,
+                projectName: project.name,
+                onConfirm: { overrideBlocker in
+                    confirmJourneyStep(proposal, project: project, overrideBlocker: overrideBlocker)
+                },
+                onNotNow: {
+                    skipJourneyStep(proposal, project: project)
+                },
+                onCancel: {
+                    cancelJourneyStep(proposal, project: project)
+                }
             )
             .transition(.opacity.combined(with: .scale(scale: 0.98)))
         }
@@ -831,6 +851,36 @@ struct MainWindow: View {
                 aliases: ["folder", "workspace"],
                 sortPriority: 10
             ),
+            CommandPaletteItem(
+                id: "journey-initialize",
+                title: "Initialize Journey",
+                subtitle: "Create .jade folder, rules, and journey.md",
+                symbolName: "map",
+                section: .app,
+                searchText: "journey bootstrap start vibe rules md obsidian log",
+                target: .journeyInitialize,
+                sortPriority: 8
+            ),
+            CommandPaletteItem(
+                id: "journey-next-step",
+                title: "Next Journey Step",
+                subtitle: "Review and confirm the next step from .jade/journey.md",
+                symbolName: "arrow.right.circle",
+                section: .app,
+                searchText: "journey next step confirm progress vibe forward",
+                target: .journeyNextStep,
+                sortPriority: 9
+            ),
+            CommandPaletteItem(
+                id: "journey-complete-step",
+                title: "Complete Journey Step",
+                subtitle: "Mark the current step done and log an achievement",
+                symbolName: "checkmark.seal",
+                section: .app,
+                searchText: "journey complete done achievement win log obsidian",
+                target: .journeyCompleteStep,
+                sortPriority: 9
+            ),
             commandItem(
                 .switchWorktree,
                 symbolName: "arrow.triangle.branch",
@@ -1188,6 +1238,139 @@ struct MainWindow: View {
             showLocalPorts = true
         case let .obsidianMCPTool(action, query):
             performObsidianMCPTool(action, query: query)
+        case .journeyInitialize:
+            initializeJourney()
+        case .journeyNextStep:
+            presentJourneyNextStep()
+        case .journeyCompleteStep:
+            completeJourneyStep()
+        }
+    }
+
+    private func initializeJourney() {
+        guard let project = activeProject else {
+            ToastState.shared.show(JadeJourneyError.noProject.localizedDescription)
+            return
+        }
+        let path = activeWorktreePath(for: project)
+        do {
+            try JadeJourneyBootstrapService.bootstrap(projectPath: path, projectName: project.name)
+            ToastState.shared.show("Journey initialized (.jade/ + project markdown)")
+        } catch {
+            ToastState.shared.show(error.localizedDescription)
+        }
+    }
+
+    private func presentJourneyNextStep() {
+        guard let project = activeProject else {
+            ToastState.shared.show(JadeJourneyError.noProject.localizedDescription)
+            return
+        }
+        let path = activeWorktreePath(for: project)
+        do {
+            let proposal = try JadeJourneyReader.loadNextStepProposal(projectPath: path)
+            pendingJourneyProposal = proposal
+            showJourneyStepReview = true
+        } catch {
+            ToastState.shared.show(error.localizedDescription)
+        }
+    }
+
+    private func confirmJourneyStep(_ proposal: JourneyStepProposal, project: Project, overrideBlocker: Bool) {
+        showJourneyStepReview = false
+        pendingJourneyProposal = nil
+
+        let prefill = "# \(proposal.title)\n\n\(proposal.why)\n"
+        if let richInputState = activeRichInputState {
+            richInputState.text = prefill
+            richInputState.focusVersion += 1
+        }
+        openRichInputPanel(mode: .send)
+
+        let outcome: JourneySessionOutcome = overrideBlocker ? .overridden : .started
+        logJourneySession(
+            outcome: outcome,
+            proposal: proposal,
+            project: project,
+            overrideBlocker: overrideBlocker,
+            successMessage: overrideBlocker ? "Step started (override logged)" : "Step started — logged to Obsidian"
+        )
+    }
+
+    private func skipJourneyStep(_ proposal: JourneyStepProposal, project: Project) {
+        showJourneyStepReview = false
+        pendingJourneyProposal = nil
+        logJourneySession(
+            outcome: .skipped,
+            proposal: proposal,
+            project: project,
+            overrideBlocker: false,
+            successMessage: "Step snoozed"
+        )
+    }
+
+    private func cancelJourneyStep(_ proposal: JourneyStepProposal, project: Project) {
+        showJourneyStepReview = false
+        pendingJourneyProposal = nil
+        logJourneySession(
+            outcome: .declined,
+            proposal: proposal,
+            project: project,
+            overrideBlocker: false,
+            successMessage: nil
+        )
+    }
+
+    private func completeJourneyStep() {
+        guard let project = activeProject else {
+            ToastState.shared.show(JadeJourneyError.noProject.localizedDescription)
+            return
+        }
+        let path = activeWorktreePath(for: project)
+        do {
+            let proposal = try JadeJourneyReader.loadNextStepProposal(projectPath: path)
+            try JadeJourneyProgressService.completeCurrentStep(projectPath: path, proposal: proposal)
+            logJourneySession(
+                outcome: .completed,
+                proposal: proposal,
+                project: project,
+                overrideBlocker: false,
+                successMessage: "Step completed — journey updated"
+            )
+        } catch {
+            ToastState.shared.show(error.localizedDescription)
+        }
+    }
+
+    private func logJourneySession(
+        outcome: JourneySessionOutcome,
+        proposal: JourneyStepProposal,
+        project: Project,
+        overrideBlocker: Bool,
+        successMessage: String?
+    ) {
+        let path = activeWorktreePath(for: project)
+        Task {
+            let result = await ObsidianJourneyLogService.logSession(
+                outcome: outcome,
+                proposal: proposal,
+                projectName: project.name,
+                projectPath: path,
+                overriddenBlocker: overrideBlocker,
+                settings: ObsidianMCPSettingsStore.shared.snapshot
+            )
+            await MainActor.run {
+                switch result {
+                case let .success(notePath):
+                    if let successMessage {
+                        ToastState.shared.show("\(successMessage) → \(notePath)")
+                    }
+                case let .failure(error):
+                    if let successMessage {
+                        ToastState.shared.show("\(successMessage) (Obsidian log failed: \(error.localizedDescription))")
+                    }
+                }
+            }
         }
     }
 

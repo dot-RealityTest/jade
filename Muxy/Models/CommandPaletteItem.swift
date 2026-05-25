@@ -178,6 +178,9 @@ struct CommandPaletteItem: Identifiable, Equatable {
         case naturalCommand(String)
         case localPorts
         case obsidianMCPTool(ObsidianMCPToolAction, query: String?)
+        case journeyInitialize
+        case journeyNextStep
+        case journeyCompleteStep
     }
 
     let id: String
