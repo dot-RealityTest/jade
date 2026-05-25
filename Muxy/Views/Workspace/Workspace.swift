@@ -169,11 +169,11 @@ private struct MaximizedAreaView: View {
             isMaximized: true,
             onToggleMaximize: onToggleMaximize
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: UIMetrics.radiusLG, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(MuxyTheme.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: UIMetrics.radiusLG, style: .continuous)
+                .strokeBorder(MuxyTheme.border.opacity(0.9), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.35), radius: 24, x: 0, y: 8)
+        .shadow(color: Color.black.opacity(0.18), radius: 12, x: 0, y: 4)
     }
 }

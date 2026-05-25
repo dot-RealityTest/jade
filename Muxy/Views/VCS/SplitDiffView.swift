@@ -14,7 +14,6 @@ struct SplitDiffView: View {
     }
 
     var body: some View {
-        _ = themeRevision
         LazyVStack(spacing: 0) {
             ForEach(Array(cachedChunks.enumerated()), id: \.offset) { index, chunk in
                 switch chunk {
@@ -29,6 +28,7 @@ struct SplitDiffView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .id(themeRevision)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Split diff, \(filePath)")
         .onAppear {

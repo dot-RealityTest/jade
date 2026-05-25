@@ -34,6 +34,8 @@ struct PaneTabStrip: View {
     let onCloseTabsToRight: (UUID) -> Void
     let onSplit: (SplitDirection) -> Void
     let onDropAction: (TabDragCoordinator.DropResult) -> Void
+    var workspaceChromePanelState: WorkspaceChromePanelState?
+    var workspaceChromeHandlers: WorkspaceChromeHandlers?
     var showMaximizeButton = false
     var isMaximized = false
     var onToggleMaximize: (() -> Void)?
@@ -43,8 +45,9 @@ struct PaneTabStrip: View {
     let onSetColorID: (UUID, String?) -> Void
     let onReorderTab: (IndexSet, Int) -> Void
     @Environment(TabDragCoordinator.self) private var dragCoordinator
-    @AppStorage(ToolbarAction.storageKey) private var toolbarActionsRaw = ToolbarAction.defaultRawValue
     @State private var dragState = TabDragState()
+    @State private var progressStore = TerminalProgressStore.shared
+    @FocusState private var tabStripFocused: Bool
 
     static func snapshots(from tabs: [TerminalTab]) -> [TabSnapshot] {
         tabs.map { tab in
@@ -68,88 +71,41 @@ struct PaneTabStrip: View {
                         .frame(minWidth: geo.size.width, alignment: .leading)
                         .background(WindowDragRepresentable(alwaysEnabled: isWindowTitleBar))
                 }
+                .focusable()
+                .focused($tabStripFocused)
+                .onKeyPress(.leftArrow) {
+                    selectAdjacentTab(offset: -1) ? .handled : .ignored
+                }
+                .onKeyPress(.rightArrow) {
+                    selectAdjacentTab(offset: 1) ? .handled : .ignored
+                }
             }
             .frame(maxWidth: .infinity)
             .frame(height: UIMetrics.scaled(32))
 
-            if isWindowTitleBar {
-                HStack(spacing: 0) {
-                    if showsToolbarAction(.debug), showDevelopmentBadge {
-                        developmentBadge
-                            .padding(.trailing, UIMetrics.spacing3)
-                    }
-                    if showsToolbarAction(.updates), let version = UpdateService.shared.availableUpdateVersion {
-                        UpdateBadge(version: version) {
-                            UpdateService.shared.checkForUpdates()
-                        }
-                        .padding(.trailing, UIMetrics.spacing2)
-                    }
-                    if showsToolbarAction(.tools) {
-                        OpenInIDEControl(
-                            projectPath: openInIDEProjectPath,
-                            filePath: openInIDEFilePath,
-                            cursorProvider: openInIDECursorProvider
-                        )
-                        LayoutPickerMenu(projectID: projectID)
-                    }
-                    if showMaximizeButton || isMaximized, let onToggleMaximize {
-                        let symbol = isMaximized
-                            ? "arrow.down.right.and.arrow.up.left"
-                            : "arrow.up.left.and.arrow.down.right"
-                        let label = isMaximized ? "Restore Pane" : "Maximize Pane"
-                        IconButton(symbol: symbol, accessibilityLabel: label, action: onToggleMaximize)
-                            .help(shortcutTooltip("Toggle Maximize Pane", for: .toggleMaximizePane))
-                    }
-                    if showsToolbarAction(.splitRight) {
-                        IconButton(symbol: "square.split.2x1", accessibilityLabel: "Split Right") { onSplit(.horizontal) }
-                            .help(shortcutTooltip("Split Right", for: .splitRight))
-                    }
-                    if showsToolbarAction(.splitDown) {
-                        IconButton(symbol: "square.split.1x2", accessibilityLabel: "Split Down") { onSplit(.vertical) }
-                            .help(shortcutTooltip("Split Down", for: .splitDown))
-                    }
-                    if showsToolbarAction(.quickOpen) {
-                        IconButton(symbol: "doc.text", size: 12, accessibilityLabel: "Quick Open") {
-                            NotificationCenter.default.post(name: .quickOpen, object: nil)
-                        }
-                        .help(shortcutTooltip("Quick Open", for: .quickOpen))
-                    }
-                    if showsToolbarAction(.sourceControl), showVCSButton {
-                        FileDiffIconButton(action: onCreateVCSTab)
-                            .help(shortcutTooltip("Source Control", for: .openVCSTab))
-                    }
-                    if showsToolbarAction(.fileTree), showVCSButton {
-                        FileTreeIconButton {
-                            NotificationCenter.default.post(name: .toggleFileTree, object: nil)
-                        }
-                        .help(shortcutTooltip("File Tree", for: .toggleFileTree))
-                    }
-                    if showsToolbarAction(.snippets) {
-                        IconButton(symbol: "curlybraces", size: 12, accessibilityLabel: "Snippets") {
-                            NotificationCenter.default.post(name: .toggleSnippetsPanel, object: nil)
-                        }
-                        .help(shortcutTooltip("Snippets", for: .toggleSnippetsPanel))
-                    }
-                    if showsToolbarAction(.notes) {
-                        IconButton(symbol: "note.text", size: 12, accessibilityLabel: "Notes") {
-                            NotificationCenter.default.post(name: .toggleProjectNotesPanel, object: nil)
-                        }
-                        .help(shortcutTooltip("Notes", for: .toggleProjectNotesPanel))
-                    }
-                    if showsToolbarAction(.todo) {
-                        IconButton(symbol: "checklist", size: 12, accessibilityLabel: "Todo") {
-                            NotificationCenter.default.post(name: .toggleProjectTodoPanel, object: nil)
-                        }
-                        .help(shortcutTooltip("Todo", for: .toggleProjectTodoPanel))
-                    }
-                    if showsToolbarAction(.newTab) {
-                        IconButton(symbol: "plus", accessibilityLabel: "New Tab") { onCreateTab() }
-                            .help(shortcutTooltip("New Tab", for: .newTab))
-                    }
-                }
-                .padding(.leading, UIMetrics.spacing4)
-                .padding(.trailing, UIMetrics.spacing2)
-                .fixedSize(horizontal: true, vertical: false)
+            if isWindowTitleBar, let workspaceChromePanelState, let workspaceChromeHandlers {
+                WorkspaceChromeTrailingActions(
+                    layoutPickerProjectID: projectID,
+                    openInIDEProjectPath: openInIDEProjectPath,
+                    openInIDEFilePath: openInIDEFilePath,
+                    openInIDECursorProvider: openInIDECursorProvider,
+                    panelState: workspaceChromePanelState,
+                    showsSplitActions: true,
+                    showVCSButton: showVCSButton,
+                    showDevelopmentBadge: showDevelopmentBadge,
+                    showMaximizeButton: showMaximizeButton,
+                    isMaximized: isMaximized,
+                    onSplit: onSplit,
+                    onCreateTab: onCreateTab,
+                    onCreateVCSTab: onCreateVCSTab,
+                    onQuickOpen: workspaceChromeHandlers.onQuickOpen,
+                    onToggleFileTree: workspaceChromeHandlers.onToggleFileTree,
+                    onToggleSnippets: workspaceChromeHandlers.onToggleSnippets,
+                    onToggleNotes: workspaceChromeHandlers.onToggleNotes,
+                    onToggleTodo: workspaceChromeHandlers.onToggleTodo,
+                    onToggleAIAssistant: workspaceChromeHandlers.onToggleAIAssistant,
+                    onToggleMaximize: onToggleMaximize
+                )
                 .background(WindowDragRepresentable(alwaysEnabled: true))
             }
         }
@@ -158,6 +114,26 @@ struct PaneTabStrip: View {
             guard dragState.draggedID != nil else { return }
             dragState.frames = frames
         }
+    }
+
+    private func selectAdjacentTab(offset: Int) -> Bool {
+        guard let activeTabID,
+              let index = tabs.firstIndex(where: { $0.id == activeTabID })
+        else { return false }
+        let nextIndex = index + offset
+        guard tabs.indices.contains(nextIndex) else { return false }
+        onSelectTab(tabs[nextIndex].id)
+        return true
+    }
+
+    private func paneProgress(for tab: TabSnapshot) -> TerminalProgress? {
+        guard let paneID = tab.paneID else { return nil }
+        return progressStore.progress(for: paneID)
+    }
+
+    private func hasCompletionPending(for tab: TabSnapshot) -> Bool {
+        guard let paneID = tab.paneID else { return false }
+        return progressStore.isCompletionPending(for: paneID)
     }
 
     private func tabRow(availableWidth: CGFloat) -> some View {
@@ -174,6 +150,8 @@ struct PaneTabStrip: View {
                     active: tab.id == activeTabID,
                     paneFocused: isFocused,
                     areaID: areaID,
+                    paneProgress: paneProgress(for: tab),
+                    hasCompletionPending: hasCompletionPending(for: tab),
                     hasUnread: NotificationStore.shared.hasUnread(tabID: tab.id),
                     isAnyDragging: dragState.draggedID != nil,
                     shortcutIndex: globalIndex < 9 ? globalIndex + 1 : nil,
@@ -233,18 +211,6 @@ struct PaneTabStrip: View {
 
     private func closableCount(rightOf index: Int) -> Int {
         tabs.suffix(from: index + 1).count(where: { !$0.isPinned })
-    }
-
-    private func shortcutTooltip(_ name: String, for action: ShortcutAction) -> String {
-        "\(name) (\(KeyBindingStore.shared.combo(for: action).displayString))"
-    }
-
-    private func showsToolbarAction(_ action: ToolbarAction) -> Bool {
-        ToolbarAction.visibleActions(from: toolbarActionsRaw).contains(action)
-    }
-
-    private var developmentBadge: some View {
-        DebugButton()
     }
 
     private static let dragActivationDistance: CGFloat = 4
@@ -359,6 +325,8 @@ private struct TabCell: View {
     let active: Bool
     let paneFocused: Bool
     let areaID: UUID
+    let paneProgress: TerminalProgress?
+    let hasCompletionPending: Bool
     var hasUnread: Bool = false
     var isAnyDragging: Bool = false
     var shortcutIndex: Int?
@@ -385,7 +353,6 @@ private struct TabCell: View {
     @State private var completionFlashOn = false
     @State private var flashTask: Task<Void, any Error>?
     @FocusState private var renameFieldFocused: Bool
-    private let progressStore = TerminalProgressStore.shared
 
     private static let springLoadDelay: Duration = .milliseconds(250)
 
@@ -413,16 +380,6 @@ private struct TabCell: View {
             return tabColor
         }
         return nil
-    }
-
-    private var paneProgress: TerminalProgress? {
-        guard let paneID = tab.paneID else { return nil }
-        return progressStore.progress(for: paneID)
-    }
-
-    private var hasCompletionPending: Bool {
-        guard let paneID = tab.paneID else { return false }
-        return progressStore.isCompletionPending(for: paneID)
     }
 
     private var showBadge: Bool {
@@ -609,14 +566,15 @@ private struct TabCell: View {
     private var trailingAccessory: some View {
         ZStack {
             if !tab.isPinned {
-                Image(systemName: "xmark")
-                    .font(.system(size: UIMetrics.fontCaption, weight: .bold))
-                    .foregroundStyle(MuxyTheme.fgDim)
-                    .opacity(closeButtonVisible ? 1 : 0)
-                    .allowsHitTesting(closeButtonVisible)
-                    .onTapGesture(perform: onClose)
-                    .accessibilityLabel("Close Tab")
-                    .accessibilityAddTraits(.isButton)
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: UIMetrics.fontCaption, weight: .bold))
+                        .foregroundStyle(MuxyTheme.fgDim)
+                }
+                .buttonStyle(.plain)
+                .opacity(closeButtonVisible ? 1 : 0)
+                .disabled(!closeButtonVisible)
+                .accessibilityLabel("Close Tab")
             }
         }
         .frame(width: UIMetrics.iconMD, height: UIMetrics.iconMD)
@@ -628,7 +586,7 @@ private struct TabCell: View {
             completionFlashOn = true
         }
         if active, let paneID = tab.paneID {
-            progressStore.clearCompletion(for: paneID)
+            TerminalProgressStore.shared.clearCompletion(for: paneID)
         }
         flashTask = Task { @MainActor in
             try await Task.sleep(for: .milliseconds(450))

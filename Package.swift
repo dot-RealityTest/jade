@@ -1,6 +1,23 @@
 // swift-tools-version: 6.0
 
+import Foundation
 import PackageDescription
+
+let bundleMoltis = ProcessInfo.processInfo.environment["MUXY_BUNDLE_MOLTIS"] == "1"
+
+var muxyResources: [Resource] = [
+    .process("Resources"),
+    .copy("Resources/ghostty"),
+    .copy("Resources/terminfo"),
+    .copy("Resources/rg"),
+]
+
+if bundleMoltis {
+    muxyResources.append(contentsOf: [
+        .copy("Resources/moltis"),
+        .copy("Resources/moltis-share"),
+    ])
+}
 
 let package = Package(
     name: "Muxy",
@@ -43,13 +60,16 @@ let package = Package(
                 .product(name: "Sentry", package: "sentry-cocoa"),
             ],
             path: "Muxy",
-            exclude: ["Info.plist", "Muxy.entitlements", "Resources/ghostty", "Resources/terminfo", "Resources/rg"],
-            resources: [
-                .process("Resources"),
-                .copy("Resources/ghostty"),
-                .copy("Resources/terminfo"),
-                .copy("Resources/rg"),
+            exclude: [
+                "Info.plist",
+                "Muxy.entitlements",
+                "Resources/ghostty",
+                "Resources/terminfo",
+                "Resources/rg",
+                "Resources/moltis",
+                "Resources/moltis-share",
             ],
+            resources: muxyResources,
             linkerSettings: [
                 .unsafeFlags([
                     "GhosttyKit.xcframework/macos-arm64_x86_64/ghostty-internal.a",

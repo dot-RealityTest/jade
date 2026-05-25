@@ -17,7 +17,7 @@ struct SnippetsPanel: View {
     var body: some View {
         if showsPanelChrome {
             content
-                .frame(width: 280)
+                .frame(width: WindowLayoutMetrics.snippetsWidth)
                 .background(MuxyTheme.bg)
                 .overlay(alignment: .leading) {
                     Rectangle()

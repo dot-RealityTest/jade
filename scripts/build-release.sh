@@ -110,6 +110,11 @@ if [[ -d "$SPM_BUILD_DIR/Muxy_Muxy.bundle" ]]; then
     cp -R "$SPM_BUILD_DIR/Muxy_Muxy.bundle" "$APP_BUNDLE/Contents/Resources/Muxy_Muxy.bundle"
 fi
 
+echo "==> Removing experimental Moltis assets from release bundle"
+MOLTIS_RESOURCES="$APP_BUNDLE/Contents/Resources/Muxy_Muxy.bundle/Resources"
+rm -f "$MOLTIS_RESOURCES/moltis" 2>/dev/null || true
+rm -rf "$MOLTIS_RESOURCES/moltis-share" 2>/dev/null || true
+
 cp "$PROJECT_ROOT/Muxy/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP_BUNDLE/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP_BUNDLE/Contents/Info.plist"

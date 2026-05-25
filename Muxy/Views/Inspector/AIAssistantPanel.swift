@@ -3,6 +3,8 @@ import SwiftUI
 struct AIAssistantPanel: View {
     let projectID: UUID?
     let projectPath: String?
+    let worktreeID: UUID?
+    let worktreePath: String?
     let activeFile: String?
 
     @State private var store = AIAssistantStore.shared
@@ -18,7 +20,7 @@ struct AIAssistantPanel: View {
             Divider().overlay(MuxyTheme.border)
             inputBar
         }
-        .frame(width: 340)
+        .frame(width: WindowLayoutMetrics.aiAssistantWidth)
         .background(MuxyTheme.bg)
         .overlay(alignment: .leading) {
             Rectangle()
@@ -35,20 +37,24 @@ struct AIAssistantPanel: View {
             .opacity(0)
             .frame(width: 0, height: 0)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .focusAIAssistantInput)) { _ in
+            inputFocused = true
+        }
     }
 
     private var header: some View {
-        HStack(spacing: 9) {
-            Image(systemName: "bubble.left.and.bubble.right.fill")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .frame(width: 18)
+        HStack(spacing: UIMetrics.spacing4) {
+            Image(systemName: "bubble.left.and.bubble.right")
+                .font(.system(size: UIMetrics.fontEmphasis, weight: .semibold))
+                .foregroundStyle(MuxyTheme.fgMuted)
+                .frame(width: UIMetrics.iconLG)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text("Assistant")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.primary)
+                    .font(.system(size: UIMetrics.fontEmphasis, weight: .semibold))
+                    .foregroundStyle(MuxyTheme.fg)
                 Text(projectName)
-                    .font(.system(size: 10))
+                    .font(.system(size: UIMetrics.fontCaption))
                     .foregroundStyle(MuxyTheme.fgMuted)
                     .lineLimit(1)
             }
@@ -56,21 +62,23 @@ struct AIAssistantPanel: View {
             if let pid = projectID, store.isStreaming[pid] == true {
                 ProgressView()
                     .controlSize(.small)
-                    .frame(width: 16, height: 16)
+                    .frame(width: UIMetrics.iconLG, height: UIMetrics.iconLG)
+                    .accessibilityLabel("Assistant is responding")
             }
             Button {
                 clearConversation()
             } label: {
                 Image(systemName: "eraser")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: UIMetrics.fontFootnote, weight: .semibold))
                     .foregroundStyle(MuxyTheme.fgMuted)
-                    .frame(width: 22, height: 22)
+                    .frame(width: UIMetrics.controlMedium, height: UIMetrics.controlMedium)
             }
             .buttonStyle(.plain)
             .help("Clear conversation")
+            .accessibilityLabel("Clear conversation")
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
+        .padding(.horizontal, UIMetrics.spacing6)
+        .padding(.vertical, UIMetrics.spacing4)
     }
 
     private var messageList: some View {
@@ -101,10 +109,10 @@ struct AIAssistantPanel: View {
     }
 
     private var inputBar: some View {
-        HStack(spacing: 8) {
-            TextField("Ask anything...", text: $draft, axis: .vertical)
+        HStack(spacing: UIMetrics.spacing4) {
+            TextField(inputPlaceholder, text: $draft, axis: .vertical)
                 .textFieldStyle(.plain)
-                .font(.system(size: 12))
+                .font(.system(size: UIMetrics.fontBody))
                 .lineLimit(1 ... 4)
                 .focused($inputFocused)
                 .onSubmit {
@@ -114,39 +122,42 @@ struct AIAssistantPanel: View {
 
             if let pid = projectID, store.isStreaming[pid] == true {
                 Button {
-                    store.cancel(projectID: pid)
+                    service.cancel(projectID: pid)
                 } label: {
                     Image(systemName: "stop.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: UIMetrics.fontEmphasis, weight: .semibold))
                         .foregroundStyle(MuxyTheme.diffRemoveFg)
-                        .frame(width: 22, height: 22)
+                        .frame(width: UIMetrics.controlMedium, height: UIMetrics.controlMedium)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Stop response")
             } else {
                 Button {
                     send()
                 } label: {
                     Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: UIMetrics.fontTitleLarge, weight: .semibold))
                         .foregroundStyle(canSend ? MuxyTheme.accent : MuxyTheme.fgDim)
                 }
                 .buttonStyle(.plain)
                 .disabled(!canSend)
+                .accessibilityLabel("Send message")
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.horizontal, UIMetrics.spacing5)
+        .padding(.vertical, UIMetrics.spacing4)
         .background(MuxyTheme.surface)
     }
 
     private var aiEmptyState: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: UIMetrics.spacing4) {
             Spacer()
             Image(systemName: "bubble.left.and.bubble.right")
-                .font(.system(size: 22))
+                .font(.system(size: UIMetrics.fontDisplay))
                 .foregroundStyle(MuxyTheme.fgDim)
+                .accessibilityHidden(true)
             Text("Select a project to start")
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: UIMetrics.fontBody, weight: .medium))
                 .foregroundStyle(MuxyTheme.fgMuted)
             Spacer()
         }
@@ -163,6 +174,10 @@ struct AIAssistantPanel: View {
         return store.messages(for: pid).last?.id
     }
 
+    private var inputPlaceholder: String {
+        "Ask anything..."
+    }
+
     private var canSend: Bool {
         guard let pid = projectID else { return false }
         return !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -173,12 +188,14 @@ struct AIAssistantPanel: View {
         let text = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty, let pid = projectID else { return }
         draft = ""
-        service.send(
+        service.send(context: InspectorChatContext(
             prompt: text,
             projectID: pid,
             projectPath: projectPath,
-            activeFile: activeFile
-        )
+            activeFile: activeFile,
+            worktreeID: worktreeID,
+            worktreePath: worktreePath
+        ))
     }
 
     private func clearConversation() {
@@ -191,12 +208,14 @@ struct AIAssistantPanel: View {
               let prompt = store.lastFailedPrompt[pid]
         else { return }
         store.setLastFailedPrompt(nil, projectID: pid)
-        service.send(
+        service.send(context: InspectorChatContext(
             prompt: prompt,
             projectID: pid,
             projectPath: projectPath,
-            activeFile: activeFile
-        )
+            activeFile: activeFile,
+            worktreeID: worktreeID,
+            worktreePath: worktreePath
+        ))
     }
 }
 
@@ -250,8 +269,8 @@ private struct MarkdownMessageContent: View {
     let activeFile: String?
 
     var body: some View {
-        let blocks = MarkdownBlockParser.parse(text)
-        VStack(alignment: .leading, spacing: 8) {
+        let blocks = MarkdownBlockParser.cachedBlocks(for: text)
+        VStack(alignment: .leading, spacing: UIMetrics.spacing4) {
             ForEach(blocks) { block in
                 blockView(block)
             }
@@ -279,15 +298,15 @@ private struct MarkdownMessageContent: View {
 
     private func paragraphView(_ segments: [InlineSegment]) -> some View {
         Text(attributedString(from: segments))
-            .font(.system(size: 12))
+            .font(.system(size: UIMetrics.fontBody))
             .foregroundStyle(MuxyTheme.fg)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func headingView(level: Int, text: String) -> some View {
-        let size = max(14, 20 - level * 2)
+        let size = max(UIMetrics.fontHeadline, UIMetrics.fontDisplay - CGFloat(level) * 2)
         return Text(text)
-            .font(.system(size: CGFloat(size), weight: .bold))
+            .font(.system(size: size, weight: .bold))
             .foregroundStyle(MuxyTheme.fg)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -295,12 +314,12 @@ private struct MarkdownMessageContent: View {
     private func codeBlockView(_ code: String) -> some View {
         ZStack(alignment: .topTrailing) {
             Text(code)
-                .font(.system(size: 11, design: .monospaced))
+                .font(.system(size: UIMetrics.fontFootnote, design: .monospaced))
                 .foregroundStyle(MuxyTheme.fg)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .padding(.top, 20)
-                .background(MuxyTheme.hover, in: RoundedRectangle(cornerRadius: 6))
+                .padding(.horizontal, UIMetrics.spacing4)
+                .padding(.vertical, UIMetrics.spacing3)
+                .padding(.top, UIMetrics.spacing8)
+                .background(MuxyTheme.hover, in: RoundedRectangle(cornerRadius: UIMetrics.radiusMD))
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack(spacing: 4) {
@@ -395,14 +414,20 @@ private enum MarkdownBlock: Identifiable {
     case orderedList(items: [String])
     case blockquote(text: String)
 
-    var id: UUID {
+    var id: String {
         switch self {
-        case let .paragraph(segments): segments.first?.id ?? UUID()
-        case .heading: UUID()
-        case .codeBlock: UUID()
-        case .bulletList: UUID()
-        case .orderedList: UUID()
-        case .blockquote: UUID()
+        case let .paragraph(segments):
+            "p-\(segments.map(\.id).joined(separator: "-"))"
+        case let .heading(level, text):
+            "h\(level)-\(text.hashValue)"
+        case let .codeBlock(language, code):
+            "c-\((language ?? "").hashValue)-\(code.hashValue)"
+        case let .bulletList(items):
+            "ul-\(items.joined(separator: "|").hashValue)"
+        case let .orderedList(items):
+            "ol-\(items.joined(separator: "|").hashValue)"
+        case let .blockquote(text):
+            "q-\(text.hashValue)"
         }
     }
 }
@@ -415,12 +440,37 @@ private struct InlineSegment: Identifiable {
         case code
     }
 
-    let id = UUID()
     let kind: Kind
     let text: String
+
+    var id: String {
+        let kindLabel = switch kind {
+        case .plain: "plain"
+        case .bold: "bold"
+        case .italic: "italic"
+        case .code: "code"
+        }
+        return "\(kindLabel)-\(text.hashValue)"
+    }
 }
 
+@MainActor
 private enum MarkdownBlockParser {
+    private static var cache: [String: [MarkdownBlock]] = [:]
+    private static let cacheLimit = 128
+
+    static func cachedBlocks(for text: String) -> [MarkdownBlock] {
+        if let cached = cache[text] {
+            return cached
+        }
+        let parsed = parse(text)
+        cache[text] = parsed
+        if cache.count > cacheLimit {
+            cache.removeAll(keepingCapacity: true)
+        }
+        return parsed
+    }
+
     static func parse(_ text: String) -> [MarkdownBlock] {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
         var blocks: [MarkdownBlock] = []

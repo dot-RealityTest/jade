@@ -55,7 +55,8 @@ Muxy/
     CommandPaletteItem.swift  Unified command palette result model, ranked search, section headers, aliases, remote actions, confirmable actions, and remote-space ordering
     KeyBinding.swift          ShortcutAction enum + KeyBinding defaults
     KeyCombo.swift            Key combo encoding, display, matching
-    ToolbarAction.swift       Persisted titlebar toolbar visibility actions and compact defaults
+    ToolbarAction.swift       Persisted toolbar visibility actions and compact defaults
+    WindowLayoutMetrics.swift Main/settings min sizes and narrow-width panel policy
     VCSTabState.swift         Git diff viewer state + loading orchestration
     EditorTabState.swift      Code editor tab state (backing store, cursor, search, save)
     DiffViewerTabState.swift  Standalone diff-viewer tab state (single-file diff, unified/split toggle, session-only — not persisted)
@@ -164,7 +165,9 @@ Muxy/
   Views/
     NotificationPanel.swift   Notification list popover (bell icon in sidebar footer)
     LocalPortsPanel.swift     Command-palette utility panel for active local listeners and dead ports
-    MainWindow.swift          Main window layout (sidebar + workspace)
+    MainWindow.swift          Main window layout (native title bar, toolbar, sidebar, workspace)
+    Workspace/
+      WorkspaceChromeTrailingActions.swift  Trailing workspace chrome actions (panels, splits, new tab, AI)
     Sidebar.swift             Narrow icon-strip sidebar (44px), add-project button, project icons
     Sidebar/
       ProjectRow.swift          Project icon (first letter or emoji logo), tooltip, context menu with logo + color pickers
@@ -173,7 +176,7 @@ Muxy/
       CreateWorktreeSheet.swift Sheet for creating a new git worktree
       AIUsagePanel.swift        AI usage popover: preview button, panel header/list, provider and metric rows, used/remaining conversion
     ProviderIconView.swift    Renders SVG provider icons from Muxy/Resources/ProviderIcons with monochrome tinting
-    ThemePicker.swift         Theme selection popover (hosted in topbar right, syncs selection to HEX)
+    ThemePicker.swift         Theme selection popover (utility overlay, syncs selection to HEX)
     WelcomeView.swift         Empty state view
     Inspector/
       ProjectInspectorPanel.swift Right-side inspector shell that can show Notes, Todo, or both project tools
@@ -184,7 +187,7 @@ Muxy/
       IconButton.swift        Reusable icon button
       FileDiffIcon.swift      Git diff file icon (SVG shape)
       FileTreeIcon.swift      File tree toggle button (SF symbol)
-      WindowDragView.swift    NSView for window title bar dragging
+      WindowDragView.swift    Legacy NSView drag helper (retained for overlays)
       MiddleClickView.swift   NSView for middle-click tab close
       UUIDFramePreferenceKey.swift  Generic PreferenceKey for frame tracking
       NotificationBadge.swift Unread count badge for sidebar project icons
@@ -307,24 +310,17 @@ User action → AppState.dispatch() → WorkspaceReducer.reduce()
 - **Persistence**: All files in `~/Library/Application Support/Muxy/`. Shared directory helper: `MuxyFileStorage`. Shortcuts are stored in `keybindings.json`; custom command shortcuts are stored in `command-shortcuts.json`; shared snippets are stored in `snippets.json`; project inspector notes/todos are stored in `project-inspector/{projectID}.json`; remote machine spaces are stored in `remote-spaces.json`; remote-space snippets are stored in `remote-spaces/{slug}/snippets.json`. Remote spaces are backward-compatible JSON records: simple `ssh user@host` command records are normalized into structured profile fields on load/save, while unsupported custom commands still run through the legacy command field. Remote spaces also persist an optional theme name; blank theme names use name-based defaults for Zen and Alienware. Snippets are backward-compatible JSON records; shared snippets seed common local workflows when storage is missing or empty, while remote scopes seed Linux starter workflows only when their snippet file does not exist yet. Cmd+K remote commands and remote-space snippets open named command tabs through `RemoteCommandBuilder`, which wraps the selected Linux command in the active space's SSH profile instead of running it in the local backing directory; reboot and power-off require an inline second Enter before execution. Natural-language shell commands are not saved as history; settings live in `UserDefaults`, generated commands must be reviewed before running, and useful results can be explicitly saved into the active snippet scope. Worktrees are persisted per-project at `worktrees/{projectID}.json`, including whether a secondary worktree is Muxy-managed or externally discovered. Git projects can manually refresh this list from `git worktree list --porcelain` to import existing worktrees without deleting absent entries; paths are matched after symlink resolution so a repo opened via a symlinked path still collapses onto a single primary entry. Externally discovered worktrees are never touched by Muxy's `cleanupOnDisk` paths (project removal, post-merge cleanup, manual removal) — they can only be unregistered by the user in the underlying repo. Worktree setup commands live in-repo at `{Project.path}/.muxy/worktree.json`.
 - **Ghostty Config**: Managed by `MuxyConfig`, stored at `~/Library/Application Support/Muxy/ghostty.conf`. Seeded from `~/.config/ghostty/config` on first run.
 - **Updates**: Sparkle framework via `UpdateService`. Two channels exist: `stable` (manual `release.yml`, tagged `vX.Y.Z`, accumulating appcast at `releases/latest/download/appcast-<arch>.xml`) and `beta` (auto `release-beta.yml` on every push to `main`, tagged `vX.Y.Z-beta.<buildNumber>` where `X.Y.Z` is read from the `BETA_VERSION` file at repo root, rolling appcast at `releases/download/beta-channel/appcast-beta-<arch>.xml`). Each channel's appcast accumulates only its own items (release notes are isolated). The user-selected channel is persisted in `UserDefaults` (`muxy.update.channel`) and routed at runtime via `SPUUpdaterDelegate.feedURLString(for:)` — the baked-in feed URL is just the default fallback. Stable releases are produced by **promoting a beta tag**: `release.yml` takes a `from_beta_tag` input (e.g. `v0.26.0-beta.42`), checks out that exact commit, and rebuilds with the stable version string — so stable users receive the exact bits beta testers validated, while `main` keeps accepting merges throughout. After publishing, the workflow bumps `BETA_VERSION` on `main` so subsequent betas target the next planned stable.
-- **Window Title**: `NSWindow.title` is hidden visually (`titleVisibility = .hidden`) but set
-  reactively by `WindowTitleUpdater` in `MainWindow` to `{project name} — {active tab title}`
-  (or just the project name if no tab title is known). This makes Muxy sessions identifiable
-  to accessibility readers and activity trackers (e.g., ActivityWatch) that read `AXTitle`.
-  Tab titles come from the active tab's `TerminalTab.title`, which follows OSC 0/2 updates
-  via `GhosttyRuntimeEventAdapter` → `TerminalPaneState.setTitle`. Users can override the
-  auto-title via `TerminalTab.customTitle` ("Rename Tab" context menu / `⌃⌘R`) and assign a
-  color accent via `TerminalTab.colorID` ("Set Tab Color…" context menu). Both fields persist
-  to `workspaces.json` through `TerminalTabSnapshot`. Colors resolve through
-  `ProjectIconColor.palette` (shared with project icon colors).
+- **Main Window Shell**: The primary `WindowGroup` uses the standard macOS title bar plus a single `32pt` workspace chrome row (sidebar toggle, back/forward, tabs, and trailing actions). The main window enforces `900×640` minimum size (`WindowLayoutMetrics`). When the workspace root is a single tab area, `PaneTabStrip` fills the chrome row center with `WorkspaceChromeTrailingActions` on the right; split roots keep per-pane tab strips in `TabAreaView` and show project name plus trailing actions in the root chrome row. Trailing auxiliary columns remain separate: attached VCS or file tree (shared slot), snippets (`280pt`), AI assistant (`340pt`), and project inspector notes/todo (`320pt`). At narrow widths, `WindowLayoutMetrics` may auto-hide AI, snippets, and inspector panels to preserve at least `480pt` for the workspace.
+- **Window Title**: `NSWindow.title` is set reactively by `WindowTitleUpdater` in `MainWindow` to `{project name} — {active tab title}` (or just the project name if no tab title is known). This makes Jade sessions identifiable to accessibility readers and activity trackers (e.g., ActivityWatch) that read `AXTitle`. Tab titles come from the active tab's `TerminalTab.title`, which follows OSC 0/2 updates via `GhosttyRuntimeEventAdapter` → `TerminalPaneState.setTitle`. Users can override the auto-title via `TerminalTab.customTitle` ("Rename Tab" context menu / `⌃⌘R`) and assign a color accent via `TerminalTab.colorID` ("Set Tab Color…" context menu). Both fields persist to `workspaces.json` through `TerminalTabSnapshot`. Colors resolve through `ProjectIconColor.palette` (shared with project icon colors).
+- **Settings Window**: The `Settings` scene sizes to a HIG productivity band (`520–640` × `360–520`, ideal `560×420`) via `WindowLayoutMetrics` on the scene.
 
 ## File Tree
 
 The file tree is a lightweight side panel mounted at the trailing edge of the
 main window, in the same slot used by the attached VCS panel. Only one of the
 two panels can be visible at a time — opening one closes the other. Both are
-toggled from buttons in the topbar (file tree button appears only when the VCS
-display mode is `attached`, since the file tree panel reuses the attached slot).
+toggled from the main window toolbar (file tree appears when the VCS display mode is
+`attached`, since the file tree panel reuses the attached slot).
 
 `FileTreeState` is created per `WorktreeKey` and held by `MainWindow`. It lazily
 loads directory contents through `FileTreeService.loadChildren`, which calls
@@ -451,8 +447,7 @@ longer exist are removed eagerly, and the cursor snaps to the post-reducer
 active tuple when it is still present — so closing a tab simply takes
 that entry out of the stack rather than leaving a stale hop.
 
-The topbar hosts two chevron buttons (to the right of the sidebar border)
-wired to these calls. Keyboard (default `⌃⌘←` / `⌃⌘→`), mouse side
+The main window toolbar hosts back/forward chevrons wired to these calls. Keyboard (default `⌃⌘←` / `⌃⌘→`), mouse side
 buttons (buttons 3/4), and horizontal swipe gestures (Magic Mouse
 1-finger, 3-finger trackpad) all trigger the same actions. The main
 window's shortcut interceptor installs a local `addLocalMonitorForEvents`
@@ -641,7 +636,7 @@ are filtered out so the sidebar stays focused on usage quotas.
 
 ## AI Assistant
 
-A chat-style AI assistant panel is available in the right sidebar (toggled via `⌃⌘A` or Command Palette). It uses the same Ollama backend as the natural-language command generator and streams responses in real time.
+A chat-style AI assistant panel is available in the right sidebar (toggled via `⌃⌘A` or Command Palette). Inspector chat defaults to **Ollama direct** (`/api/chat` SSE). In **debug builds**, settings can route through the bundled **Moltis gateway** (WebSocket protocol v4) with Ollama as its LLM provider, falling back to direct Ollama when configured. Commit/PR generation still uses the separate agentic CLI path (`AIAssistantRunner`).
 
 ### Architecture
 
@@ -651,13 +646,18 @@ AIAssistantPanel (SwiftUI)
      ├── AIAssistantStore (@Observable, @MainActor singleton)
      │     └── per-project [AIAssistantMessage] conversation history
      │
-     └── AIAssistantService
-           ├── Builds system prompt with project path + active file context
-           ├── Streams via Ollama /api/chat (SSE)
-           └── Updates store incrementally as chunks arrive
+     ├── MoltisProcessManager — spawns Contents/Resources/moltis gateway (debug-only routing)
+     ├── MoltisConfigGenerator — writes moltis.toml with `[providers.ollama]` from Jade Ollama settings
+     ├── MoltisGatewayClient — connect, subscribe, chat.send, chat.abort
+     │
+     └── AIAssistantChatService
+           ├── Ask-only chat (agent_max_iterations = 0 when routed through Moltis)
+           ├── Default: Ollama /api/chat (SSE)
+           ├── Optional debug path: Moltis gateway with Ollama fallback
+           └── Never attaches to Ghostty PTY or terminal cwd
 ```
 
-Messages are keyed by `projectID` so each project maintains its own conversation thread. The system prompt includes the active project path and currently open file path (if any) to ground responses in the user's actual workspace.
+Messages are keyed by `projectID` with Moltis `sessionKey` `jade-<project-uuid>` when the gateway path is used. Context includes project path, worktree path, and open file. Moltis data lives under `~/Library/Application Support/Muxy/moltis/`. The Moltis binary and share assets are opt-in for local builds (`MUXY_BUNDLE_MOLTIS=1 swift build` after `scripts/setup-moltis.sh`) and are stripped from release app bundles. Run agent and isolated worktrees remain deferred.
 
 ### UI
 

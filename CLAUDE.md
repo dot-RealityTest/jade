@@ -96,12 +96,19 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 
 ## Learned User Preferences
 
-- Prefer minimal top window chrome for Jade: avoid stacking a native title bar, a separate SwiftUI toolbar row, and a tab strip; keep one compact workspace chrome row (~32pt) under the native title bar.
+- Prefer minimal top window chrome for Jade: one compact workspace chrome row (~32pt) under the native title bar; put inspector toggles (Notes, Todo, Snippets, AI) on that row, not a separate SwiftUI toolbar band.
 - When polishing Jade UI, aim for a finer, smaller, premium feel rather than chunky controls or extra vertical bands.
 - For UI screenshot feedback, confirm the target is Jade/muxy before changing code; the user also has a separate PiecesTask app and has corrected mistaken cross-repo polish.
+- Inspector AI defaults to Ollama direct; bundled Moltis (Ollama-backed gateway) is dev-only when built with `MUXY_BUNDLE_MOLTIS=1` — keep Ghostty terminal PTYs independent from Moltis agent/exec.
+- When Jade scope grows (AI, chrome, panels), prefer trimming over-engineering and delaying platform features until the shell UX converges.
+- When implementing an attached plan, do not edit the plan file; use existing todos and mark them in progress.
 
 ## Learned Workspace Facts
 
-- Launch Jade from a local debug build with `.build/arm64-apple-macosx/debug/Muxy` after `swift build` (SwiftPM executable name remains `Muxy`; user-facing app name is Jade).
+- Launch Jade locally with `./scripts/run-jade.sh` after build (Sparkle-aware `.app` bundle); bare `.build/arm64-apple-macosx/debug/Muxy` alone is unreliable for windowed launches.
 - PiecesTask is a separate project at `/Users/kika_hub/Projects/PiecesTask`, not part of the muxy/Jade repo.
 - Jade main-window HIG work favors incremental changes (native title bar, consolidated chrome, `WindowLayoutMetrics`) over a full `NavigationSplitView` / single-inspector refactor unless the user widens scope.
+- Upstream repo: https://github.com/muxy-app/muxy
+- Bundled Moltis is opt-in at build time via `MUXY_BUNDLE_MOLTIS=1`; default release builds omit the ~149MB Moltis bundle.
+- Moltis gateway state/config lives under `~/Library/Application Support/Muxy/moltis/`; Jade wires Ollama URL/model into Moltis from `NaturalCommandSettings`.
+- Right-rail panels use `SidePanelPolicy` mutual exclusion (Snippets, AI, Notes/Todo inspector — one primary panel at a time).

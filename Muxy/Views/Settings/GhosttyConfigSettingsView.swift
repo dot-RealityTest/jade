@@ -124,7 +124,9 @@ struct GhosttyConfigSettingsView: View {
                 label: "Hide mouse while typing",
                 isOn: Binding(
                     get: { mouseHideWhileTyping },
-                    set: { mouseHideWhileTyping = $0; saveForm() }
+                    set: { mouseHideWhileTyping = $0
+                        saveForm()
+                    }
                 )
             )
 
@@ -132,7 +134,9 @@ struct GhosttyConfigSettingsView: View {
                 label: "Copy on select",
                 isOn: Binding(
                     get: { copyOnSelect },
-                    set: { copyOnSelect = $0; saveForm() }
+                    set: { copyOnSelect = $0
+                        saveForm()
+                    }
                 )
             )
 
@@ -140,7 +144,9 @@ struct GhosttyConfigSettingsView: View {
                 label: "Window decorations",
                 isOn: Binding(
                     get: { windowDecoration },
-                    set: { windowDecoration = $0; saveForm() }
+                    set: { windowDecoration = $0
+                        saveForm()
+                    }
                 )
             )
 
@@ -148,7 +154,9 @@ struct GhosttyConfigSettingsView: View {
                 label: "Confirm before closing terminal",
                 isOn: Binding(
                     get: { confirmCloseSurface },
-                    set: { confirmCloseSurface = $0; saveForm() }
+                    set: { confirmCloseSurface = $0
+                        saveForm()
+                    }
                 )
             )
 

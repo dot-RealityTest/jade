@@ -51,6 +51,10 @@ enum UIMetrics {
     static var headerHeight: CGFloat { scaled(36) }
     static var titleBarHeight: CGFloat { scaled(32) }
 
+    static var utilityOverlayWidth: CGFloat { scaled(360) }
+    static var utilityOverlayHeight: CGFloat { scaled(420) }
+    static var themePickerOverlayHeight: CGFloat { scaled(430) }
+
     static func scaled(_ value: CGFloat) -> CGFloat {
         value * UIScale.shared.multiplier
     }

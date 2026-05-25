@@ -84,7 +84,8 @@ struct GitModelsTests {
             authorName: "Test",
             authorDate: Date(),
             refs: [],
-            parentHashes: ["parent1"]
+            parentHashes: ["parent1"],
+            graphPrefix: ""
         )
         #expect(!commit.isMerge)
     }
@@ -98,7 +99,8 @@ struct GitModelsTests {
             authorName: "Test",
             authorDate: Date(),
             refs: [],
-            parentHashes: ["parent1", "parent2"]
+            parentHashes: ["parent1", "parent2"],
+            graphPrefix: ""
         )
         #expect(commit.isMerge)
     }

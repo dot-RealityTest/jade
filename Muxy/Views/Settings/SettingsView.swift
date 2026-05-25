@@ -19,8 +19,14 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }
         }
-        .frame(minWidth: 720, minHeight: 560)
-        .background(SettingsWindowConfigurator(minSize: NSSize(width: 720, height: 560)))
+        .frame(
+            minWidth: WindowLayoutMetrics.settingsMinWidth,
+            minHeight: WindowLayoutMetrics.settingsMinHeight
+        )
+        .background(SettingsWindowConfigurator(minSize: NSSize(
+            width: WindowLayoutMetrics.settingsMinWidth,
+            height: WindowLayoutMetrics.settingsMinHeight
+        )))
         .background(Color(nsColor: .windowBackgroundColor))
         .resetsSettingsFocusOnOutsideClick()
     }

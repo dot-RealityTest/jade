@@ -19,6 +19,20 @@ struct MuxyCommands: Commands {
         return projectStore.projects.first { $0.id == projectID }
     }
 
+    private var activeEditorState: EditorTabState? {
+        guard let project = activeProject else { return nil }
+        return appState.activeTab(for: project.id)?.content.editorState
+    }
+
+    private var isMarkdownPreviewActive: Bool {
+        guard let state = activeEditorState, state.isMarkdownFile else { return false }
+        return state.markdownViewMode == .preview || state.markdownViewMode == .split
+    }
+
+    private func adjustMarkdownPreviewZoom(by delta: CGFloat) {
+        EditorSettings.shared.adjustMarkdownPreviewFontScale(by: delta)
+    }
+
     private var shortcutDispatcher: ShortcutActionDispatcher {
         ShortcutActionDispatcher(
             appState: appState,

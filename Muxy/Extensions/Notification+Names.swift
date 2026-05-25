@@ -26,6 +26,7 @@ extension Notification.Name {
     static let toggleProjectNotesPanel = Notification.Name("MuxyToggleProjectNotesPanel")
     static let toggleProjectTodoPanel = Notification.Name("MuxyToggleProjectTodoPanel")
     static let toggleAIAssistant = Notification.Name("MuxyToggleAIAssistant")
+    static let focusAIAssistantInput = Notification.Name("MuxyFocusAIAssistantInput")
     static let explainSelectionWithAI = Notification.Name("MuxyExplainSelectionWithAI")
     static let applyAIAssistantCode = Notification.Name("MuxyApplyAIAssistantCode")
     static let vcsRepoDidChange = Notification.Name("MuxyVCSRepoDidChange")

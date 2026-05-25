@@ -1,23 +1,47 @@
 import SwiftUI
 
+private enum InspectorSection: String, CaseIterable, Identifiable {
+    case notes
+    case todo
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .notes: "Notes"
+        case .todo: "Todo"
+        }
+    }
+}
+
 struct ProjectInspectorPanel: View {
     let project: Project?
     let showsNotes: Bool
     let showsTodo: Bool
     @State private var store = ProjectInspectorStore.shared
+    @State private var selectedSection: InspectorSection = .notes
+
+    private var usesSegmentedInspector: Bool {
+        showsNotes && showsTodo
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             header
-            Divider().overlay(MuxyTheme.border)
+            if usesSegmentedInspector {
+                segmentedControl
+                Divider().overlay(MuxyTheme.border)
+            } else {
+                Divider().overlay(MuxyTheme.border)
+            }
             ProjectInspectorContent(
                 project: project,
                 store: store,
-                showsNotes: showsNotes,
-                showsTodo: showsTodo
+                showsNotes: resolvedShowsNotes,
+                showsTodo: resolvedShowsTodo
             )
         }
-        .frame(width: 304)
+        .frame(width: WindowLayoutMetrics.inspectorWidth)
         .background(MuxyTheme.bg)
         .overlay(alignment: .leading) {
             Rectangle()
@@ -32,48 +56,78 @@ struct ProjectInspectorPanel: View {
         }
     }
 
+    private var resolvedShowsNotes: Bool {
+        if usesSegmentedInspector { return selectedSection == .notes }
+        return showsNotes
+    }
+
+    private var resolvedShowsTodo: Bool {
+        if usesSegmentedInspector { return selectedSection == .todo }
+        return showsTodo
+    }
+
+    private var segmentedControl: some View {
+        Picker("Inspector section", selection: $selectedSection) {
+            ForEach(InspectorSection.allCases) { section in
+                Text(section.title).tag(section)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .padding(.horizontal, UIMetrics.spacing6)
+        .padding(.vertical, UIMetrics.spacing4)
+    }
+
     private var header: some View {
-        HStack(spacing: 9) {
+        HStack(spacing: UIMetrics.spacing4) {
             Image(systemName: symbolName)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .frame(width: 18)
+                .font(.system(size: UIMetrics.fontEmphasis, weight: .semibold))
+                .foregroundStyle(MuxyTheme.fgMuted)
+                .frame(width: UIMetrics.iconLG)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.primary)
+                    .font(.system(size: UIMetrics.fontEmphasis, weight: .semibold))
+                    .foregroundStyle(MuxyTheme.fg)
                 Text(project?.name ?? "No project")
-                    .font(.system(size: 10))
+                    .font(.system(size: UIMetrics.fontCaption))
                     .foregroundStyle(MuxyTheme.fgMuted)
                     .lineLimit(1)
             }
             Spacer()
-            if showsNotes, showsTodo {
-                inspectorStatusChip("Notes")
-                inspectorStatusChip("Todo")
+            if usesSegmentedInspector {
+                Text(headerDetail)
+                    .font(.system(size: UIMetrics.fontCaption, weight: .medium))
+                    .foregroundStyle(MuxyTheme.fgDim)
             } else {
                 Text(headerDetail)
-                    .font(.system(size: 10, weight: .medium))
+                    .font(.system(size: UIMetrics.fontCaption, weight: .medium))
                     .foregroundStyle(MuxyTheme.fgDim)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
+        .padding(.horizontal, UIMetrics.spacing6)
+        .padding(.vertical, UIMetrics.spacing4)
     }
 
     private var title: String {
-        if showsNotes, showsTodo { return "Inspector" }
+        if usesSegmentedInspector { return "Inspector" }
         if showsNotes { return "Notes" }
         return "Todo"
     }
 
     private var symbolName: String {
-        if showsNotes, showsTodo { return "sidebar.right" }
+        if usesSegmentedInspector { return "sidebar.right" }
         if showsNotes { return "note.text" }
         return "checklist"
     }
 
     private var headerDetail: String {
+        if usesSegmentedInspector {
+            switch selectedSection {
+            case .notes: return notesDetail
+            case .todo: return todoDetail
+            }
+        }
         if showsNotes { return notesDetail }
         return todoDetail
     }
@@ -391,16 +445,6 @@ private func sectionHeader(title: String, symbolName: String, detail: String) ->
     }
     .padding(.horizontal, 10)
     .padding(.bottom, 5)
-}
-
-@MainActor
-private func inspectorStatusChip(_ title: String) -> some View {
-    Text(title)
-        .font(.system(size: 9, weight: .medium))
-        .foregroundStyle(MuxyTheme.fgMuted)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background(MuxyTheme.hover, in: Capsule())
 }
 
 @MainActor

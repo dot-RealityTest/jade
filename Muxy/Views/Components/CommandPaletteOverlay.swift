@@ -1,5 +1,5 @@
-import SwiftUI
 import os
+import SwiftUI
 
 private let paletteLogger = Logger(subsystem: "app.muxy", category: "CommandPalette")
 
@@ -9,7 +9,7 @@ struct CommandPaletteOverlay: View {
     let activeRemoteSpace: RemoteSpace?
     let snippetScope: SnippetScope
     let projectPath: String?
-    let worktreeItems: [WorktreeSwitcherItem]
+    let worktreeOpenerItems: [OpenerItem]
     let naturalCommandContext: NaturalCommandContext
     let onSelect: (CommandPaletteItem) -> Void
     let onRunNaturalCommand: (NaturalCommandPlan) -> Void
@@ -55,8 +55,8 @@ struct CommandPaletteOverlay: View {
                             isConfirming: pendingConfirmationID == item.id
                         ))
                     },
-                    footer: AnyView(CommandPaletteFooter(isConfirming: pendingConfirmationID != nil))
-                    ,
+                    footer: AnyView(CommandPaletteFooter(isConfirming: pendingConfirmationID != nil)),
+
                     debounceDelay: { query in
                         CommandPaletteFileSearchPolicy.shouldSearchFiles(query: query)
                             ? .milliseconds(90)
@@ -122,7 +122,7 @@ struct CommandPaletteOverlay: View {
         var hasher = Hasher()
         hasher.combine(appItems.count)
         hasher.combine(remoteSpaces.count)
-        hasher.combine(worktreeItems.count)
+        hasher.combine(worktreeOpenerItems.count)
         hasher.combine(snippetsStore.snippets.count)
         hasher.combine(activeRemoteSpace?.id)
         let signature = hasher.finalize()
@@ -191,15 +191,16 @@ struct CommandPaletteOverlay: View {
     }
 
     private func worktreeCommandItems() -> [CommandPaletteItem] {
-        worktreeItems.map { item in
-            CommandPaletteItem(
-                id: "worktree-\(item.projectID.uuidString)-\(item.worktree.id.uuidString)",
-                title: "Switch to \(item.displayName)",
-                subtitle: item.branchSubtitle.map { "\($0) · \(item.projectName)" } ?? item.projectName,
+        worktreeOpenerItems.compactMap { item in
+            guard case let .worktree(worktree) = item else { return nil }
+            return CommandPaletteItem(
+                id: "worktree-\(worktree.projectID.uuidString)-\(worktree.worktreeID.uuidString)",
+                title: "Switch to \(item.title)",
+                subtitle: item.subtitle ?? item.title,
                 symbolName: "point.3.connected.trianglepath.dotted",
                 section: .worktree,
                 searchText: item.searchKey,
-                target: .worktree(projectID: item.projectID, worktreeID: item.worktree.id)
+                target: .worktree(projectID: worktree.projectID, worktreeID: worktree.worktreeID)
             )
         }
     }

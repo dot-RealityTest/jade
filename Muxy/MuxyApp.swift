@@ -109,7 +109,10 @@ struct MuxyApp: App {
                 }
         }
         .windowStyle(HiddenTitleBarWindowStyle())
-        .defaultSize(width: 1200, height: 800)
+        .defaultSize(
+            width: WindowLayoutMetrics.mainDefaultWidth,
+            height: WindowLayoutMetrics.mainDefaultHeight
+        )
         .commands {
             MuxyCommands(
                 appState: appState,
@@ -462,6 +465,10 @@ struct WindowConfigurator: NSViewRepresentable {
         DispatchQueue.main.async {
             guard let w = v.window else { return }
             w.identifier = ShortcutContext.mainWindowIdentifier
+            w.minSize = NSSize(
+                width: WindowLayoutMetrics.mainMinWidth,
+                height: WindowLayoutMetrics.mainMinHeight
+            )
             w.titlebarAppearsTransparent = true
             w.titleVisibility = .hidden
             w.styleMask.insert(.fullSizeContentView)

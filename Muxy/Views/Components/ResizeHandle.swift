@@ -18,6 +18,10 @@ struct ResizeHandle: View {
         Rectangle()
             .fill(active ? MuxyTheme.accent : MuxyTheme.border)
             .frame(width: axis == .horizontal ? 1 : nil, height: axis == .vertical ? 1 : nil)
+            .accessibilityElement()
+            .accessibilityLabel(accessibilityLabel)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityHint("Drag to resize")
             .overlay {
                 Color.clear
                     .frame(
@@ -46,5 +50,9 @@ struct ResizeHandle: View {
 
     private var cursor: NSCursor {
         axis == .horizontal ? .resizeLeftRight : .resizeUpDown
+    }
+
+    private var accessibilityLabel: String {
+        axis == .horizontal ? "Resize panel width" : "Resize panel height"
     }
 }

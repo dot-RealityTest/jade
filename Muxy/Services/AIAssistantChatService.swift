@@ -41,73 +41,91 @@ final class AIAssistantChatService {
     }
 
     func isAvailable() async -> Bool {
-        guard let baseURL = await baseURLProvider() else { return false }
-        var request = URLRequest(url: baseURL.appending(path: "api/tags"))
-        request.timeoutInterval = 1.5
-        do {
-            _ = try await dataLoader(request)
-            return true
-        } catch {
+        let settings = MoltisAssistantSettings.shared
+        if settings.usesDirectOllamaOnly {
+            return await isOllamaAvailable()
+        }
+        if settings.usesMoltisFirst {
+            if MoltisChatBackend.isAvailable() {
+                return true
+            }
+            if settings.fallbackToOllama {
+                return await isOllamaAvailable()
+            }
             return false
         }
+        return await isOllamaAvailable()
     }
 
-    func send(
-        prompt: String,
-        projectID: UUID,
-        projectPath: String?,
-        activeFile: String?
-    ) {
-        store.cancel(projectID: projectID)
-        store.setStreaming(true, projectID: projectID)
+    func send(context: InspectorChatContext) {
+        store.cancel(projectID: context.projectID)
+        store.setStreaming(true, projectID: context.projectID)
 
-        let userMessage = AIAssistantMessage(role: .user, content: prompt)
-        store.appendMessage(userMessage, projectID: projectID)
+        let userMessage = AIAssistantMessage(role: .user, content: context.prompt)
+        store.appendMessage(userMessage, projectID: context.projectID)
 
         let assistantPlaceholder = AIAssistantMessage(role: .assistant, content: "")
-        store.appendMessage(assistantPlaceholder, projectID: projectID)
+        store.appendMessage(assistantPlaceholder, projectID: context.projectID)
 
         let task = Task {
             do {
-                try await streamResponse(
-                    prompt: prompt,
-                    projectID: projectID,
-                    projectPath: projectPath,
-                    activeFile: activeFile
-                )
-                store.setLastFailedPrompt(nil, projectID: projectID)
+                try await streamResponse(context: context)
+                store.setLastFailedPrompt(nil, projectID: context.projectID)
             } catch {
                 logger.error("AI assistant stream failed: \(error.localizedDescription)")
-                store.setLastFailedPrompt(prompt, projectID: projectID)
+                store.setLastFailedPrompt(context.prompt, projectID: context.projectID)
                 store.updateLastAssistantMessage(
                     content: "**Error:** \(error.localizedDescription)",
-                    projectID: projectID
+                    projectID: context.projectID
                 )
             }
-            store.setStreaming(false, projectID: projectID)
+            store.setStreaming(false, projectID: context.projectID)
             if !NSApplication.shared.isActive {
-                postResponseNotification(projectID: projectID)
+                postResponseNotification(projectID: context.projectID)
             }
         }
 
-        store.setTask(task, projectID: projectID)
+        store.setTask(task, projectID: context.projectID)
     }
 
-    private func streamResponse(
-        prompt: String,
-        projectID: UUID,
-        projectPath: String?,
-        activeFile: String?
-    ) async throws {
+    func cancel(projectID: UUID) {
+        store.cancel(projectID: projectID)
+        Task { await MoltisChatBackend.cancelActiveRun() }
+    }
+
+    private func streamResponse(context: InspectorChatContext) async throws {
+        let settings = MoltisAssistantSettings.shared
+        if settings.usesMoltisFirst {
+            do {
+                try await streamViaMoltis(context: context)
+                return
+            } catch {
+                guard settings.fallbackToOllama else { throw error }
+                logger.error("Moltis (Ollama) failed, falling back to direct Ollama: \(error.localizedDescription)")
+            }
+        }
+        try await streamViaOllama(context: context)
+    }
+
+    private func streamViaMoltis(context: InspectorChatContext) async throws {
+        try await MoltisChatBackend.stream(context: context) { [self] content in
+            store.updateLastAssistantMessage(content: content, projectID: context.projectID)
+        }
+    }
+
+    private func streamViaOllama(context: InspectorChatContext) async throws {
         guard let baseURL = await baseURLProvider() else { throw AIAssistantError.unavailable }
         let model = await modelProvider()
         guard !model.isEmpty else { throw AIAssistantError.unavailable }
 
-        let history = store.messages(for: projectID)
+        let history = store.messages(for: context.projectID)
             .filter { $0.role != .system }
             .map { OllamaChatMessage(role: $0.role.rawValue, content: $0.content) }
 
-        let systemPrompt = Self.buildSystemPrompt(projectPath: projectPath, activeFile: activeFile)
+        let systemPrompt = Self.buildSystemPrompt(
+            projectPath: context.projectPath,
+            activeFile: context.activeFile
+        )
         var messages = [OllamaChatMessage(role: "system", content: systemPrompt)]
         messages.append(contentsOf: history)
 
@@ -115,7 +133,7 @@ final class AIAssistantChatService {
         request.httpMethod = "POST"
         request.timeoutInterval = 120
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONEncoder().encode(OllamaChatRequest(
+        request.httpBody = try JSONEncoder().encode(AIAssistantOllamaChatRequest(
             model: model,
             messages: messages,
             stream: true
@@ -135,8 +153,20 @@ final class AIAssistantChatService {
                   let text = chunk.message?.content ?? chunk.response
             else { continue }
             accumulated += text
-            store.updateLastAssistantMessage(content: accumulated, projectID: projectID)
+            store.updateLastAssistantMessage(content: accumulated, projectID: context.projectID)
             if chunk.done == true { break }
+        }
+    }
+
+    private func isOllamaAvailable() async -> Bool {
+        guard let baseURL = await baseURLProvider() else { return false }
+        var request = URLRequest(url: baseURL.appending(path: "api/tags"))
+        request.timeoutInterval = 1.5
+        do {
+            _ = try await dataLoader(request)
+            return true
+        } catch {
+            return false
         }
     }
 
@@ -190,7 +220,7 @@ enum AIAssistantError: Error {
     case backendFailed
 }
 
-private struct OllamaChatRequest: Codable {
+private struct AIAssistantOllamaChatRequest: Codable {
     var model: String
     var messages: [OllamaChatMessage]
     var stream: Bool
