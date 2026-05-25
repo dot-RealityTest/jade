@@ -27,13 +27,13 @@ struct NaturalCommandSettingsView: View {
                     TextField("", text: $settings.ollamaBaseURL)
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: 12))
-                        .frame(width: SettingsMetrics.controlWidth)
+                        .settingsControlFrame()
                 }
                 SettingsRow("Model") {
                     TextField("", text: $settings.ollamaModel)
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: 12))
-                        .frame(width: SettingsMetrics.controlWidth)
+                        .settingsControlFrame()
                 }
             }
         }

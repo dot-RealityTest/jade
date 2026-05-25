@@ -23,7 +23,7 @@ struct AppearanceSettingsView: View {
                     }
                     .labelsHidden()
                     .pickerStyle(.segmented)
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
                 }
 
                 SettingsToggleRow(label: "Show Status Bar", isOn: $showStatusBar)
@@ -62,7 +62,7 @@ struct AppearanceSettingsView: View {
                         .pickerStyle(.segmented)
                         .fixedSize()
                     }
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
                 }
 
                 SettingsRow("Expanded Style") {
@@ -77,7 +77,7 @@ struct AppearanceSettingsView: View {
                         .pickerStyle(.segmented)
                         .fixedSize()
                     }
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
                 }
             }
 
@@ -90,7 +90,7 @@ struct AppearanceSettingsView: View {
                     }
                     .labelsHidden()
                     .pickerStyle(.segmented)
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
                 }
             }
         }

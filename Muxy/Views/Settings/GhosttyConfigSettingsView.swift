@@ -81,13 +81,13 @@ struct GhosttyConfigSettingsView: View {
                             }
                     }
                 }
-                .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                .settingsControlFrame(alignment: .trailing)
             }
 
             SettingsRow("Font Family") {
                 TextField("JetBrains Mono", text: $fontFamily)
                     .font(.system(size: SettingsMetrics.labelFontSize))
-                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .settingsControlFrame(alignment: .trailing)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit { saveForm() }
             }
@@ -116,7 +116,7 @@ struct GhosttyConfigSettingsView: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.segmented)
-                .frame(width: SettingsMetrics.controlWidth)
+                .settingsControlFrame()
                 .onChange(of: cursorStyle) { _, _ in saveForm() }
             }
 

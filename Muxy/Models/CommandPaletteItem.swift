@@ -2,6 +2,7 @@ import Foundation
 
 enum CommandPaletteSection: String, CaseIterable {
     case app = "App"
+    case mcp = "MCP Tools"
     case remoteCommand = "Remote Commands"
     case remote = "Remote Spaces"
     case snippet = "Snippets"
@@ -13,8 +14,8 @@ enum CommandPaletteSection: String, CaseIterable {
         Self.defaultOrder.firstIndex(of: self) ?? Self.defaultOrder.count
     }
 
-    static let defaultOrder: [CommandPaletteSection] = [.app, .todo, .remote, .remoteCommand, .snippet, .file, .worktree]
-    static let remoteSpaceOrder: [CommandPaletteSection] = [.remoteCommand, .snippet, .remote, .app, .todo, .file, .worktree]
+    static let defaultOrder: [CommandPaletteSection] = [.app, .mcp, .todo, .remote, .remoteCommand, .snippet, .file, .worktree]
+    static let remoteSpaceOrder: [CommandPaletteSection] = [.remoteCommand, .snippet, .remote, .mcp, .app, .todo, .file, .worktree]
 }
 
 enum CommandPaletteFileSearchPolicy {
@@ -178,6 +179,7 @@ struct CommandPaletteItem: Identifiable, Equatable {
         case naturalCommand(String)
         case localPorts
         case projectTodo(UUID)
+        case obsidianMCPTool(ObsidianMCPToolAction, query: String?)
     }
 
     let id: String
@@ -289,6 +291,22 @@ struct CommandPaletteItem: Identifiable, Equatable {
             sortPriority: sortPriority,
             requiresConfirmation: requiresConfirmation,
             showsSectionHeader: isVisible
+        )
+    }
+
+    func withObsidianQuery(_ query: String) -> CommandPaletteItem {
+        guard case let .obsidianMCPTool(action, _) = target else { return self }
+        return CommandPaletteItem(
+            id: id,
+            title: title,
+            subtitle: subtitle,
+            symbolName: symbolName,
+            section: section,
+            searchText: searchText,
+            target: .obsidianMCPTool(action, query: query),
+            sortPriority: sortPriority,
+            requiresConfirmation: requiresConfirmation,
+            showsSectionHeader: showsSectionHeader
         )
     }
 }

@@ -33,7 +33,11 @@ extension Notification.Name {
     static let vcsDidRefresh = Notification.Name("MuxyVCSDidRefresh")
     static let externalDragHoverChanged = Notification.Name("MuxyExternalDragHoverChanged")
     static let toggleRichInput = Notification.Name("MuxyToggleRichInput")
+    static let toggleRichInputPreview = Notification.Name("MuxyToggleRichInputPreview")
+    static let richInputPreviewDidMutateWorkspace = Notification.Name("MuxyRichInputPreviewDidMutateWorkspace")
     static let toggleVoiceRecording = Notification.Name("MuxyToggleVoiceRecording")
+    static let sendToObsidian = Notification.Name("MuxySendToObsidian")
+    static let focusMCPToolsSettings = Notification.Name("MuxyFocusMCPToolsSettings")
 }
 
 enum ExternalDragHoverUserInfoKey {

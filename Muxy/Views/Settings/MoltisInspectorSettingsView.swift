@@ -23,13 +23,13 @@ struct MoltisInspectorSettingsView: View {
                 TextField("", value: $settings.preferredGatewayPort, format: .number)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: 12))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
             }
             SettingsRow("Status") {
                 Text(statusLabel)
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
-                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .settingsControlFrame(alignment: .trailing)
             }
             HStack {
                 Spacer()

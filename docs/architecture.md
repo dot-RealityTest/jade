@@ -130,6 +130,10 @@ Muxy/
     RemoteSpaceLauncher.swift Creates/selects dedicated remote machine project-spaces from the macOS menu using the profile command and theme
     RemoteCommandBuilder.swift Wraps selected Linux commands through a remote space's SSH profile for command tabs
     NaturalCommand{Settings,Generator}.swift  Review-first natural-language shell command generation with Apple Intelligence and Ollama backends
+    ObsidianMCPSettingsStore.swift  UserDefaults-backed obsidian-codex-mcp configuration (vault, Python, server.py, inbox folder)
+    ObsidianSendService.swift  Send-to-Obsidian command via MCP stdio `create_note`
+    MCP/MCPJSONRPC.swift      JSON-RPC line encoding/decoding for MCP stdio sessions
+    MCP/MCPStdioSession.swift One-shot MCP stdio client (initialize → tools/call)
     ShellCommandSafetyClassifier.swift  Deterministic safety guard for generated shell commands and inspect-first destructive intents
     ProjectStore.swift        @Observable store for projects list
     ProjectPersistence.swift  JSON persistence for projects
@@ -249,6 +253,7 @@ Muxy/
       AIAssistantSettingsView.swift  AI Assistant backend config (Ollama base URL + model picker with fetch)
       MobileSettingsView.swift  Mobile server and approved devices tab
       RemoteSpacesSettingsView.swift  Remote machine profile add/edit/delete tab with generated SSH command preview and theme selection
+      MCPToolsSettingsView.swift  MCP Tools tab (Obsidian MCP vault/server paths, read-only and backup toggles, connection test)
       ShortcutRecorderView.swift  Shortcut capture field
       ShortcutBadge.swift     Shortcut label display
 ```
@@ -712,7 +717,7 @@ MuxyMobile (iOS)  ◄── WebSocket (JSON) ──►  MuxyRemoteServer (inside
 ```
 
 The server listens on a user-configurable port (default 4865) when enabled in
-Mobile settings. The port is stored in `UserDefaults` and applied on start.
+Network settings. The port is stored in `UserDefaults` and applied on start.
 `MobileServerService` reports bind failures back to the UI: if the listener
 fails to start (e.g. port in use), the enable toggle is rolled off and the
 settings view displays the error. It uses Apple's Network framework

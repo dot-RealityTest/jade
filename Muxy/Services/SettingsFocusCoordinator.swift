@@ -23,11 +23,14 @@ final class SettingsFocusCoordinator {
 
 enum SettingsFocusRequest: Hashable {
     case projectPickerDefaultLocation
+    case mcpTools
 
     var notificationName: Notification.Name {
         switch self {
         case .projectPickerDefaultLocation:
             .focusProjectPickerDefaultLocation
+        case .mcpTools:
+            .focusMCPToolsSettings
         }
     }
 }

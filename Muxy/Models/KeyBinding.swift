@@ -53,6 +53,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
     case openYazi
     case commandPalette
     case toggleRichInput
+    case toggleRichInputPreview
     case submitRichInput
     case submitRichInputWithoutReturn
     case openVCSTab
@@ -72,6 +73,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
     case navigateForward
     case toggleMaximizePane
     case toggleVoiceRecording
+    case sendToObsidian
 
     static let allCases: [Self] = [
         .newTab,
@@ -118,6 +120,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         .openYazi,
         .commandPalette,
         .toggleRichInput,
+        .toggleRichInputPreview,
         .submitRichInput,
         .submitRichInputWithoutReturn,
         .openVCSTab,
@@ -136,6 +139,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         .navigateForward,
         .toggleMaximizePane,
         .toggleVoiceRecording,
+        .sendToObsidian,
     ]
 
     var id: String { rawValue }
@@ -195,6 +199,11 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         case .openYazi: ShortcutMetadata(displayName: "Open Yazi", category: "Terminal", scope: .mainWindow)
         case .commandPalette: ShortcutMetadata(displayName: "Command Palette", category: "App", scope: .mainWindow)
         case .toggleRichInput: ShortcutMetadata(displayName: "Toggle Rich Input", category: "Rich Input", scope: .mainWindow)
+        case .toggleRichInputPreview: ShortcutMetadata(
+                displayName: "Rich Input Preview",
+                category: "Rich Input",
+                scope: .mainWindow
+            )
         case .submitRichInput: ShortcutMetadata(displayName: "Send", category: "Rich Input", scope: .richInput)
         case .submitRichInputWithoutReturn: ShortcutMetadata(
                 displayName: "Send Without Enter",
@@ -221,6 +230,11 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
                 category: "Rich Input",
                 scope: .mainWindow
             )
+        case .sendToObsidian: ShortcutMetadata(
+                displayName: "Send to Obsidian",
+                category: "Integrations",
+                scope: .mainWindow
+            )
         case .toggleThemePicker: ShortcutMetadata(displayName: "Theme Picker", category: "App", scope: .mainWindow)
         case .newProject: ShortcutMetadata(displayName: "New Project", category: "App", scope: .mainWindow)
         case .openProject: ShortcutMetadata(displayName: "Open Project", category: "App", scope: .mainWindow)
@@ -234,7 +248,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
     var scope: ShortcutScope { metadata.scope }
 
     static var categories: [String] {
-        ["Tabs", "Panes", "Tab Navigation", "Project Navigation", "Navigation", "Terminal", "Rich Input", "Editor", "App"]
+        ["Tabs", "Panes", "Tab Navigation", "Project Navigation", "Navigation", "Terminal", "Rich Input", "Integrations", "Editor", "App"]
     }
 
     static func tabAction(for index: Int) -> Self? {
@@ -338,6 +352,7 @@ struct KeyBinding: Codable, Identifiable {
         Self(action: .openLazygit, combo: KeyCombo(key: "g", command: true, shift: true)),
         Self(action: .openYazi, combo: KeyCombo(key: "y", command: true, shift: true)),
         Self(action: .toggleRichInput, combo: KeyCombo(key: "i", command: true)),
+        Self(action: .toggleRichInputPreview, combo: KeyCombo(key: "n", command: true, control: true)),
         Self(action: .submitRichInput, combo: KeyCombo(key: KeyCombo.returnKey, command: true)),
         Self(action: .submitRichInputWithoutReturn, combo: KeyCombo(key: KeyCombo.returnKey, command: true, shift: true)),
         Self(action: .quickOpen, combo: KeyCombo(key: "p", command: true)),
@@ -355,5 +370,6 @@ struct KeyBinding: Codable, Identifiable {
         Self(action: .navigateForward, combo: KeyCombo(key: KeyCombo.rightArrowKey, command: true, control: true)),
         Self(action: .toggleMaximizePane, combo: KeyCombo(key: KeyCombo.returnKey, command: true, option: true)),
         Self(action: .toggleVoiceRecording, combo: KeyCombo(key: "i", command: true, shift: true)),
+        Self(action: .sendToObsidian, combo: KeyCombo(key: "o", command: true, control: true)),
     ]
 }

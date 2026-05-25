@@ -57,11 +57,11 @@ private struct HelpWelcomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: UIMetrics.spacing7) {
-                Text("Welcome to Muxy")
+                Text("Welcome to \(AppIdentity.displayName)")
                     .font(.system(size: UIMetrics.scaled(22), weight: .bold))
                     .foregroundStyle(MuxyTheme.fg)
                 Text(
-                    "Muxy is a native macOS terminal multiplexer organised around projects, "
+                    "\(AppIdentity.displayName) is a native macOS terminal multiplexer organised around projects, "
                         + "worktrees, tabs, and split panes — with a built‑in editor, source "
                         + "control view, and a remote API for mobile companion apps."
                 )

@@ -281,7 +281,7 @@ struct ProjectPickerOverlay: View {
     private func confirmCreateDirectory(path: String) -> Bool {
         let alert = NSAlert()
         alert.messageText = "Create Project Folder?"
-        alert.informativeText = "Muxy will create \"\(path)\" and add it as a project."
+        alert.informativeText = "\(AppIdentity.displayName) will create \"\(path)\" and add it as a project."
         alert.addButton(withTitle: "Create & Add")
         alert.addButton(withTitle: "Cancel")
         return alert.runModal() == .alertFirstButtonReturn

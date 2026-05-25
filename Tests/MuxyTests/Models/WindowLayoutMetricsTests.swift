@@ -11,12 +11,13 @@ final class WindowLayoutMetricsTests: XCTestCase {
     }
 
     func testSettingsSizingMatchesHIGBand() {
-        XCTAssertEqual(WindowLayoutMetrics.settingsMinWidth, 520)
-        XCTAssertEqual(WindowLayoutMetrics.settingsIdealWidth, 560)
-        XCTAssertEqual(WindowLayoutMetrics.settingsMaxWidth, 640)
+        XCTAssertEqual(WindowLayoutMetrics.settingsMinWidth, 480)
+        XCTAssertEqual(WindowLayoutMetrics.settingsIdealWidth, 640)
+        XCTAssertEqual(WindowLayoutMetrics.settingsMaxWidth, 900)
         XCTAssertEqual(WindowLayoutMetrics.settingsMinHeight, 360)
-        XCTAssertEqual(WindowLayoutMetrics.settingsIdealHeight, 420)
-        XCTAssertEqual(WindowLayoutMetrics.settingsMaxHeight, 520)
+        XCTAssertEqual(WindowLayoutMetrics.settingsIdealHeight, 480)
+        XCTAssertEqual(WindowLayoutMetrics.settingsMaxHeight, 720)
+        XCTAssertEqual(WindowLayoutMetrics.settingsSidebarIdealWidth, 220)
     }
 
     func testNarrowWidthAdjustmentsHideLowestPriorityPanelsFirst() {

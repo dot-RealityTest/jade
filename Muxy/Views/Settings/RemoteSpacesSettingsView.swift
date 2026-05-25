@@ -108,7 +108,7 @@ struct RemoteSpacesSettingsView: View {
             SettingsRow("Name") {
                 TextField("Zen", text: $draft.name)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
                     .controlSize(.small)
             }
 
@@ -116,7 +116,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField("ssh user@host", text: $draft.command)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
                     .controlSize(.small)
             }
 
@@ -124,7 +124,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField("100.86.62.100", text: $draft.host)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
                     .controlSize(.small)
             }
 
@@ -132,7 +132,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField(NSUserName(), text: $draft.user)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
                     .controlSize(.small)
             }
 
@@ -140,7 +140,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField("22", text: $draft.portText)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
                     .controlSize(.small)
             }
 
@@ -148,7 +148,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField("~/.ssh/id_ed25519", text: $draft.identityFile)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
                     .controlSize(.small)
             }
 
@@ -156,7 +156,7 @@ struct RemoteSpacesSettingsView: View {
                 TextField("bastion", text: $draft.jumpHost)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
                     .controlSize(.small)
             }
 
@@ -189,20 +189,19 @@ struct RemoteSpacesSettingsView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .truncationMode(.middle)
-                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .settingsControlFrame(alignment: .trailing)
                     .textSelection(.enabled)
             }
 
             SettingsRow("Theme") {
                 Picker("", selection: $draft.themeName) {
                     Text("Automatic").tag("")
-                    Text("Muxy Zen").tag("Muxy Zen")
-                    Text("Muxy Alienware").tag("Muxy Alienware")
-                    Text("Muxy").tag("Muxy")
-                    Text("Muxy Light").tag("Muxy Light")
+                    ForEach(["Muxy Zen", "Muxy Alienware", "Muxy", "Muxy Light"], id: \.self) { themeName in
+                        Text(AppIdentity.themeDisplayName(themeName)).tag(themeName)
+                    }
                 }
                 .labelsHidden()
-                .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                .settingsControlFrame(alignment: .trailing)
             }
 
             SettingsRow("Color") {
@@ -215,7 +214,7 @@ struct RemoteSpacesSettingsView: View {
                             .frame(width: 12, height: 12)
                         Text(colorName)
                     }
-                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .settingsControlFrame(alignment: .trailing)
                 }
                 .controlSize(.small)
                 .popover(isPresented: $showColorPicker, arrowEdge: .trailing) {

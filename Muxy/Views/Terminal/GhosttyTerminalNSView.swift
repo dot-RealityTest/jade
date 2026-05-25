@@ -78,6 +78,10 @@ final class GhosttyTerminalNSView: NSView {
         readSelectionText()
     }
 
+    func selectedText() -> String? {
+        readSelectionText()
+    }
+
     private func readSelectionText() -> String? {
         guard let surface, ghostty_surface_has_selection(surface) else { return nil }
         var text = ghostty_text_s()

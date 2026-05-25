@@ -11,7 +11,7 @@ struct RecordingSettingsView: View {
             SettingsSection(
                 "Voice Recording",
                 footer: "Press the Voice Recording shortcut to dictate. "
-                    + "Muxy transcribes your speech on-device and inserts it wherever your cursor was before "
+                    + "\(AppIdentity.displayName) transcribes your speech on-device and inserts it wherever your cursor was before "
                     + "you opened the recorder. If that target is gone, the transcript lands on your clipboard."
             ) {
                 SettingsToggleRow(
@@ -55,7 +55,7 @@ struct RecordingSettingsView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                .settingsControlFrame(alignment: .trailing)
             }
         }
     }

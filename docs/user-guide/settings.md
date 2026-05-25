@@ -1,6 +1,6 @@
 # Settings
 
-Open settings with `Cmd+,` (**Muxy → Settings…**). Settings are split into seven tabs.
+Open settings with `Cmd+,` (**Jade → Settings…**). Settings are grouped in the sidebar.
 
 ## General
 
@@ -39,15 +39,17 @@ See [Keyboard Shortcuts](keyboard-shortcuts.md).
 
 See [Notifications](../features/notifications.md).
 
-## Mobile
+## Network
 
-- **Enable Mobile Server** — start / stop the WebSocket server.
-- **Port** — defaults to 4865.
-- **Approved devices** — list of paired clients with revoke buttons.
+- **Allow remote access** — start / stop the WebSocket server for phones, tablets, and other clients on your LAN.
+- **How to connect** — copy the local `http://` URL shown when the server is running.
+- **Port** — defaults to 4865 (4866 in debug builds).
+
+Pair mobile devices and manage approvals under **Connections → Mobile**.
 
 See [Remote Server](../features/remote-server/README.md).
 
-## AI Usage
+## Connections
 
 - **Enable AI usage tracking** — global toggle.
 - **Display mode** — show *used* or *remaining* values.

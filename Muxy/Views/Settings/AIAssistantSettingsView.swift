@@ -41,14 +41,14 @@ struct AIAssistantSettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .settingsControlFrame(alignment: .trailing)
                 }
 
                 if provider != .custom {
                     SettingsRow("Model (optional)") {
                         TextField("Default", text: modelBinding)
                             .textFieldStyle(.roundedBorder)
-                            .frame(width: SettingsMetrics.controlWidth)
+                            .settingsControlFrame()
                     }
                 } else {
                     customCommandRow
@@ -96,11 +96,11 @@ struct AIAssistantSettingsView: View {
             SettingsRow("Command") {
                 TextField("e.g. mytool --quiet", text: $customCommand)
                     .textFieldStyle(.roundedBorder)
-                    .frame(width: SettingsMetrics.controlWidth)
+                    .settingsControlFrame()
             }
             Text(
                 "Runs through your interactive login shell so PATH and aliases resolve. "
-                    + "Muxy pipes the full prompt to stdin and reads the response from stdout. "
+                    + "\(AppIdentity.displayName) pipes the full prompt to stdin and reads the response from stdout. "
                     + "Provide arguments that make the tool emit only the response (no banners or progress)."
             )
             .font(.system(size: SettingsMetrics.footnoteFontSize))

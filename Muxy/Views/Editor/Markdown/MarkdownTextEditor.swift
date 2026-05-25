@@ -20,10 +20,13 @@ struct MarkdownTextEditor: NSViewRepresentable {
         var onPasteImageData: ((Data) -> Void)?
         var onPasteFileURL: ((URL) -> Void)?
         var onContentHeightChange: ((CGFloat) -> Void)?
+        var onSlashCommandContextChange: ((MarkdownSlashCommandContext?) -> Void)?
     }
 
     @Binding var text: String
     var focusVersion: Int = 0
+    var slashCommandsEnabled: Bool = false
+    var slashApplyRequest: MarkdownSlashCommandApplyRequest?
     var configuration: Configuration = .init()
     var callbacks: Callbacks = .init()
 
@@ -105,6 +108,9 @@ struct MarkdownTextEditor: NSViewRepresentable {
         textView.onPasteFileURL = { [weak coordinator = context.coordinator] url in
             coordinator?.parent.callbacks.onPasteFileURL?(url)
         }
+        textView.onSelectionChange = { [weak coordinator = context.coordinator] in
+            coordinator?.reportSlashCommandContext()
+        }
 
         if textView.string != text {
             textView.string = text
@@ -146,8 +152,10 @@ struct MarkdownTextEditor: NSViewRepresentable {
             context.coordinator.lastFocusVersion = focusVersion
             textView.grabFirstResponder()
         }
+        context.coordinator.applyPendingSlashCommandIfNeeded(request: slashApplyRequest)
         DispatchQueue.main.async { [weak coordinator = context.coordinator] in
             coordinator?.reportContentHeight()
+            coordinator?.reportSlashCommandContext()
         }
     }
 
@@ -163,6 +171,8 @@ struct MarkdownTextEditor: NSViewRepresentable {
         var lastFocusVersion: Int = -1
         var lineHeightDelegate: LineHeightLayoutDelegate?
         private var lastReportedHeight: CGFloat = -1
+        private var lastSlashContext: MarkdownSlashCommandContext?
+        private var lastAppliedSlashToken: UUID?
 
         init(parent: MarkdownTextEditor) {
             self.parent = parent
@@ -173,6 +183,49 @@ struct MarkdownTextEditor: NSViewRepresentable {
             parent.text = textView.string
             applyHighlighting()
             reportContentHeight()
+            reportSlashCommandContext()
+        }
+
+        func textViewDidChangeSelection(_ notification: Notification) {
+            reportSlashCommandContext()
+        }
+
+        func reportSlashCommandContext() {
+            guard parent.slashCommandsEnabled, let textView else {
+                publishSlashContext(nil)
+                return
+            }
+            let context = MarkdownSlashCommandSession.context(
+                in: textView.string,
+                selectedLocation: textView.selectedRange().location
+            )
+            publishSlashContext(context)
+        }
+
+        private func publishSlashContext(_ context: MarkdownSlashCommandContext?) {
+            guard context != lastSlashContext else { return }
+            lastSlashContext = context
+            parent.callbacks.onSlashCommandContextChange?(context)
+        }
+
+        func applyPendingSlashCommandIfNeeded(request: MarkdownSlashCommandApplyRequest?) {
+            guard let request, let textView else { return }
+            guard lastAppliedSlashToken != request.token else { return }
+            lastAppliedSlashToken = request.token
+
+            let selectedLocation = textView.selectedRange().location
+            let applied = MarkdownSlashCommandSession.apply(
+                command: request.command,
+                replaceRange: request.replaceRange,
+                in: textView.string,
+                selectedLocation: selectedLocation
+            )
+            textView.string = applied.text
+            textView.setSelectedRange(NSRange(location: applied.selectedLocation, length: 0))
+            parent.text = applied.text
+            applyHighlighting()
+            reportContentHeight()
+            publishSlashContext(nil)
         }
 
         func reportContentHeight() {
@@ -257,6 +310,7 @@ final class MarkdownEditingTextView: NSTextView {
     var onDecreaseFontSize: (() -> Void)?
     var onPasteImageData: ((Data) -> Void)?
     var onPasteFileURL: ((URL) -> Void)?
+    var onSelectionChange: (() -> Void)?
     var pendingFocusGrab: Bool = false
 
     override func viewDidMoveToWindow() {
@@ -264,6 +318,16 @@ final class MarkdownEditingTextView: NSTextView {
         guard pendingFocusGrab else { return }
         pendingFocusGrab = false
         grabFirstResponder()
+    }
+
+    override func didChangeText() {
+        super.didChangeText()
+        onSelectionChange?()
+    }
+
+    override func setSelectedRange(_ charRange: NSRange) {
+        super.setSelectedRange(charRange)
+        onSelectionChange?()
     }
 
     override func keyDown(with event: NSEvent) {

@@ -263,7 +263,7 @@ final class MemoryDiagnostics: NSObject {
     private func buildReport(periodic: Bool) -> String {
         let metrics = collectMetrics()
         var out = ""
-        out += "Muxy Diagnostics Snapshot\n"
+        out += "\(AppIdentity.displayName) Diagnostics Snapshot\n"
         out += "Generated: \(isoFormatter.string(from: Date()))\n"
         out += "App Version: \(appVersion())\n"
         out += "macOS: \(ProcessInfo.processInfo.operatingSystemVersionString)\n"

@@ -276,6 +276,18 @@ struct MuxyCommands: Commands {
             }
             .shortcut(for: .toggleRichInput, store: keyBindings)
 
+            Button("Rich Input Preview") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.toggleRichInputPreview)
+            }
+            .shortcut(for: .toggleRichInputPreview, store: keyBindings)
+
+            Button("Send to Obsidian") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.sendToObsidian)
+            }
+            .shortcut(for: .sendToObsidian, store: keyBindings)
+
             Divider()
 
             Button("Open Switcher...") {
@@ -326,7 +338,7 @@ struct MuxyCommands: Commands {
         }
 
         CommandGroup(replacing: .help) {
-            Button("Muxy Help") {
+            Button(AppIdentity.helpWindowTitle) {
                 openHelpWindow()
             }
 

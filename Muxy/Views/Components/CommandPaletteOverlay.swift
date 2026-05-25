@@ -107,14 +107,21 @@ struct CommandPaletteOverlay: View {
             query: query,
             sectionOrder: sectionOrder
         )
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let resolved = filtered.map { item in
+            guard case let .obsidianMCPTool(action, _) = item.target, action.requiresSearchQuery else {
+                return item
+            }
+            return item.withObsidianQuery(trimmedQuery)
+        }
         let elapsed = start.duration(to: clock.now)
         if elapsed > .milliseconds(20) {
             let elapsedDesc = String(describing: elapsed)
             paletteLogger.debug(
-                "Palette search for '\(query, privacy: .public)' returned \(filtered.count) items in \(elapsedDesc, privacy: .public)"
+                "Palette search for '\(query, privacy: .public)' returned \(resolved.count) items in \(elapsedDesc, privacy: .public)"
             )
         }
-        return filtered
+        return resolved
     }
 
     @MainActor
@@ -125,11 +132,14 @@ struct CommandPaletteOverlay: View {
         hasher.combine(worktreeOpenerItems.count)
         hasher.combine(snippetsStore.snippets.count)
         hasher.combine(activeRemoteSpace?.id)
+        hasher.combine(ObsidianMCPSettingsStore.shared.isEnabled)
+        hasher.combine(ObsidianMCPSettingsStore.shared.snapshot.canSendNotes)
         let signature = hasher.finalize()
         if signature == cachedBaseItemsSignature {
             return cachedBaseItems
         }
         let updated = appItems
+            + mcpToolItems()
             + remoteCommandItems()
             + remoteItems()
             + snippetItems()
@@ -137,6 +147,26 @@ struct CommandPaletteOverlay: View {
         cachedBaseItemsSignature = signature
         cachedBaseItems = updated
         return updated
+    }
+
+    @MainActor
+    private func mcpToolItems() -> [CommandPaletteItem] {
+        let settings = ObsidianMCPSettingsStore.shared.snapshot
+        return ObsidianMCPToolAction.allCases
+            .filter { $0.isAvailable(for: settings) }
+            .enumerated()
+            .map { index, action in
+                CommandPaletteItem(
+                    id: "mcp-obsidian-\(action.rawValue)",
+                    title: action.title,
+                    subtitle: action.subtitle,
+                    symbolName: action.symbolName,
+                    section: .mcp,
+                    searchText: action.searchText,
+                    target: .obsidianMCPTool(action, query: nil),
+                    sortPriority: index
+                )
+            }
     }
 
     @MainActor

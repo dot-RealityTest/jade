@@ -3,9 +3,6 @@ import SwiftUI
 struct WorkspaceChromePanelState: Equatable {
     var snippetsVisible: Bool
     var snippetsSuppressed: Bool
-    var notesVisible: Bool
-    var todoVisible: Bool
-    var inspectorSuppressed: Bool
     var aiVisible: Bool
     var aiSuppressed: Bool
 }
@@ -14,8 +11,6 @@ struct WorkspaceChromeHandlers {
     let onQuickOpen: () -> Void
     let onToggleFileTree: () -> Void
     let onToggleSnippets: () -> Void
-    let onToggleNotes: () -> Void
-    let onToggleTodo: () -> Void
     let onToggleAIAssistant: () -> Void
 }
 

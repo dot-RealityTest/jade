@@ -74,7 +74,7 @@ private struct ThemeRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: UIMetrics.spacing2) {
             HStack(spacing: UIMetrics.spacing2) {
-                Text(theme.name)
+                Text(AppIdentity.themeDisplayName(theme.name))
                     .font(.system(size: UIMetrics.fontFootnote))
                     .foregroundStyle(MuxyTheme.fg)
                     .lineLimit(1)

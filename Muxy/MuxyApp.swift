@@ -135,7 +135,7 @@ struct MuxyApp: App {
         }
         .defaultSize(width: 700, height: 600)
 
-        Window("Muxy Help", id: "help") {
+        Window(AppIdentity.helpWindowTitle, id: "help") {
             HelpView()
                 .preferredColorScheme(MuxyTheme.colorScheme)
         }
@@ -373,8 +373,8 @@ extension AppDelegate {
         guard QuitConfirmationPreferences.confirmQuit else { return .terminateNow }
 
         let alert = NSAlert()
-        alert.messageText = "Quit Muxy?"
-        alert.informativeText = "Are you sure you want to quit Muxy?"
+        alert.messageText = "Quit \(AppIdentity.displayName)?"
+        alert.informativeText = "Are you sure you want to quit \(AppIdentity.displayName)?"
         alert.alertStyle = .warning
         alert.icon = NSApp.applicationIconImage
         alert.addButton(withTitle: "Quit")

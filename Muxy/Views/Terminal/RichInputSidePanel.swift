@@ -5,10 +5,16 @@ import UniformTypeIdentifiers
 struct RichInputSidePanel: View {
     @Bindable var state: RichInputState
     let worktreeKey: WorktreeKey
+    let mode: RichInputPanelMode
+    let projectID: UUID?
     let onDismiss: () -> Void
     let onSubmit: (_ appendReturn: Bool) -> Void
 
     @State private var editorSettings = EditorSettings.shared
+    @State private var inspectorStore = ProjectInspectorStore.shared
+    @State private var workspaceText = ""
+    @State private var slashContext: MarkdownSlashCommandContext?
+    @State private var slashApplyRequest: MarkdownSlashCommandApplyRequest?
     @AppStorage(RichInputPreferences.fontSizeKey) private var fontSize: Double = RichInputPreferences.defaultFontSize
     @AppStorage(RichInputPreferences.positionKey) private var position: RichInputPanelPosition = RichInputPreferences
         .defaultPosition
@@ -19,20 +25,8 @@ struct RichInputSidePanel: View {
         VStack(spacing: 0) {
             header
             Rectangle().fill(MuxyTheme.border).frame(height: 1)
-            MarkdownTextEditor(
-                text: $state.text,
-                focusVersion: state.focusVersion,
-                configuration: editorConfiguration,
-                callbacks: editorCallbacks
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(MuxyTheme.bg)
-            .overlay(alignment: .topLeading) {
-                if state.text.isEmpty {
-                    placeholder
-                }
-            }
-            if !state.fileAttachments.isEmpty {
+            editorStack
+            if mode == .send, !state.fileAttachments.isEmpty {
                 Rectangle().fill(MuxyTheme.border).frame(height: 1)
                 AttachmentChipsView(
                     attachments: state.fileAttachments,
@@ -47,15 +41,165 @@ struct RichInputSidePanel: View {
         }
         .background(MuxyTheme.bg)
         .onDrop(of: [UTType.fileURL, UTType.image], isTargeted: nil) { providers in
-            handleDrop(providers: providers)
+            guard mode == .send else { return false }
+            return handleDrop(providers: providers)
         }
-        .onChange(of: state.text) { persistDraft() }
-        .onChange(of: state.fileAttachments) { persistDraft() }
-        .onChange(of: state.imageAttachments) { persistDraft() }
+        .onAppear {
+            if mode == .notes {
+                syncWorkspaceFromStore()
+            }
+        }
+        .onChange(of: projectID) { _, _ in
+            if mode == .notes {
+                syncWorkspaceFromStore()
+            }
+        }
+        .onChange(of: state.text) {
+            guard mode == .send else { return }
+            persistDraft()
+        }
+        .onChange(of: state.fileAttachments) {
+            guard mode == .send else { return }
+            persistDraft()
+        }
+        .onChange(of: state.imageAttachments) {
+            guard mode == .send else { return }
+            persistDraft()
+        }
+        .onChange(of: workspaceText) {
+            guard mode == .notes else { return }
+            persistWorkspace()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .richInputPreviewDidMutateWorkspace)) { _ in
+            guard mode == .notes else { return }
+            syncWorkspaceFromStore()
+        }
+    }
+
+    private var editorStack: some View {
+        ZStack(alignment: .topLeading) {
+            Group {
+                if mode == .send {
+                    MarkdownTextEditor(
+                        text: $state.text,
+                        focusVersion: state.focusVersion,
+                        slashCommandsEnabled: true,
+                        slashApplyRequest: slashApplyRequest,
+                        configuration: editorConfiguration,
+                        callbacks: sendEditorCallbacks
+                    )
+                } else {
+                    MarkdownTextEditor(
+                        text: $workspaceText,
+                        focusVersion: state.focusVersion,
+                        slashCommandsEnabled: true,
+                        slashApplyRequest: slashApplyRequest,
+                        configuration: editorConfiguration,
+                        callbacks: notesEditorCallbacks
+                    )
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(MuxyTheme.bg)
+
+            if showsPlaceholder {
+                placeholder
+            }
+
+            if let activeSlashContext = slashContext {
+                SlashCommandMenuView(
+                    commands: MarkdownSlashCommandSession.filteredCommands(query: activeSlashContext.query),
+                    onSelect: { command in
+                        slashApplyRequest = MarkdownSlashCommandApplyRequest(
+                            token: UUID(),
+                            command: command,
+                            replaceRange: activeSlashContext.replaceRange
+                        )
+                        slashContext = nil
+                    }
+                )
+                .padding(.horizontal, 12)
+                .padding(.top, 36)
+            }
+        }
+    }
+
+    private var showsPlaceholder: Bool {
+        switch mode {
+        case .send:
+            state.text.isEmpty
+        case .notes:
+            workspaceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 8) {
+            Image(systemName: mode.symbolName)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(MuxyTheme.fgMuted)
+            Text(headerTitle)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(MuxyTheme.fg)
+            Spacer(minLength: 8)
+            if mode == .send {
+                Button(action: toggleBroadcast) {
+                    Image(systemName: broadcastToggleIcon)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(broadcast ? MuxyTheme.accent : MuxyTheme.fgMuted)
+                }
+                .buttonStyle(RichInputToolbarButtonStyle())
+                .accessibilityLabel(broadcastToggleLabel)
+                .help(broadcastToggleLabel)
+                Button(action: toggleFloating) {
+                    Image(systemName: pinToggleIcon)
+                        .font(.system(size: 11, weight: .semibold))
+                }
+                .buttonStyle(RichInputToolbarButtonStyle())
+                .accessibilityLabel(pinToggleLabel)
+                .help(pinToggleLabel)
+                Button(action: togglePosition) {
+                    Image(systemName: positionToggleIcon)
+                        .font(.system(size: 11, weight: .semibold))
+                }
+                .buttonStyle(RichInputToolbarButtonStyle())
+                .accessibilityLabel(positionToggleLabel)
+                .help(positionToggleLabel)
+            }
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .buttonStyle(RichInputToolbarButtonStyle())
+            .accessibilityLabel("Close")
+            .help("Close")
+        }
+        .padding(.horizontal, 10)
+        .frame(height: 32)
+        .background(MuxyTheme.bg)
+    }
+
+    private var headerTitle: String {
+        switch mode {
+        case .send:
+            "Rich Input"
+        case .notes:
+            "Notes"
+        }
     }
 
     private func persistDraft() {
         RichInputDraftStore.shared.scheduleSave(state.draft, for: worktreeKey)
+    }
+
+    private func persistWorkspace() {
+        guard projectID != nil else { return }
+        inspectorStore.updateWorkspace(workspaceText)
+    }
+
+    private func syncWorkspaceFromStore() {
+        inspectorStore.selectProject(projectID)
+        workspaceText = inspectorStore.workspaceMarkdown
     }
 
     private var editorConfiguration: MarkdownTextEditor.Configuration {
@@ -73,7 +217,7 @@ struct RichInputSidePanel: View {
             ?? .monospacedSystemFont(ofSize: clampedFontSize, weight: .regular)
     }
 
-    private var editorCallbacks: MarkdownTextEditor.Callbacks {
+    private var sendEditorCallbacks: MarkdownTextEditor.Callbacks {
         MarkdownTextEditor.Callbacks(
             onSubmit: { onSubmit(true) },
             onSubmitWithoutReturn: { onSubmit(false) },
@@ -86,7 +230,16 @@ struct RichInputSidePanel: View {
             onPasteFileURL: { url in
                 guard !state.fileAttachments.contains(url) else { return }
                 state.fileAttachments.append(url)
-            }
+            },
+            onSlashCommandContextChange: { slashContext = $0 }
+        )
+    }
+
+    private var notesEditorCallbacks: MarkdownTextEditor.Callbacks {
+        MarkdownTextEditor.Callbacks(
+            onIncreaseFontSize: increaseFontSize,
+            onDecreaseFontSize: decreaseFontSize,
+            onSlashCommandContextChange: { slashContext = $0 }
         )
     }
 
@@ -96,7 +249,7 @@ struct RichInputSidePanel: View {
     }
 
     private var placeholder: some View {
-        Text("Type something...")
+        Text(placeholderText)
             .font(.system(size: clampedFontSize))
             .foregroundStyle(MuxyTheme.fgMuted.opacity(0.6))
             .padding(.horizontal, 12)
@@ -104,48 +257,13 @@ struct RichInputSidePanel: View {
             .allowsHitTesting(false)
     }
 
-    private var header: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "keyboard")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(MuxyTheme.fgMuted)
-            Text("Rich Input")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(MuxyTheme.fg)
-            Spacer(minLength: 8)
-            Button(action: toggleBroadcast) {
-                Image(systemName: broadcastToggleIcon)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(broadcast ? MuxyTheme.accent : MuxyTheme.fgMuted)
-            }
-            .buttonStyle(RichInputToolbarButtonStyle())
-            .accessibilityLabel(broadcastToggleLabel)
-            .help(broadcastToggleLabel)
-            Button(action: toggleFloating) {
-                Image(systemName: pinToggleIcon)
-                    .font(.system(size: 11, weight: .semibold))
-            }
-            .buttonStyle(RichInputToolbarButtonStyle())
-            .accessibilityLabel(pinToggleLabel)
-            .help(pinToggleLabel)
-            Button(action: togglePosition) {
-                Image(systemName: positionToggleIcon)
-                    .font(.system(size: 11, weight: .semibold))
-            }
-            .buttonStyle(RichInputToolbarButtonStyle())
-            .accessibilityLabel(positionToggleLabel)
-            .help(positionToggleLabel)
-            Button(action: onDismiss) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 11, weight: .semibold))
-            }
-            .buttonStyle(RichInputToolbarButtonStyle())
-            .accessibilityLabel("Close Rich Input")
-            .help("Close Rich Input")
+    private var placeholderText: String {
+        switch mode {
+        case .send:
+            "Type something… type / for blocks"
+        case .notes:
+            "Notes and tasks… type / for blocks"
         }
-        .padding(.horizontal, 10)
-        .frame(height: 32)
-        .background(MuxyTheme.bg)
     }
 
     private var positionToggleIcon: String {

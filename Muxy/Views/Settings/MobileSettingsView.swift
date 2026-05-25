@@ -4,81 +4,33 @@ import SwiftUI
 
 struct MobileSettingsView: View {
     private static let pairingFooter = """
-    Scan this with the Muxy mobile app to add this Mac. \
+    Scan this with the \(AppIdentity.mobileAppLabel) to add this Mac. \
     The QR carries no token — first-time pairing still needs your approval.
     """
 
     @Bindable private var service = MobileServerService.shared
     @Bindable private var devices = ApprovedDevicesStore.shared
     @State private var deviceToRevoke: ApprovedDevice?
-    @State private var portText: String = ""
-    @State private var portValidationError: String?
-    @State private var showFreePortConfirmation = false
     @State private var didCopyPairingLink = false
     @State private var pairingHosts: [MobilePairingHost] = []
     @State private var selectedNetwork: MobilePairingNetwork = .local
     @State private var pathMonitor: NWPathMonitor?
 
-    private var enabledBinding: Binding<Bool> {
-        Binding(
-            get: { service.isEnabled },
-            set: { newValue in
-                if newValue, !commitPort() { return }
-                service.setEnabled(newValue)
-            }
-        )
-    }
-
     var body: some View {
         SettingsContainer {
-            SettingsSection(
-                "Network",
-                footer: "Allow other devices on your local network to connect to Jade."
-            ) {
-                SettingsToggleRow(label: "Allow remote access", isOn: enabledBinding)
-
-                if service.isEnabled {
-                    SettingsRow("How to connect") {
-                        connectionInstructions
-                    }
+            if !service.isEnabled {
+                SettingsSection(
+                    "Mobile Pairing",
+                    footer: "Turn on remote access under Network to pair phones and tablets.",
+                    showsDivider: false
+                ) {
+                    Text("Remote access is off.")
+                        .font(.system(size: SettingsMetrics.labelFontSize))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, SettingsMetrics.horizontalPadding)
+                        .padding(.vertical, SettingsMetrics.rowVerticalPadding)
                 }
-
-                SettingsRow("Port") {
-                    TextField("\(MobileServerService.defaultPort)", text: $portText)
-                        .textFieldStyle(.roundedBorder)
-                        .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                        .frame(width: SettingsMetrics.controlWidth)
-                        .onChange(of: portText) { _, _ in
-                            guard portText != String(service.port) else { return }
-                            portValidationError = nil
-                            if service.isEnabled {
-                                service.setEnabled(false)
-                            }
-                        }
-                        .onSubmit { _ = commitPort() }
-                }
-
-                if let error = portValidationError ?? service.lastError {
-                    HStack(spacing: 6) {
-                        Text(error)
-                            .font(.system(size: SettingsMetrics.footnoteFontSize))
-                            .foregroundStyle(.red)
-                            .fixedSize(horizontal: false, vertical: true)
-                        if service.isPortInUse {
-                            Button("Free Port") {
-                                showFreePortConfirmation = true
-                            }
-                            .font(.system(size: SettingsMetrics.footnoteFontSize, weight: .medium))
-                            .buttonStyle(.borderless)
-                            .foregroundStyle(MuxyTheme.accent)
-                        }
-                    }
-                    .padding(.horizontal, SettingsMetrics.horizontalPadding)
-                    .padding(.vertical, SettingsMetrics.rowVerticalPadding)
-                }
-            }
-
-            if service.isEnabled, let selectedHost, let uri = pairingURI(for: selectedHost) {
+            } else if let selectedHost, let uri = pairingURI(for: selectedHost) {
                 SettingsSection(
                     "Pair Mobile Device",
                     footer: Self.pairingFooter
@@ -106,28 +58,12 @@ struct MobileSettingsView: View {
             }
         }
         .onAppear {
-            portText = String(service.port)
             refreshPairingHosts()
             startPathMonitor()
         }
         .onDisappear { stopPathMonitor() }
-        .onChange(of: service.port) { _, newValue in
-            let text = String(newValue)
-            if portText != text { portText = text }
-        }
         .onChange(of: service.isEnabled) { _, _ in
             refreshPairingHosts()
-        }
-        .alert(
-            "Free port \(String(service.port))?",
-            isPresented: $showFreePortConfirmation
-        ) {
-            Button("Free Port", role: .destructive) {
-                service.freePort()
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("This will terminate any process currently listening on port \(String(service.port)).")
         }
         .alert(
             "Revoke \(deviceToRevoke?.name ?? "device")?",
@@ -144,18 +80,6 @@ struct MobileSettingsView: View {
         } message: { _ in
             Text("The device will be disconnected immediately and must request approval again to reconnect.")
         }
-    }
-
-    private func commitPort() -> Bool {
-        let trimmed = portText.trimmingCharacters(in: .whitespaces)
-        guard let value = UInt16(trimmed), MobileServerService.isValid(port: value) else {
-            portValidationError = "Enter a port between \(MobileServerService.minPort) and \(MobileServerService.maxPort)."
-            return false
-        }
-        portValidationError = nil
-        service.port = value
-        portText = String(value)
-        return true
     }
 
     private var selectedHost: MobilePairingHost? {
@@ -206,7 +130,7 @@ struct MobileSettingsView: View {
             HStack(alignment: .top, spacing: 14) {
                 MobilePairingQRView(uriString: uri, size: 132)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Open the Muxy mobile app, tap Add device, and scan this code.")
+                    Text("Open the \(AppIdentity.mobileAppLabel), tap Add device, and scan this code.")
                         .font(.system(size: SettingsMetrics.labelFontSize))
                         .fixedSize(horizontal: false, vertical: true)
                     Text(host.host)
@@ -294,44 +218,5 @@ struct MobileSettingsView: View {
             return "Last seen \(formatter.localizedString(for: seen, relativeTo: Date()))"
         }
         return "Approved \(formatter.localizedString(for: device.approvedAt, relativeTo: Date()))"
-    }
-
-    private var connectionInstructions: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Access Jade from another device on your local network or private VPN.")
-                .font(.system(size: SettingsMetrics.footnoteFontSize))
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            if let connectionURL {
-                HStack(spacing: 8) {
-                    Text(connectionURL)
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Button {
-                        NSPasteboard.general.clearContents()
-                        NSPasteboard.general.setString(connectionURL, forType: .string)
-                    } label: {
-                        Image(systemName: "doc.on.doc")
-                            .font(.system(size: 12))
-                    }
-                    .buttonStyle(.borderless)
-                    .help("Copy connection URL")
-                }
-                .padding(10)
-                .background(Color.secondary.opacity(0.1), in: RoundedRectangle(cornerRadius: 6))
-            } else {
-                Text("No local network address is available right now.")
-                    .font(.system(size: SettingsMetrics.footnoteFontSize))
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    private var connectionURL: String? {
-        LocalNetworkAddressProvider.connectionURL(port: service.port)
     }
 }

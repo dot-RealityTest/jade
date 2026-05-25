@@ -45,7 +45,7 @@ struct EditorSettingsView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                .settingsControlFrame(alignment: .trailing)
             }
 
             if settings.defaultEditor == .terminalCommand {
@@ -53,7 +53,7 @@ struct EditorSettingsView: View {
                     TextField("vim", text: $settings.externalEditorCommand)
                         .textFieldStyle(.roundedBorder)
                         .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
-                        .frame(width: SettingsMetrics.controlWidth)
+                        .settingsControlFrame()
                 }
             }
         }
@@ -80,7 +80,7 @@ struct EditorSettingsView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                .settingsControlFrame(alignment: .trailing)
             }
 
             SettingsRow("Zoom") {
@@ -123,7 +123,7 @@ struct EditorSettingsView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                .settingsControlFrame(alignment: .trailing)
             }
 
             SettingsRow("Position") {
@@ -133,7 +133,7 @@ struct EditorSettingsView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                .settingsControlFrame(alignment: .trailing)
             }
 
             SettingsToggleRow(label: "Floating Panel", isOn: $richInputFloating)
@@ -147,7 +147,7 @@ struct EditorSettingsView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                .settingsControlFrame(alignment: .trailing)
             }
 
             SettingsRow("Line Height") {
@@ -208,7 +208,7 @@ struct EditorSettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .settingsControlFrame(alignment: .trailing)
                 }
 
                 SettingsRow("Font Size") {

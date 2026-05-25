@@ -78,6 +78,15 @@ final class ProjectInspectorStore {
         save()
     }
 
+    var workspaceMarkdown: String {
+        ProjectWorkspaceMarkdown.compose(document)
+    }
+
+    func updateWorkspace(_ markdown: String) {
+        ProjectWorkspaceMarkdown.apply(markdown, to: &document)
+        save()
+    }
+
     @discardableResult
     func addTodo(title: String, now: Date = Date()) -> ProjectTodoItem? {
         let trimmed = title.trimmingCharacters(in: .whitespacesAndNewlines)

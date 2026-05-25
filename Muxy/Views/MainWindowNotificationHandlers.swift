@@ -20,7 +20,9 @@ struct MainWindowNotificationHandlers: ViewModifier {
     let onToggleAttachedVCS: () -> Void
     let onToggleFileTree: () -> Void
     let onToggleRichInput: () -> Void
+    let onToggleRichInputPreview: () -> Void
     let onToggleVoiceRecording: () -> Void
+    let onSendToObsidian: () -> Void
     let onExplainSelection: (Notification) -> Void
     let onApplyAIAssistantCode: (Notification) -> Void
 
@@ -63,6 +65,8 @@ struct MainWindowNotificationHandlers: ViewModifier {
             .onReceive(NotificationCenter.default.publisher(for: .toggleAttachedVCS)) { _ in onToggleAttachedVCS() }
             .onReceive(NotificationCenter.default.publisher(for: .toggleFileTree)) { _ in onToggleFileTree() }
             .onReceive(NotificationCenter.default.publisher(for: .toggleRichInput)) { _ in onToggleRichInput() }
+            .onReceive(NotificationCenter.default.publisher(for: .toggleRichInputPreview)) { _ in onToggleRichInputPreview() }
             .onReceive(NotificationCenter.default.publisher(for: .toggleVoiceRecording)) { _ in onToggleVoiceRecording() }
+            .onReceive(NotificationCenter.default.publisher(for: .sendToObsidian)) { _ in onSendToObsidian() }
     }
 }

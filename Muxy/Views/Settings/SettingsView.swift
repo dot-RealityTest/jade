@@ -1,22 +1,30 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @State private var page = SettingsPage.general
+    @State private var page: SettingsPage? = .general
 
     var body: some View {
-        HStack(spacing: 0) {
-            SettingsSidebar(selection: $page)
-                .frame(width: 188)
-
-            Divider()
-
-            VStack(spacing: 0) {
-                SettingsPageHeader(page: page)
-
-                Divider()
-
-                pageContent
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        NavigationSplitView {
+            List(SettingsPage.allCases, selection: $page) { item in
+                SettingsSidebarLabel(page: item)
+                    .tag(item)
+            }
+            .listStyle(.sidebar)
+            .navigationSplitViewColumnWidth(
+                min: WindowLayoutMetrics.settingsSidebarMinWidth,
+                ideal: WindowLayoutMetrics.settingsSidebarIdealWidth,
+                max: WindowLayoutMetrics.settingsSidebarMaxWidth
+            )
+        } detail: {
+            if let page {
+                settingsDetail(for: page)
+            } else {
+                ContentUnavailableView(
+                    "Select a Settings Page",
+                    systemImage: "gearshape",
+                    description: Text("Choose a category in the sidebar.")
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .frame(
@@ -29,10 +37,32 @@ struct SettingsView: View {
         )))
         .background(Color(nsColor: .windowBackgroundColor))
         .resetsSettingsFocusOnOutsideClick()
+        .onAppear(perform: consumeMCPToolsFocusRequest)
+        .onReceive(NotificationCenter.default.publisher(for: .focusMCPToolsSettings)) { _ in
+            page = .mcpTools
+            consumeMCPToolsFocusRequest()
+        }
+    }
+
+    private func consumeMCPToolsFocusRequest() {
+        guard SettingsFocusCoordinator.shared.consume(.mcpTools) else { return }
+        page = .mcpTools
+    }
+
+    private func settingsDetail(for page: SettingsPage) -> some View {
+        VStack(spacing: 0) {
+            SettingsPageHeader(page: page)
+
+            Divider()
+
+            pageContent(for: page)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .settingsContentWidthAware()
     }
 
     @ViewBuilder
-    private var pageContent: some View {
+    private func pageContent(for page: SettingsPage) -> some View {
         switch page {
         case .general:
             GeneralSettingsView()
@@ -48,17 +78,21 @@ struct SettingsView: View {
             RecordingSettingsView()
         case .notifications:
             NotificationSettingsView()
+        case .network:
+            NetworkSettingsView()
         case .connections:
             ConnectionsSettingsView()
         case .aiAssistant:
             AIAssistantSettingsView()
         case .ghostty:
             GhosttyConfigSettingsView()
+        case .mcpTools:
+            MCPToolsSettingsView()
         }
     }
 }
 
-private enum SettingsPage: String, CaseIterable, Identifiable {
+private enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
     case general
     case appearance
     case commands
@@ -66,9 +100,11 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
     case sessions
     case recording
     case notifications
+    case network
     case connections
     case aiAssistant
     case ghostty
+    case mcpTools
 
     var id: String { rawValue }
 
@@ -81,9 +117,11 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
         case .sessions: "Sessions"
         case .recording: "Recording"
         case .notifications: "Notifications"
+        case .network: "Network"
         case .connections: "Connections"
         case .aiAssistant: "AI Assistant"
         case .ghostty: "Ghostty"
+        case .mcpTools: "MCP Tools"
         }
     }
 
@@ -96,9 +134,11 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
         case .sessions: "Terminal session restore"
         case .recording: "Voice and screen capture"
         case .notifications: "Alerts and providers"
-        case .connections: "Remote, mobile, usage"
+        case .network: "Remote access on your LAN"
+        case .connections: "SSH spaces, pairing, usage"
         case .aiAssistant: "Commit and PR generation"
         case .ghostty: "Terminal emulator config"
+        case .mcpTools: "Obsidian and MCP servers"
         }
     }
 
@@ -111,101 +151,61 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
         case .sessions: "clock.arrow.circlepath"
         case .recording: "mic"
         case .notifications: "bell"
-        case .connections: "network"
+        case .network: "globe"
+        case .connections: "link"
         case .aiAssistant: "sparkles"
         case .ghostty: "terminal"
+        case .mcpTools: "puzzlepiece.extension"
         }
     }
 }
 
-private struct SettingsSidebar: View {
-    @Binding var selection: SettingsPage
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Settings")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 12)
-                .padding(.top, 14)
-                .padding(.bottom, 8)
-
-            ForEach(SettingsPage.allCases) { page in
-                SettingsSidebarRow(
-                    page: page,
-                    isSelected: selection == page,
-                    action: { selection = page }
-                )
-            }
-
-            Spacer(minLength: 0)
-        }
-        .padding(.bottom, 12)
-        .background(.ultraThinMaterial)
-    }
-}
-
-private struct SettingsSidebarRow: View {
+private struct SettingsSidebarLabel: View {
     let page: SettingsPage
-    let isSelected: Bool
-    let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: 9) {
-                Image(systemName: page.icon)
+        Label {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(page.title)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(isSelected ? MuxyTheme.accent : .secondary)
-                    .frame(width: 18)
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(page.title)
-                        .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
-                        .foregroundStyle(.primary)
-                    Text(page.subtitle)
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-
-                Spacer(minLength: 0)
+                Text(page.subtitle)
+                    .font(.system(size: 10))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 7)
-            .background(
-                isSelected ? AnyShapeStyle(MuxyTheme.accentSoft) : AnyShapeStyle(.clear),
-                in: RoundedRectangle(cornerRadius: 7)
-            )
-            .contentShape(RoundedRectangle(cornerRadius: 7))
+        } icon: {
+            Image(systemName: page.icon)
+                .font(.system(size: 12, weight: .medium))
         }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 8)
     }
 }
 
 private struct SettingsPageHeader: View {
+    @Environment(\.settingsContentWidth) private var contentWidth
     let page: SettingsPage
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(alignment: .top, spacing: 10) {
             Image(systemName: page.icon)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(MuxyTheme.accent)
                 .frame(width: 28, height: 28)
                 .background(MuxyTheme.accentSoft, in: RoundedRectangle(cornerRadius: 7))
 
-            VStack(alignment: .leading, spacing: 1) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(page.title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(.primary)
                 Text(page.subtitle)
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(SettingsLayout.isCompact(contentWidth: contentWidth) ? 3 : 2)
             }
 
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 18)
+        .padding(.horizontal, SettingsMetrics.horizontalPadding)
         .padding(.vertical, 13)
     }
 }

@@ -2,7 +2,7 @@
 
 ## Enabling the server
 
-The Mobile server is **disabled by default**. Toggle it from **Settings → Mobile** on macOS.
+The Mobile server is **disabled by default**. Toggle it from **Settings → Network** on macOS.
 
 | Setting | Default | Notes |
 | --- | --- | --- |

@@ -11,6 +11,7 @@ struct MarkdownInlineDecoration: Equatable {
         case marker
         case blockquote
         case listMarker
+        case taskCheckbox
     }
 
     let range: NSRange
@@ -31,6 +32,9 @@ enum MarkdownInlineHighlighter {
         if let blockquote = matchBlockquote(ns: ns, length: length, from: leading) {
             decorations.append(blockquote.decoration)
             contentStart = blockquote.contentStart
+        } else if let task = matchTaskCheckbox(ns: ns, length: length, from: leading) {
+            decorations.append(task.decoration)
+            contentStart = task.contentStart
         } else if let list = matchListMarker(ns: ns, length: length, from: leading) {
             decorations.append(list.decoration)
             contentStart = list.contentStart
@@ -68,6 +72,29 @@ enum MarkdownInlineHighlighter {
             kind: .blockquote
         )
         return (decoration, end)
+    }
+
+    private static func matchTaskCheckbox(
+        ns: NSString,
+        length: Int,
+        from start: Int
+    ) -> (decoration: MarkdownInlineDecoration, contentStart: Int)? {
+        guard start + 5 < length else { return nil }
+        guard ns.character(at: start) == 0x2D else { return nil }
+        guard ns.character(at: start + 1) == 0x20 else { return nil }
+        guard ns.character(at: start + 2) == 0x5B else { return nil }
+        let marker = ns.character(at: start + 3)
+        guard marker == 0x20 || marker == 0x78 || marker == 0x58 else { return nil }
+        guard ns.character(at: start + 4) == 0x5D else { return nil }
+        let after = start + 5
+        guard after < length, ns.character(at: after) == 0x20 else { return nil }
+        return (
+            MarkdownInlineDecoration(
+                range: NSRange(location: start, length: 6),
+                kind: .taskCheckbox
+            ),
+            after + 1
+        )
     }
 
     private static func matchListMarker(
@@ -254,7 +281,8 @@ enum MarkdownInlineStyle {
             SyntaxTheme.color(for: .string)
         case .marker,
              .blockquote,
-             .listMarker:
+             .listMarker,
+             .taskCheckbox:
             SyntaxTheme.defaultForeground.withAlphaComponent(0.5)
         case .bold,
              .italic,

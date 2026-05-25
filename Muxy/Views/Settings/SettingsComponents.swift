@@ -12,11 +12,20 @@ enum SettingsMetrics {
     static let labelFontSize: CGFloat = 12
     static let footnoteFontSize: CGFloat = 11
     static let controlWidth: CGFloat = 220
+    static let compactContentWidth: CGFloat = 380
+
+    static func resolvedControlWidth(for contentWidth: CGFloat) -> CGFloat {
+        if SettingsLayout.isCompact(contentWidth: contentWidth) {
+            return max(160, contentWidth - horizontalPadding * 2)
+        }
+        return min(controlWidth, contentWidth - horizontalPadding * 2)
+    }
 }
 
 struct SettingsSegmentedHeader<Selection: CaseIterable & Identifiable & RawRepresentable & Hashable>: View
     where Selection.RawValue == String, Selection.AllCases: RandomAccessCollection
 {
+    @Environment(\.settingsContentWidth) private var contentWidth
     @Binding var selection: Selection
 
     var body: some View {
@@ -27,7 +36,10 @@ struct SettingsSegmentedHeader<Selection: CaseIterable & Identifiable & RawRepre
         }
         .labelsHidden()
         .pickerStyle(.segmented)
-        .frame(maxWidth: 320, alignment: .leading)
+        .frame(
+            maxWidth: min(320, contentWidth - SettingsMetrics.horizontalPadding * 2),
+            alignment: .leading
+        )
         .padding(.horizontal, SettingsMetrics.horizontalPadding)
         .padding(.top, 12)
         .padding(.bottom, 10)
@@ -98,6 +110,7 @@ struct SettingsSection<Content: View>: View {
 }
 
 struct SettingsRow<Content: View>: View {
+    @Environment(\.settingsContentWidth) private var contentWidth
     let label: String
     @ViewBuilder var content: Content
 
@@ -107,17 +120,31 @@ struct SettingsRow<Content: View>: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Text(label)
-                .font(.system(size: SettingsMetrics.labelFontSize))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-            Spacer()
-            content
+        Group {
+            if SettingsLayout.isCompact(contentWidth: contentWidth) {
+                VStack(alignment: .leading, spacing: 8) {
+                    labelView
+                    content
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            } else {
+                HStack(alignment: .center, spacing: 12) {
+                    labelView
+                    Spacer(minLength: 8)
+                    content
+                }
+            }
         }
         .padding(.horizontal, SettingsMetrics.horizontalPadding)
         .padding(.vertical, SettingsMetrics.rowVerticalPadding)
         .frame(minHeight: 32)
+    }
+
+    private var labelView: some View {
+        Text(label)
+            .font(.system(size: SettingsMetrics.labelFontSize))
+            .foregroundStyle(.primary)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -140,7 +167,6 @@ struct SettingsPickerRow<Option: CaseIterable & Identifiable & RawRepresentable>
 {
     let label: String
     @Binding var selection: String
-    var width: CGFloat = SettingsMetrics.controlWidth
 
     var body: some View {
         SettingsRow(label) {
@@ -150,7 +176,7 @@ struct SettingsPickerRow<Option: CaseIterable & Identifiable & RawRepresentable>
                 }
             }
             .labelsHidden()
-            .frame(width: width, alignment: .trailing)
+            .settingsControlFrame(alignment: .trailing)
         }
     }
 }

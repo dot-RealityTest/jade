@@ -25,7 +25,7 @@ flowchart TB
 
 - Endpoint: `ws://<host>:<port>` (default port `4865`)
 - Format: JSON, UTF-8, ISO-8601 dates, UUID strings
-- Disabled by default; enable in **Settings → Mobile**
+- Disabled by default; enable in **Settings → Network**
 - All clients must authenticate before any other RPC is accepted
 
 ## Recommended client startup

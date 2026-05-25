@@ -173,16 +173,16 @@ struct ProjectPickerConfirmationFailurePresentation: Equatable {
         switch result {
         case .notDirectory:
             title = "Path Is Not a Folder"
-            message = "Muxy can only add folders as projects. Choose a folder or type a new folder path."
+            message = "\(AppIdentity.displayName) can only add folders as projects. Choose a folder or type a new folder path."
         case .missingDirectory:
             title = "Could Not Add Project"
-            message = "Muxy couldn't find \"\(path)\". Check the path and try again."
+            message = "\(AppIdentity.displayName) couldn't find \"\(path)\". Check the path and try again."
         case .createFailed:
             title = "Could Not Create Project Folder"
-            message = "Muxy couldn't create and add \"\(path)\". Check that you have permission to use this location."
+            message = "\(AppIdentity.displayName) couldn't create and add \"\(path)\". Check that you have permission to use this location."
         default:
             title = "Could Not Add Project"
-            message = "Muxy couldn't add \"\(path)\". Check that the folder exists and you have permission to use it."
+            message = "\(AppIdentity.displayName) couldn't add \"\(path)\". Check that the folder exists and you have permission to use it."
         }
     }
 }

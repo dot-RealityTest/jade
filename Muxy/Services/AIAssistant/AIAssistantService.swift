@@ -20,7 +20,7 @@ enum AIAssistantServiceError: Error, LocalizedError {
 @MainActor
 enum AIAssistantService {
     private static let diffLineLimit = 4000
-    private static let truncationMarker = "\n[diff truncated by Muxy at \(diffLineLimit) lines]\n"
+    private static let truncationMarker = "\n[diff truncated by \(AppIdentity.displayName) at \(diffLineLimit) lines]\n"
 
     private static let excludedPatterns: [String] = [
         "**/Package.resolved",

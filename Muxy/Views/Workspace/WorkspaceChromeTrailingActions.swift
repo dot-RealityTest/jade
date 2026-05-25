@@ -17,8 +17,6 @@ struct WorkspaceChromeTrailingActions: View {
     let onQuickOpen: () -> Void
     let onToggleFileTree: () -> Void
     let onToggleSnippets: () -> Void
-    let onToggleNotes: () -> Void
-    let onToggleTodo: () -> Void
     let onToggleAIAssistant: () -> Void
     let onToggleMaximize: (() -> Void)?
 
@@ -92,32 +90,6 @@ struct WorkspaceChromeTrailingActions: View {
                     action: onToggleSnippets
                 )
                 .help(shortcutTooltip("Snippets", for: .toggleSnippetsPanel))
-            }
-            if showsToolbarAction(.notes), layoutPickerProjectID != nil {
-                IconButton(
-                    symbol: "note.text",
-                    size: 12,
-                    color: WorkspaceChromePanelAccent.color(
-                        requested: panelState.notesVisible,
-                        suppressed: panelState.inspectorSuppressed
-                    ),
-                    accessibilityLabel: "Notes",
-                    action: onToggleNotes
-                )
-                .help(shortcutTooltip("Notes", for: .toggleProjectNotesPanel))
-            }
-            if showsToolbarAction(.todo), layoutPickerProjectID != nil {
-                IconButton(
-                    symbol: "checklist",
-                    size: 12,
-                    color: WorkspaceChromePanelAccent.color(
-                        requested: panelState.todoVisible,
-                        suppressed: panelState.inspectorSuppressed
-                    ),
-                    accessibilityLabel: "Todo",
-                    action: onToggleTodo
-                )
-                .help(shortcutTooltip("Todo", for: .toggleProjectTodoPanel))
             }
             if showsToolbarAction(.newTab), layoutPickerProjectID != nil {
                 IconButton(symbol: "plus", accessibilityLabel: "New Tab", action: onCreateTab)

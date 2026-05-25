@@ -1,136 +1,29 @@
 {
-  "developer_profile": {
-    "skills": [
-      "Swift",
-      "SwiftUI",
-      "macOS app development",
-      "CLI tooling",
-      "Apple platform integration"
-    ],
-    "interests": [
-      "developer productivity",
-      "automation",
-      "local-first tools",
-      "AI-assisted workflows"
-    ],
-    "platform": "macOS first, with optional iOS companion",
-    "time_availability": "side project (10-20 hrs/week)",
-    "constraints": [
-      "solo developer",
-      "low infrastructure overhead preferred",
-      "clear monetization path desired"
-    ],
-    "assumptions": "Inferred from current repository context because profile questions were skipped."
-  },
-  "brainstorm_lenses_used": [
-    "skills_and_interests",
-    "problem_first",
-    "technology_first",
-    "market_gap",
-    "trend_based"
-  ],
-  "shortlist": [
+  "title": "Moltis as Jade inspector brain",
+  "ranked": [
     {
       "rank": 1,
-      "idea": "Prompt Router for Terminal Workflows",
-      "lens": "skills_and_interests",
-      "one_liner": "macOS app that routes pasted prompts to the right AI model and keeps local, searchable run history for terminal-heavy developers.",
-      "platform": "macOS",
-      "problem_statement": "Developers lose time picking models and rewriting prompts across tools. Existing options are either web-heavy or expensive, and they do not fit terminal-native workflows.",
-      "target_user": "Indie developers and engineers who use terminal + AI daily",
-      "feasibility": {
-        "solo_dev_scope": "EXCELLENT (3-5 weeks - local app, no mandatory backend)",
-        "platform_api_fit": "STRONG (AppKit/SwiftUI, Shortcuts, clipboard monitoring, local storage)",
-        "monetization_viability": "STRONG (one-time Pro unlock or subscription for provider integrations)",
-        "competition_density": "STRONG (crowded broadly, but terminal-first niche remains fragmented)",
-        "technical_fit": "EXCELLENT (direct match with Swift/macOS/CLI experience)"
-      },
-      "overall_score": 8.7,
-      "monetization_model": "Freemium - free local routing and history, paid integrations/templates/workspaces",
-      "competition_notes": "General AI clients are crowded, but many complaints focus on price and poor workflow fit for developers.",
-      "mvp_scope": "Prompt input, model presets, local history with tags, one-click rerun, shell command snippet export",
-      "next_step": "product-agent discover --idea \"macOS app that routes developer prompts to the right AI model and keeps local searchable run history for terminal workflows\" --platform macOS --output-format json"
+      "approach": "Bundled Moltis gateway + WS client + Ask/Run modes",
+      "score": 8.0,
+      "notes": "Implemented: non-interfering PTY isolation, coexistence policy, Ollama fallback"
     },
     {
       "rank": 2,
-      "idea": "Focus Session HUD for Coders",
-      "lens": "problem_first",
-      "one_liner": "A distraction-light coding focus timer with Git/terminal-aware milestones and automatic session notes.",
-      "platform": "macOS",
-      "problem_statement": "Pomodoro apps are generic and disconnected from real coding progress. Developers want lightweight focus support tied to commits and terminal activity.",
-      "target_user": "Software developers who time-block deep work",
-      "feasibility": {
-        "solo_dev_scope": "EXCELLENT (2-4 weeks - clear local MVP)",
-        "platform_api_fit": "STRONG (menu bar app, notifications, optional git integration)",
-        "monetization_viability": "MODERATE (small ticket one-time app or bundle upsell)",
-        "competition_density": "MODERATE (many timers, fewer developer-native products)",
-        "technical_fit": "EXCELLENT (strong fit for local macOS utility development)"
-      },
-      "overall_score": 8.0,
-      "monetization_model": "Paid upfront ($9-19) with optional Pro analytics pack",
-      "competition_notes": "Category is crowded, but user complaints often mention overcomplex UX and subscription fatigue.",
-      "mvp_scope": "Menu bar timer, quick goals, optional git event markers, end-session summary note",
-      "next_step": "product-agent discover --idea \"Menu bar focus timer for developers that tracks coding sessions with git and terminal-aware milestones\" --platform macOS --output-format json"
+      "approach": "User-managed Moltis (connect only)",
+      "score": 7.2,
+      "notes": "Rejected for lifecycle UX"
     },
     {
       "rank": 3,
-      "idea": "On-Device Commit and PR Draft Assistant",
-      "lens": "technology_first",
-      "one_liner": "Use Apple Foundation Models on-device to draft commit messages and PR summaries from diffs without sending code to cloud APIs.",
-      "platform": "macOS",
-      "problem_statement": "Teams want AI writing help for commits and PRs but often cannot upload private code to third-party services.",
-      "target_user": "Privacy-conscious developers and teams on Apple Silicon Macs",
-      "feasibility": {
-        "solo_dev_scope": "STRONG (5-7 weeks - local AI integration plus git parsing)",
-        "platform_api_fit": "EXCELLENT (Foundation Models, local file/git context, Apple silicon optimization)",
-        "monetization_viability": "STRONG (clear B2C Pro pricing, possible team license later)",
-        "competition_density": "STRONG (fewer privacy-first local-first alternatives)",
-        "technical_fit": "STRONG (requires some new AI framework learning but strong core fit)"
-      },
-      "overall_score": 8.2,
-      "monetization_model": "Paid app + optional team pack (per-seat) with policy controls",
-      "competition_notes": "Cloud-based coding assistants dominate; privacy-first local positioning is a differentiator.",
-      "mvp_scope": "Select git diff, generate commit title/body options, generate PR summary + test checklist",
-      "next_step": "product-agent discover --idea \"Privacy-first macOS assistant that uses on-device Apple Foundation Models to draft commit messages and PR summaries from git diffs\" --platform macOS --output-format json"
-    },
-    {
-      "rank": 4,
-      "idea": "ADHD-Friendly Task Console for Developers",
-      "lens": "market_gap",
-      "one_liner": "A sensory-light, keyboard-first task app for developers with time-blindness cues and tiny actionable next steps.",
-      "platform": "macOS + iOS",
-      "problem_statement": "Many productivity apps are visually noisy and generic. Neurodivergent developers often need simpler, low-friction interfaces and stronger pacing cues.",
-      "target_user": "ADHD/autistic developers and knowledge workers",
-      "feasibility": {
-        "solo_dev_scope": "STRONG (6-8 weeks - phased macOS then iOS companion)",
-        "platform_api_fit": "STRONG (notifications, widgets, shortcuts, local-first sync options)",
-        "monetization_viability": "STRONG (high willingness to pay for fit and reliability)",
-        "competition_density": "STRONG (demand exists; many current options poorly matched)",
-        "technical_fit": "STRONG (mostly straightforward product engineering)"
-      },
-      "overall_score": 7.9,
-      "monetization_model": "Freemium with subscription for advanced routines and cross-device sync",
-      "competition_notes": "Review patterns frequently mention pricing frustration, complexity, and poor UX consistency.",
-      "mvp_scope": "Fast capture, next-action decomposition, focus cues, recurring routines, simple weekly review",
-      "next_step": "product-agent discover --idea \"Keyboard-first ADHD-friendly task app for developers with time-blindness cues and low-friction next actions\" --platform \"macOS + iOS\" --output-format json"
+      "approach": "Extend Ollama + MCP in Jade directly",
+      "score": 6.0,
+      "notes": "Higher maintenance than bundling Moltis"
     }
   ],
-  "ideas_filtered_out": [
+  "filtered_out": [
     {
-      "idea": "Full AI IDE clone",
-      "lens": "trend_based",
-      "reason": "Failed solo_dev_scope filter. Too broad and highly competitive for a 4-8 week solo MVP."
-    },
-    {
-      "idea": "Cloud-hosted multi-tenant CI analytics platform",
-      "lens": "market_gap",
-      "reason": "Failed technical_fit and scope filters due to backend and ops complexity."
-    },
-    {
-      "idea": "General habit tracker app",
-      "lens": "problem_first",
-      "reason": "Failed competition_density filter. Overcrowded category with weak differentiation."
+      "approach": "Replace terminal agents with Moltis exec in-pane",
+      "reason": "Violates non-interference with CLI agents in Ghostty panes"
     }
-  ],
-  "recommendation": "Start with Rank 1 (Prompt Router for Terminal Workflows). It best matches your current strengths, can ship quickly as a solo local-first product, and has a clean monetization path without requiring heavy infrastructure. Run the next_step command to validate demand before building."
+  ]
 }

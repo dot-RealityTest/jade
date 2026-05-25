@@ -94,6 +94,7 @@ struct MainWindow: View {
     @State private var fileTreeLastTerminalPaths: [WorktreeKey: String] = [:]
     @AppStorage(GeneralSettingsKeys.fileTreeSource) private var fileTreeSourceRaw = FileTreeSourcePreference.defaultValue.rawValue
     @State private var richInputPanelVisible = false
+    @State private var richInputMode: RichInputPanelMode = .send
     @State private var panelToRestoreAfterRichInput: SidePanelKind?
     @AppStorage("muxy.richInputPanelWidth") private var richInputPanelWidth: Double = .init(RichInputPanelLayout.defaultWidth)
     @AppStorage("muxy.richInputPanelHeight") private var richInputPanelHeight: Double = .init(RichInputPanelLayout.defaultHeight)
@@ -116,6 +117,7 @@ struct MainWindow: View {
     @State private var projectInspectorStore = ProjectInspectorStore.shared
     @State private var remoteSpacesStore = RemoteSpacesStore.shared
     @State private var showCommandPalette = false
+    @State private var showRichInputPreview = false
     @State private var showThemePicker = false
     @State private var showNotificationPanel = false
     @State private var showLocalPorts = false
@@ -161,7 +163,7 @@ struct MainWindow: View {
         .environment(
             \.overlayActive,
             showQuickOpen || showFindInFiles || showWorktreeSwitcher || showProjectPicker || overlayAnimatingOut || showCommandPalette ||
-                showThemePicker || showNotificationPanel || showLocalPorts || voiceRecording.isPanelVisible
+                showRichInputPreview || showThemePicker || showNotificationPanel || showLocalPorts || voiceRecording.isPanelVisible
         )
         .overlay(alignment: .bottom) {
             if voiceRecording.isPanelVisible {
@@ -243,7 +245,9 @@ struct MainWindow: View {
             onToggleAttachedVCS: toggleAttachedVCSPanel,
             onToggleFileTree: toggleFileTreePanel,
             onToggleRichInput: toggleRichInputPanel,
+            onToggleRichInputPreview: toggleRichInputPreview,
             onToggleVoiceRecording: { _ = openVoiceRecorder() },
+            onSendToObsidian: sendToObsidian,
             onExplainSelection: handleExplainSelection,
             onApplyAIAssistantCode: handleApplyAIAssistantCode
         )
@@ -392,6 +396,24 @@ struct MainWindow: View {
             .transition(.opacity.combined(with: .scale(scale: 0.98)))
         }
 
+        if showRichInputPreview, let project = activeProject {
+            RichInputPreviewOverlay(
+                projectName: project.name,
+                markdown: projectInspectorStore.workspaceMarkdown,
+                onToggleTask: { lineIndex in
+                    toggleRichInputPreviewTask(lineIndex: lineIndex)
+                },
+                onCopyAll: {
+                    copyRichInputPreviewText(projectInspectorStore.workspaceMarkdown)
+                },
+                onCopyLine: { line in
+                    copyRichInputPreviewText(line.copyText)
+                },
+                onDismiss: { showRichInputPreview = false }
+            )
+            .transition(.opacity.combined(with: .scale(scale: 0.98)))
+        }
+
         if showThemePicker {
             UtilityOverlay(onDismiss: { showThemePicker = false }, content: {
                 ThemePicker(mode: .sidebar)
@@ -526,7 +548,6 @@ struct MainWindow: View {
                 rightSidePanel
                 snippetsSidePanel
                 aiAssistantSidePanel
-                inspectorSidePanel
             }
             .overlay(alignment: .trailing) {
                 floatingRichInputOverlay
@@ -698,8 +719,6 @@ struct MainWindow: View {
                             onQuickOpen: { showQuickOpen.toggle() },
                             onToggleFileTree: toggleFileTreePanel,
                             onToggleSnippets: toggleSnippetsPanel,
-                            onToggleNotes: toggleNotesPanel,
-                            onToggleTodo: toggleTodoPanel,
                             onToggleAIAssistant: toggleAIAssistantPanel,
                             onToggleMaximize: nil
                         )
@@ -729,17 +748,6 @@ struct MainWindow: View {
         }
     }
 
-    @ViewBuilder
-    private var inspectorSidePanel: some View {
-        if notesPanelVisible || todoPanelVisible, !narrowLayoutAdjustments.hideInspector {
-            ProjectInspectorPanel(
-                project: activeProject,
-                showsNotes: notesPanelVisible,
-                showsTodo: todoPanelVisible
-            )
-        }
-    }
-
     private var worktreeOpenerItems: [OpenerItem] {
         openerItems.filter {
             if case .worktree = $0 { return true }
@@ -752,9 +760,6 @@ struct MainWindow: View {
         return WorkspaceChromePanelState(
             snippetsVisible: snippetsPanelVisible,
             snippetsSuppressed: adjustments.hideSnippets,
-            notesVisible: notesPanelVisible,
-            todoVisible: todoPanelVisible,
-            inspectorSuppressed: adjustments.hideInspector,
             aiVisible: aiAssistantPanelVisible,
             aiSuppressed: adjustments.hideAI
         )
@@ -765,8 +770,6 @@ struct MainWindow: View {
             onQuickOpen: { showQuickOpen.toggle() },
             onToggleFileTree: toggleFileTreePanel,
             onToggleSnippets: toggleSnippetsPanel,
-            onToggleNotes: toggleNotesPanel,
-            onToggleTodo: toggleTodoPanel,
             onToggleAIAssistant: toggleAIAssistantPanel
         )
     }
@@ -791,8 +794,8 @@ struct MainWindow: View {
             fileTreeWidth: CGFloat(fileTreePanelWidth),
             snippetsVisible: snippetsPanelVisible,
             aiVisible: aiAssistantPanelVisible,
-            notesVisible: notesPanelVisible,
-            todoVisible: todoPanelVisible
+            notesVisible: false,
+            todoVisible: false
         )
     }
 
@@ -828,6 +831,18 @@ struct MainWindow: View {
                 symbolName: "curlybraces",
                 subtitle: "Show or hide snippets",
                 aliases: ["commands", "vault", "scripts", "shell", "snippets"]
+            ),
+            commandItem(
+                .toggleRichInputPreview,
+                symbolName: "eye",
+                subtitle: "Quick preview of notes and tasks",
+                aliases: ["preview", "notes", "tasks", "rich input", "workspace"]
+            ),
+            commandItem(
+                .sendToObsidian,
+                symbolName: "note.text.badge.plus",
+                subtitle: "Send selection or clipboard to Obsidian inbox",
+                aliases: ["obsidian", "vault", "note", "capture", "mcp"]
             ),
             commandItem(
                 .toggleProjectNotesPanel,
@@ -1152,6 +1167,58 @@ struct MainWindow: View {
             showLocalPorts = true
         case .projectTodo:
             showTodoPanel()
+        case let .obsidianMCPTool(action, query):
+            performObsidianMCPTool(action, query: query)
+        }
+    }
+
+    private func performObsidianMCPTool(_ action: ObsidianMCPToolAction, query: String?) {
+        switch action {
+        case .sendCapture:
+            sendToObsidian()
+        case .openSettings:
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+            SettingsFocusCoordinator.shared.request(.mcpTools)
+        case .listInboxNotes:
+            runObsidianMCPTool(action) { settings in
+                ["folder": settings.inboxFolder]
+            }
+        case .searchNotes:
+            let trimmed = query?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !trimmed.isEmpty else {
+                ToastState.shared.show("Type a search query in the command palette first")
+                return
+            }
+            runObsidianMCPTool(action) { _ in
+                ["query": trimmed]
+            }
+        case .getAllTags:
+            runObsidianMCPTool(action) { _ in [:] }
+        case .getFolderStructure:
+            runObsidianMCPTool(action) { _ in [:] }
+        }
+    }
+
+    private func runObsidianMCPTool(
+        _ action: ObsidianMCPToolAction,
+        arguments: @escaping (ObsidianMCPSettings) -> [String: Any]
+    ) {
+        guard let toolName = action.toolName else { return }
+        let settings = ObsidianMCPSettingsStore.shared.snapshot
+        Task {
+            let result = await ObsidianMCPService.runTool(
+                toolName,
+                arguments: arguments(settings),
+                settings: settings
+            )
+            await MainActor.run {
+                switch result {
+                case let .success(response):
+                    ToastState.shared.show(ObsidianMCPService.summaryMessage(for: action, response: response))
+                case let .failure(error):
+                    ToastState.shared.show(error.localizedDescription)
+                }
+            }
         }
     }
 
@@ -1262,23 +1329,81 @@ struct MainWindow: View {
     }
 
     private func toggleNotesPanel() {
-        let next = SidePanelPolicy.toggling(.inspectorNotes, in: sidePanelVisibility)
-        applySidePanelVisibility(next)
-        notifyIfPanelSuppressed(
-            requestedVisible: notesPanelVisible,
-            suppressed: narrowLayoutAdjustments.hideInspector,
-            panelName: "Notes"
-        )
+        if richInputPanelVisible, richInputMode == .notes {
+            closeRichInputPanel()
+            return
+        }
+        guard activeProject != nil else {
+            ToastState.shared.show("Select a project first")
+            return
+        }
+        notesPanelVisible = true
+        UserDefaults.standard.set(true, forKey: "muxy.notesPanelVisible")
+        openRichInputPanel(mode: .notes)
     }
 
     private func toggleTodoPanel() {
-        let next = SidePanelPolicy.toggling(.inspectorTodo, in: sidePanelVisibility)
-        applySidePanelVisibility(next)
-        notifyIfPanelSuppressed(
-            requestedVisible: todoPanelVisible,
-            suppressed: narrowLayoutAdjustments.hideInspector,
-            panelName: "Todo"
+        toggleNotesPanel()
+    }
+
+    private func toggleRichInputPreview() {
+        if showRichInputPreview {
+            showRichInputPreview = false
+            return
+        }
+        guard activeProject != nil else {
+            ToastState.shared.show("Select a project first")
+            return
+        }
+        projectInspectorStore.selectProject(appState.activeProjectID)
+        showRichInputPreview = true
+    }
+
+    private func sendToObsidian() {
+        Task {
+            await performSendToObsidian()
+        }
+    }
+
+    private func performSendToObsidian() async {
+        guard let content = SendToObsidianContentCapture.capture(
+            terminalPaneID: activeTerminalPane?.id,
+            richInputText: activeRichInputState?.text,
+            richInputVisible: richInputPanelVisible
         )
+        else {
+            ToastState.shared.show("Nothing to send to Obsidian")
+            return
+        }
+
+        let result = await ObsidianSendService.send(
+            content: content,
+            projectName: activeProject?.name
+        )
+        switch result {
+        case let .success(path):
+            ToastState.shared.show("Saved to Obsidian: \(path)")
+        case let .failure(error):
+            ToastState.shared.show(error.localizedDescription)
+        }
+    }
+
+    private func toggleRichInputPreviewTask(lineIndex: Int) {
+        let markdown = projectInspectorStore.workspaceMarkdown
+        guard let updated = ProjectWorkspaceMarkdown.toggleTaskLine(at: lineIndex, in: markdown) else { return }
+        projectInspectorStore.updateWorkspace(updated)
+        NotificationCenter.default.post(name: .richInputPreviewDidMutateWorkspace, object: nil)
+    }
+
+    private func copyRichInputPreviewText(_ text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            ToastState.shared.show("Nothing to copy")
+            return
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        ToastState.shared.show("Copied")
     }
 
     private func toggleAIAssistantPanel() {
@@ -1381,11 +1506,8 @@ struct MainWindow: View {
     }
 
     private func showTodoPanel() {
-        var next = sidePanelVisibility
-        if !next.todo {
-            next = SidePanelPolicy.toggling(.inspectorTodo, in: next)
-        }
-        applySidePanelVisibility(next)
+        guard !richInputPanelVisible || richInputMode != .notes else { return }
+        toggleNotesPanel()
     }
 
     private func handleExplainSelection(notification: Notification) {
@@ -1568,6 +1690,8 @@ struct MainWindow: View {
             let panel = RichInputSidePanel(
                 state: richInputState,
                 worktreeKey: worktreeKey,
+                mode: richInputMode,
+                projectID: appState.activeProjectID,
                 onDismiss: { closeRichInputPanel() },
                 onSubmit: { appendReturn in submitRichInput(richInputState, appendReturn: appendReturn) }
             )
@@ -1816,27 +1940,41 @@ struct MainWindow: View {
     private func toggleRichInputPanel() {
         guard let richInputState = activeRichInputState else { return }
         guard richInputPanelVisible else {
-            if richInputReplacesRightSidePanel {
-                if vcsPanelVisible {
-                    panelToRestoreAfterRichInput = .vcs
-                } else if fileTreePanelVisible {
-                    panelToRestoreAfterRichInput = .fileTree
-                } else {
-                    panelToRestoreAfterRichInput = nil
-                }
-                vcsPanelVisible = false
-                fileTreePanelVisible = false
-            } else {
-                panelToRestoreAfterRichInput = nil
-            }
+            richInputMode = .send
+            prepareRichInputSidePanelOpening()
             richInputPanelVisible = true
             richInputState.focusVersion += 1
             return
         }
-        if NSApp.keyWindow?.firstResponder is MarkdownEditingTextView {
+        if richInputMode == .send, NSApp.keyWindow?.firstResponder is MarkdownEditingTextView {
             closeRichInputPanel()
         } else {
+            richInputMode = .send
             richInputState.focusVersion += 1
+        }
+    }
+
+    private func openRichInputPanel(mode: RichInputPanelMode) {
+        guard let richInputState = activeRichInputState else { return }
+        richInputMode = mode
+        prepareRichInputSidePanelOpening()
+        richInputPanelVisible = true
+        richInputState.focusVersion += 1
+    }
+
+    private func prepareRichInputSidePanelOpening() {
+        if richInputReplacesRightSidePanel {
+            if vcsPanelVisible {
+                panelToRestoreAfterRichInput = .vcs
+            } else if fileTreePanelVisible {
+                panelToRestoreAfterRichInput = .fileTree
+            } else {
+                panelToRestoreAfterRichInput = nil
+            }
+            vcsPanelVisible = false
+            fileTreePanelVisible = false
+        } else {
+            panelToRestoreAfterRichInput = nil
         }
     }
 
@@ -1846,6 +1984,11 @@ struct MainWindow: View {
 
     private func closeRichInputPanel() {
         richInputPanelVisible = false
+        notesPanelVisible = false
+        todoPanelVisible = false
+        UserDefaults.standard.set(false, forKey: "muxy.notesPanelVisible")
+        UserDefaults.standard.set(false, forKey: "muxy.todoPanelVisible")
+        richInputMode = .send
         let panelToRestore = panelToRestoreAfterRichInput
         panelToRestoreAfterRichInput = nil
         switch panelToRestore {

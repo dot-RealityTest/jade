@@ -30,3 +30,24 @@ enum RichInputPanelPosition: String, CaseIterable, Identifiable {
         }
     }
 }
+
+enum RichInputPanelMode: String, CaseIterable, Identifiable {
+    case send
+    case notes
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .send: "Send"
+        case .notes: "Notes"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .send: "keyboard"
+        case .notes: "note.text"
+        }
+    }
+}

@@ -4,8 +4,6 @@ enum ToolbarAction: String, CaseIterable, Identifiable {
     case debug
     case tools
     case snippets
-    case notes
-    case todo
     case newTab
     case quickOpen
     case sourceControl
@@ -15,8 +13,9 @@ enum ToolbarAction: String, CaseIterable, Identifiable {
     case updates
 
     static let storageKey = "muxy.toolbar.visibleActions"
-    static let defaultActions: [ToolbarAction] = [.debug, .tools, .snippets, .notes, .todo, .newTab]
+    static let defaultActions: [ToolbarAction] = [.debug, .tools, .snippets, .newTab]
     static let defaultRawValue = defaultActions.map(\.rawValue).joined(separator: ",")
+    private static let retiredRawValues: Set<String> = ["notes", "todo", "inspector"]
 
     var id: String { rawValue }
 
@@ -25,8 +24,6 @@ enum ToolbarAction: String, CaseIterable, Identifiable {
         case .debug: "Debug"
         case .tools: "Tools"
         case .snippets: "Snippets"
-        case .notes: "Notes"
-        case .todo: "Todo"
         case .newTab: "New Tab"
         case .quickOpen: "Quick Open"
         case .sourceControl: "Source Control"
@@ -42,8 +39,6 @@ enum ToolbarAction: String, CaseIterable, Identifiable {
         case .debug: "Development diagnostics badge."
         case .tools: "Open the project or focused file in external tools."
         case .snippets: "Show or hide snippets."
-        case .notes: "Show or hide project notes."
-        case .todo: "Show or hide the project todo list."
         case .newTab: "Create a terminal tab."
         case .quickOpen: "Open file search from the toolbar."
         case .sourceControl: "Open Source Control from the toolbar."
@@ -55,15 +50,11 @@ enum ToolbarAction: String, CaseIterable, Identifiable {
     }
 
     static func visibleActions(from rawValue: String) -> Set<ToolbarAction> {
-        var actions = Set(rawValue
+        Set(rawValue
             .split(separator: ",")
-            .compactMap { ToolbarAction(rawValue: String($0)) })
-        let rawParts = Set(rawValue.split(separator: ",").map(String.init))
-        if rawValue == "debug,tools,snippets,newTab" || rawParts.contains("inspector") {
-            actions.insert(.notes)
-            actions.insert(.todo)
-        }
-        return actions
+            .map(String.init)
+            .filter { !retiredRawValues.contains($0) }
+            .compactMap { ToolbarAction(rawValue: $0) })
     }
 
     static func rawValue(for actions: Set<ToolbarAction>) -> String {

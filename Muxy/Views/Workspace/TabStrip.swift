@@ -101,8 +101,6 @@ struct PaneTabStrip: View {
                     onQuickOpen: workspaceChromeHandlers.onQuickOpen,
                     onToggleFileTree: workspaceChromeHandlers.onToggleFileTree,
                     onToggleSnippets: workspaceChromeHandlers.onToggleSnippets,
-                    onToggleNotes: workspaceChromeHandlers.onToggleNotes,
-                    onToggleTodo: workspaceChromeHandlers.onToggleTodo,
                     onToggleAIAssistant: workspaceChromeHandlers.onToggleAIAssistant,
                     onToggleMaximize: onToggleMaximize
                 )

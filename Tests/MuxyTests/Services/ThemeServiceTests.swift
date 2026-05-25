@@ -9,7 +9,7 @@ struct ThemeServiceTests {
     func parseSingleThemeName() {
         let selection = ThemeService.parseThemeSelection("\"Muxy\"")
 
-        #expect(selection.displayName == "Muxy")
+        #expect(selection.displayName == "Jade")
         #expect(selection.resolvedName(isDark: true) == "Muxy")
         #expect(selection.resolvedName(isDark: false) == "Muxy")
     }
@@ -18,7 +18,7 @@ struct ThemeServiceTests {
     func parseUnquotedBareName() {
         let selection = ThemeService.parseThemeSelection("Muxy")
 
-        #expect(selection.displayName == "Muxy")
+        #expect(selection.displayName == "Jade")
         #expect(selection.resolvedName(isDark: true) == "Muxy")
         #expect(selection.resolvedName(isDark: false) == "Muxy")
     }
@@ -27,7 +27,7 @@ struct ThemeServiceTests {
     func parsePairedThemeNames() {
         let selection = ThemeService.parseThemeSelection("dark:\"Muxy\",light:\"Muxy Light\"")
 
-        #expect(selection.displayName == "Dark: Muxy, Light: Muxy Light")
+        #expect(selection.displayName == "Dark: Jade, Light: Jade Light")
         #expect(selection.resolvedName(isDark: true) == "Muxy")
         #expect(selection.resolvedName(isDark: false) == "Muxy Light")
     }

@@ -148,6 +148,12 @@ struct ShortcutActionDispatcher {
         case .toggleRichInput:
             notificationCenter.post(name: .toggleRichInput, object: nil)
             return true
+        case .toggleRichInputPreview:
+            notificationCenter.post(name: .toggleRichInputPreview, object: nil)
+            return true
+        case .sendToObsidian:
+            notificationCenter.post(name: .sendToObsidian, object: nil)
+            return true
         case .submitRichInput,
              .submitRichInputWithoutReturn:
             return false

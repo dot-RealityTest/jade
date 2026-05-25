@@ -41,7 +41,7 @@ struct GeneralSettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .settingsControlFrame(alignment: .trailing)
                 }
             }
 
@@ -77,7 +77,7 @@ struct GeneralSettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .settingsControlFrame(alignment: .trailing)
                 }
             }
 
@@ -85,14 +85,14 @@ struct GeneralSettingsView: View {
                 "Projects",
                 footer: projectsFooter
             ) {
-                SettingsRow("Muxy Picker") {
+                SettingsRow(AppIdentity.pickerLabel) {
                     Picker("", selection: $projectPickerModeRaw) {
                         ForEach(ProjectPickerMode.allCases) { mode in
                             Text(mode.label).tag(mode.rawValue)
                         }
                     }
                     .labelsHidden()
-                    .frame(width: SettingsMetrics.controlWidth, alignment: .trailing)
+                    .settingsControlFrame(alignment: .trailing)
                 }
 
                 if projectPickerMode == .custom {
@@ -117,7 +117,7 @@ struct GeneralSettingsView: View {
 
             SettingsSection(
                 "Worktrees",
-                footer: "Muxy creates a project-named subfolder inside this folder. "
+                footer: "\(AppIdentity.displayName) creates a project-named subfolder inside this folder. "
                     + "Projects can still override this from the new worktree dialog."
             ) {
                 worktreeLocationControl
@@ -142,7 +142,7 @@ struct GeneralSettingsView: View {
 
             SettingsSection("Quit", showsDivider: sentry.hasDSN) {
                 SettingsToggleRow(
-                    label: "Confirm before quitting Muxy",
+                    label: "Confirm before quitting \(AppIdentity.displayName)",
                     isOn: $confirmQuit
                 )
             }
@@ -232,14 +232,15 @@ struct GeneralSettingsView: View {
 
     private var projectsFooter: String {
         if projectPickerMode == .custom {
-            return "Muxy Picker starts in this default location. Use App Default to reset it. "
+            return "\(AppIdentity.pickerLabel) starts in this default location. Use App Default to reset it. "
                 + "Projects can stay in the sidebar after closing their last tab."
         }
-        return "Muxy Picker can use Finder or Muxy's picker. Projects can stay in the sidebar after closing their last tab."
+        return "\(AppIdentity.pickerLabel) can use Finder or \(AppIdentity.displayName)'s picker. "
+            + "Projects can stay in the sidebar after closing their last tab."
     }
 
     private var defaultWorktreeLocationText: String {
-        defaultWorktreeParentPath.isEmpty ? "Muxy App Support" : defaultWorktreeParentPath
+        defaultWorktreeParentPath.isEmpty ? AppIdentity.appSupportLabel : defaultWorktreeParentPath
     }
 
     private var worktreeLocationControl: some View {

@@ -23,9 +23,10 @@ struct ThemeSelection: Equatable {
 
     var displayName: String {
         if let darkName, let lightName {
-            return "Dark: \(darkName), Light: \(lightName)"
+            return "Dark: \(AppIdentity.themeDisplayName(darkName)), Light: \(AppIdentity.themeDisplayName(lightName))"
         }
-        return fallbackName ?? rawValue
+        let name = fallbackName ?? rawValue
+        return AppIdentity.themeDisplayName(name)
     }
 
     func resolvedName(isDark: Bool) -> String? {
