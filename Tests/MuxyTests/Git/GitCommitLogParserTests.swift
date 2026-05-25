@@ -17,7 +17,7 @@ struct GitCommitLogParserTests {
         refs: String = "",
         parents: String = ""
     ) -> String {
-        [hash, shortHash, subject, author, date, refs, parents]
+        GitCommitLogParser.graphMarker + [hash, shortHash, subject, author, date, refs, parents]
             .joined(separator: Self.field) + Self.record
     }
 
