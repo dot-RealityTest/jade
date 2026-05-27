@@ -152,6 +152,9 @@ final class GhosttyRuntimeEventAdapter: GhosttyRuntimeEventHandling {
 
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(String(cString: dataPtr), forType: .string)
+            DispatchQueue.main.async {
+                TerminalCopyFeedback.showCopiedIndicator()
+            }
             return
         }
     }

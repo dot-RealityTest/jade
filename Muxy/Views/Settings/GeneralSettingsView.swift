@@ -23,7 +23,7 @@ struct GeneralSettingsView: View {
     @AppStorage(QuitConfirmationPreferences.confirmQuitKey)
     private var confirmQuit = true
     @AppStorage(GeneralSettingsKeys.autoCopyTerminalSelection)
-    private var autoCopyTerminalSelection = false
+    private var autoCopyTerminalSelection = true
     @State private var projectPickerDefaultLocationSettings = ProjectPickerDefaultLocationSettingsModel()
     @State private var sentry = SentryService.shared
 
@@ -125,7 +125,8 @@ struct GeneralSettingsView: View {
 
             SettingsSection(
                 "Terminal",
-                footer: "When enabled, releasing the mouse after selecting text in the terminal copies it to the clipboard."
+                footer: "Selected text copies to the clipboard when you release the mouse. "
+                    + "A brief confirmation appears in the window corner."
             ) {
                 SettingsToggleRow(
                     label: "Auto-copy selected text",

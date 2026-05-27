@@ -10,12 +10,29 @@ final class MuxyConfig {
     let ghosttyConfigURL: URL
 
     private static let ghosttyConfigFilename = "ghostty.conf"
+    private static let terminalRenderDefaultsMigrationKey = "terminalRenderDefaultsV1"
     private static let systemGhosttyConfigPath = NSHomeDirectory() + "/.config/ghostty/config"
+    private let userDefaults: UserDefaults
 
-    private init() {
+    private init(ghosttyConfigURL: URL, userDefaults: UserDefaults, seedFromSystem: Bool) {
+        self.ghosttyConfigURL = ghosttyConfigURL
+        self.userDefaults = userDefaults
+        if seedFromSystem {
+            seedFromSystemGhosttyIfNeeded()
+        }
+    }
+
+    private convenience init() {
         let dir = MuxyFileStorage.appSupportDirectory()
-        ghosttyConfigURL = dir.appendingPathComponent(Self.ghosttyConfigFilename)
-        seedFromSystemGhosttyIfNeeded()
+        self.init(
+            ghosttyConfigURL: dir.appendingPathComponent(Self.ghosttyConfigFilename),
+            userDefaults: .standard,
+            seedFromSystem: true
+        )
+    }
+
+    convenience init(ghosttyConfigURL: URL, userDefaults: UserDefaults) {
+        self.init(ghosttyConfigURL: ghosttyConfigURL, userDefaults: userDefaults, seedFromSystem: false)
     }
 
     var ghosttyConfigPath: String {
@@ -57,6 +74,27 @@ final class MuxyConfig {
         let trimmed = lines[index].trimmingCharacters(in: .whitespaces)
         let afterKey = trimmed.dropFirst(key.count).trimmingCharacters(in: .whitespaces)
         return afterKey.dropFirst().trimmingCharacters(in: .whitespaces)
+    }
+
+    @discardableResult
+    func applyTerminalRenderDefaultsIfNeeded() -> Bool {
+        var changed = false
+
+        if configValue(for: "minimum-contrast") == nil {
+            updateConfigValue("minimum-contrast", value: "1.1")
+            changed = true
+        }
+
+        let migrationKey = Self.terminalRenderDefaultsMigrationKey
+        guard !userDefaults.bool(forKey: migrationKey) else { return changed }
+
+        if configValue(for: "cursor-style") == "block" {
+            updateConfigValue("cursor-style", value: "bar")
+            changed = true
+        }
+
+        userDefaults.set(true, forKey: migrationKey)
+        return changed
     }
 
     private func findConfigLineIndex(for key: String, in lines: [String]) -> Int? {

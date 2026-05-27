@@ -43,6 +43,13 @@ struct MarkdownSlashCommandSessionTests {
         #expect(matches.contains(where: { $0.id == "heading1" }))
         #expect(!matches.contains(where: { $0.id == "todo" }))
     }
+    @Test("moves slash selection within bounds")
+    func movesSlashSelectionWithinBounds() {
+        #expect(MarkdownSlashCommandSelection.movedIndex(from: 0, delta: -1, commandCount: 3) == 0)
+        #expect(MarkdownSlashCommandSelection.movedIndex(from: 1, delta: 1, commandCount: 3) == 2)
+        #expect(MarkdownSlashCommandSelection.movedIndex(from: 2, delta: 1, commandCount: 3) == 2)
+        #expect(MarkdownSlashCommandSelection.clampedIndex(5, commandCount: 3) == 2)
+    }
 }
 
 @Suite("ProjectWorkspaceMarkdown")

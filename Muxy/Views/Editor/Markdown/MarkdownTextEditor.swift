@@ -21,6 +21,7 @@ struct MarkdownTextEditor: NSViewRepresentable {
         var onPasteFileURL: ((URL) -> Void)?
         var onContentHeightChange: ((CGFloat) -> Void)?
         var onSlashCommandContextChange: ((MarkdownSlashCommandContext?) -> Void)?
+        var onSlashMenuKey: ((MarkdownSlashMenuKey) -> Bool)?
     }
 
     @Binding var text: String
@@ -111,6 +112,9 @@ struct MarkdownTextEditor: NSViewRepresentable {
         textView.onSelectionChange = { [weak coordinator = context.coordinator] in
             coordinator?.reportSlashCommandContext()
         }
+        textView.onSlashMenuKey = { [weak coordinator = context.coordinator] key in
+            coordinator?.parent.callbacks.onSlashMenuKey?(key) ?? false
+        }
 
         if textView.string != text {
             textView.string = text
@@ -151,6 +155,9 @@ struct MarkdownTextEditor: NSViewRepresentable {
         if context.coordinator.lastFocusVersion != focusVersion {
             context.coordinator.lastFocusVersion = focusVersion
             textView.grabFirstResponder()
+        }
+        textView.onSlashMenuKey = { [weak coordinator = context.coordinator] key in
+            coordinator?.parent.callbacks.onSlashMenuKey?(key) ?? false
         }
         context.coordinator.applyPendingSlashCommandIfNeeded(request: slashApplyRequest)
         DispatchQueue.main.async { [weak coordinator = context.coordinator] in
@@ -311,6 +318,7 @@ final class MarkdownEditingTextView: NSTextView {
     var onPasteImageData: ((Data) -> Void)?
     var onPasteFileURL: ((URL) -> Void)?
     var onSelectionChange: (() -> Void)?
+    var onSlashMenuKey: ((MarkdownSlashMenuKey) -> Bool)?
     var pendingFocusGrab: Bool = false
 
     override func viewDidMoveToWindow() {
@@ -331,6 +339,7 @@ final class MarkdownEditingTextView: NSTextView {
     }
 
     override func keyDown(with event: NSEvent) {
+        if handleSlashMenuKeyDown(event) { return }
         let store = KeyBindingStore.shared
         if store.combo(for: .submitRichInput).matches(event: event) {
             let callback = onSubmit
@@ -359,6 +368,20 @@ final class MarkdownEditingTextView: NSTextView {
             }
         }
         super.keyDown(with: event)
+    }
+
+    private func handleSlashMenuKeyDown(_ event: NSEvent) -> Bool {
+        guard let onSlashMenuKey else { return false }
+        let key: MarkdownSlashMenuKey? = switch event.keyCode {
+        case 126: .up
+        case 125: .down
+        case 36,
+             76: .confirm
+        case 53: .cancel
+        default: nil
+        }
+        guard let key else { return false }
+        return onSlashMenuKey(key)
     }
 
     func grabFirstResponder() {

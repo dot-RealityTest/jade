@@ -14,6 +14,7 @@ struct RichInputSidePanel: View {
     @State private var inspectorStore = ProjectInspectorStore.shared
     @State private var workspaceText = ""
     @State private var slashContext: MarkdownSlashCommandContext?
+    @State private var slashSelectedIndex = 0
     @State private var slashApplyRequest: MarkdownSlashCommandApplyRequest?
     @AppStorage(RichInputPreferences.fontSizeKey) private var fontSize: Double = RichInputPreferences.defaultFontSize
     @AppStorage(RichInputPreferences.positionKey) private var position: RichInputPanelPosition = RichInputPreferences
@@ -107,15 +108,12 @@ struct RichInputSidePanel: View {
             }
 
             if let activeSlashContext = slashContext {
+                let commands = filteredSlashCommands(for: activeSlashContext)
                 SlashCommandMenuView(
-                    commands: MarkdownSlashCommandSession.filteredCommands(query: activeSlashContext.query),
+                    commands: commands,
+                    selectedCommandID: selectedSlashCommandID(in: commands),
                     onSelect: { command in
-                        slashApplyRequest = MarkdownSlashCommandApplyRequest(
-                            token: UUID(),
-                            command: command,
-                            replaceRange: activeSlashContext.replaceRange
-                        )
-                        slashContext = nil
+                        applySlashCommand(command, replaceRange: activeSlashContext.replaceRange)
                     }
                 )
                 .padding(.horizontal, 12)
@@ -231,7 +229,13 @@ struct RichInputSidePanel: View {
                 guard !state.fileAttachments.contains(url) else { return }
                 state.fileAttachments.append(url)
             },
-            onSlashCommandContextChange: { slashContext = $0 }
+            onSlashCommandContextChange: { context in
+                if context != nil {
+                    slashSelectedIndex = 0
+                }
+                slashContext = context
+            },
+            onSlashMenuKey: handleSlashMenuKey
         )
     }
 
@@ -239,8 +243,64 @@ struct RichInputSidePanel: View {
         MarkdownTextEditor.Callbacks(
             onIncreaseFontSize: increaseFontSize,
             onDecreaseFontSize: decreaseFontSize,
-            onSlashCommandContextChange: { slashContext = $0 }
+            onSlashCommandContextChange: { context in
+                if context != nil {
+                    slashSelectedIndex = 0
+                }
+                slashContext = context
+            },
+            onSlashMenuKey: handleSlashMenuKey
         )
+    }
+
+    private func filteredSlashCommands(for context: MarkdownSlashCommandContext) -> [MarkdownSlashCommand] {
+        MarkdownSlashCommandSession.filteredCommands(query: context.query)
+    }
+
+    private func selectedSlashCommandID(in commands: [MarkdownSlashCommand]) -> String? {
+        guard !commands.isEmpty else { return nil }
+        let index = MarkdownSlashCommandSelection.clampedIndex(slashSelectedIndex, commandCount: commands.count)
+        return commands[index].id
+    }
+
+    private func handleSlashMenuKey(_ key: MarkdownSlashMenuKey) -> Bool {
+        guard let activeSlashContext = slashContext else { return false }
+        let commands = filteredSlashCommands(for: activeSlashContext)
+        switch key {
+        case .up:
+            slashSelectedIndex = MarkdownSlashCommandSelection.movedIndex(
+                from: slashSelectedIndex,
+                delta: -1,
+                commandCount: commands.count
+            )
+            return true
+        case .down:
+            slashSelectedIndex = MarkdownSlashCommandSelection.movedIndex(
+                from: slashSelectedIndex,
+                delta: 1,
+                commandCount: commands.count
+            )
+            return true
+        case .confirm:
+            guard !commands.isEmpty else { return true }
+            let index = MarkdownSlashCommandSelection.clampedIndex(slashSelectedIndex, commandCount: commands.count)
+            applySlashCommand(commands[index], replaceRange: activeSlashContext.replaceRange)
+            return true
+        case .cancel:
+            slashContext = nil
+            slashSelectedIndex = 0
+            return true
+        }
+    }
+
+    private func applySlashCommand(_ command: MarkdownSlashCommand, replaceRange: NSRange) {
+        slashApplyRequest = MarkdownSlashCommandApplyRequest(
+            token: UUID(),
+            command: command,
+            replaceRange: replaceRange
+        )
+        slashContext = nil
+        slashSelectedIndex = 0
     }
 
     private var clampedFontSize: CGFloat {

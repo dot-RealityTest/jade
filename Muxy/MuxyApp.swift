@@ -280,6 +280,10 @@ extension AppDelegate {
         GhosttyService.shared.applyInitialColorScheme()
         ThemeService.shared.applyDefaultThemeIfNeeded()
         ThemeService.shared.migrateToPairedThemeIfNeeded()
+        GeneralSettingsMigration.applyIfNeeded()
+        if MuxyConfig.shared.applyTerminalRenderDefaultsIfNeeded() {
+            GhosttyService.shared.reloadConfig()
+        }
         observeSystemAppearanceChanges()
         consumeLaunchArguments()
         let launchDuration = String(describing: launchStart.duration(to: launchClock.now))

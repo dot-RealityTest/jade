@@ -95,6 +95,24 @@ struct MarkdownSlashCommandApplyRequest: Equatable {
     let replaceRange: NSRange
 }
 
+enum MarkdownSlashMenuKey {
+    case up
+    case down
+    case confirm
+    case cancel
+}
+
+enum MarkdownSlashCommandSelection {
+    static func clampedIndex(_ index: Int, commandCount: Int) -> Int {
+        guard commandCount > 0 else { return 0 }
+        return min(max(index, 0), commandCount - 1)
+    }
+
+    static func movedIndex(from index: Int, delta: Int, commandCount: Int) -> Int {
+        clampedIndex(index + delta, commandCount: commandCount)
+    }
+}
+
 enum MarkdownSlashCommandSession {
     static func context(in text: String, selectedLocation: Int) -> MarkdownSlashCommandContext? {
         let ns = text as NSString

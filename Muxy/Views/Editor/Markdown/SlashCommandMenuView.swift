@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SlashCommandMenuView: View {
     let commands: [MarkdownSlashCommand]
+    var selectedCommandID: String?
     let onSelect: (MarkdownSlashCommand) -> Void
 
     var body: some View {
@@ -30,6 +31,7 @@ struct SlashCommandMenuView: View {
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
+                        .background(rowBackground(for: command))
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
@@ -46,6 +48,11 @@ struct SlashCommandMenuView: View {
                 .strokeBorder(MuxyTheme.border, lineWidth: 1)
         }
         .shadow(color: .black.opacity(0.25), radius: 10, y: 4)
+    }
+
+    private func rowBackground(for command: MarkdownSlashCommand) -> some View {
+        RoundedRectangle(cornerRadius: 6, style: .continuous)
+            .fill(selectedCommandID == command.id ? MuxyTheme.accent.opacity(0.14) : Color.clear)
     }
 
     private var emptyRow: some View {

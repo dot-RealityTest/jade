@@ -47,7 +47,6 @@ final class GhosttyTerminalNSView: NSView {
 
     private var keyTextAccumulator: [String] = []
     private var currentKeyEvent: NSEvent?
-    private var commandSelectorCalled = false
     private var inputTrackingDecisionCache: (expiresAt: Date, canRecord: Bool)?
 
     init(
@@ -473,55 +472,34 @@ final class GhosttyTerminalNSView: NSView {
         let hadMarkedText = hasMarkedText()
         currentKeyEvent = event
         keyTextAccumulator = []
-        commandSelectorCalled = false
         let interpretEvent = optionAsAlt ? eventStrippingOption(event) : event
         interpretKeyEvents([interpretEvent])
         currentKeyEvent = nil
 
         syncPreedit(clearIfNeeded: hadMarkedText)
 
-        let commandWasCalled = commandSelectorCalled
-
         if !keyTextAccumulator.isEmpty {
             for text in keyTextAccumulator {
-                var keyEvent = buildKeyEvent(from: event, action: action)
-                keyEvent.consumed_mods = commandWasCalled ? GHOSTTY_MODS_NONE : consumedModsFromFlags(
-                    flags,
-                    consumeOption: !optionAsAlt
+                sendKeyEvent(
+                    event,
+                    action: action,
+                    translationMods: interpretEvent.modifierFlags,
+                    text: text,
+                    composing: false
                 )
-                text.withCString { ptr in
-                    keyEvent.text = ptr
-                    recordTextInput(text)
-                    _ = ghostty_surface_key(surface, keyEvent)
-                }
             }
         } else {
-            var keyEvent = buildKeyEvent(from: event, action: action)
-            keyEvent.consumed_mods = commandWasCalled ? GHOSTTY_MODS_NONE : consumedModsFromFlags(
-                flags,
-                consumeOption: !optionAsAlt
+            sendKeyEvent(
+                event,
+                action: action,
+                translationMods: interpretEvent.modifierFlags,
+                text: interpretEvent.ghosttyCharacters,
+                composing: hasMarkedText() || hadMarkedText
             )
-            keyEvent.composing = hasMarkedText() || hadMarkedText
-
-            let text = filterSpecialCharacters(event.characters ?? "")
-            if !text.isEmpty, !keyEvent.composing {
-                text.withCString { ptr in
-                    keyEvent.text = ptr
-                    recordTextInput(text)
-                    _ = ghostty_surface_key(surface, keyEvent)
-                }
-            } else {
-                recordSpecialKey(event)
-                keyEvent.consumed_mods = GHOSTTY_MODS_NONE
-                keyEvent.text = nil
-                _ = ghostty_surface_key(surface, keyEvent)
-            }
         }
     }
 
-    override func doCommand(by selector: Selector) {
-        commandSelectorCalled = true
-    }
+    override func doCommand(by _: Selector) {}
 
     override func insertText(_ insertString: Any) {
         insertText(insertString, replacementRange: NSRange(location: NSNotFound, length: 0))
@@ -616,11 +594,18 @@ final class GhosttyTerminalNSView: NSView {
 
     private func autoCopySelectionIfEnabled() {
         guard UserDefaults.standard.bool(forKey: GeneralSettingsKeys.autoCopyTerminalSelection) else { return }
-        guard let selection = readSelectionText(), !selection.isEmpty else { return }
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(selection, forType: .string)
-        ToastState.shared.show("Copied")
+        guard let selection = readSelectionText() else { return }
+        Task { @MainActor in
+            TerminalCopyFeedback.copyToPasteboard(selection)
+        }
+    }
+
+    @objc
+    private func handleContextCopy(_: Any?) {
+        guard let selection = readSelectionText() else { return }
+        Task { @MainActor in
+            TerminalCopyFeedback.copyToPasteboard(selection)
+        }
     }
 
     override func mouseDragged(with event: NSEvent) {
@@ -785,14 +770,22 @@ final class GhosttyTerminalNSView: NSView {
 
     private func presentContextMenu(with event: NSEvent, snippetCommand: String?) {
         let menu = NSMenu(title: "Terminal")
+        let hasSelection = readSelectionText().map { !$0.isEmpty } ?? false
+
+        let copy = NSMenuItem(title: "Copy", action: #selector(handleContextCopy(_:)), keyEquivalent: "c")
+        copy.target = self
+        copy.keyEquivalentModifierMask = .command
+        copy.isEnabled = hasSelection
+        menu.addItem(copy)
 
         if let snippetCommand {
             let saveSnippet = NSMenuItem(title: "Save as Snippet", action: #selector(handleContextSaveSnippet(_:)), keyEquivalent: "")
             saveSnippet.target = self
             saveSnippet.representedObject = snippetCommand
             menu.addItem(saveSnippet)
-            menu.addItem(.separator())
         }
+
+        menu.addItem(.separator())
 
         let paste = NSMenuItem(title: "Paste", action: #selector(handleContextPaste(_:)), keyEquivalent: "")
         paste.target = self
@@ -852,6 +845,7 @@ final class GhosttyTerminalNSView: NSView {
         return item
     }
 
+
     @objc
     private func handleContextPaste(_: Any?) {
         window?.makeFirstResponder(self)
@@ -908,58 +902,46 @@ final class GhosttyTerminalNSView: NSView {
         ghostty_surface_mouse_scroll(surface, event.scrollingDeltaX, event.scrollingDeltaY, mods)
     }
 
-    private func buildKeyEvent(from event: NSEvent, action: ghostty_input_action_e) -> ghostty_input_key_s {
-        var keyEvent = ghostty_input_key_s()
-        keyEvent.action = action
+    private func buildKeyEvent(
+        from event: NSEvent,
+        action: ghostty_input_action_e,
+        translationMods: NSEvent.ModifierFlags? = nil
+    ) -> ghostty_input_key_s {
+        event.ghosttyKeyEvent(action, translationMods: translationMods)
+    }
 
-        let normalized = event.type == .keyDown || event.type == .keyUp
-            ? KeyCombo.normalized(key: event.charactersIgnoringModifiers ?? "", keyCode: event.keyCode)
-            : KeyCombo.normalized(key: "", keyCode: event.keyCode)
-        if let mappedCode = KeyCombo.keyCode(for: normalized) {
-            keyEvent.keycode = UInt32(mappedCode)
-        } else {
-            keyEvent.keycode = UInt32(event.keyCode)
+    private func sendKeyEvent(
+        _ event: NSEvent,
+        action: ghostty_input_action_e,
+        translationMods: NSEvent.ModifierFlags?,
+        text: String?,
+        composing: Bool
+    ) {
+        guard let surface else { return }
+        var keyEvent = buildKeyEvent(from: event, action: action, translationMods: translationMods)
+        keyEvent.composing = composing
+
+        if let text,
+           !text.isEmpty,
+           !composing,
+           let codepoint = text.utf8.first,
+           codepoint >= 0x20
+        {
+            text.withCString { ptr in
+                keyEvent.text = ptr
+                recordTextInput(text)
+                _ = ghostty_surface_key(surface, keyEvent)
+            }
+            return
         }
 
-        keyEvent.mods = modsFromEvent(event)
-        keyEvent.consumed_mods = GHOSTTY_MODS_NONE
-        keyEvent.composing = false
+        recordSpecialKey(event)
         keyEvent.text = nil
-        keyEvent.unshifted_codepoint = unshiftedCodepoint(from: event)
-        return keyEvent
-    }
-
-    private func consumedModsFromFlags(
-        _ flags: NSEvent.ModifierFlags,
-        consumeOption: Bool = true
-    ) -> ghostty_input_mods_e {
-        var mods = GHOSTTY_MODS_NONE.rawValue
-        if flags.contains(.shift) { mods |= GHOSTTY_MODS_SHIFT.rawValue }
-        if consumeOption, flags.contains(.option) { mods |= GHOSTTY_MODS_ALT.rawValue }
-        return ghostty_input_mods_e(rawValue: mods)
-    }
-
-    private enum RightModifierMask {
-        static let shift: UInt = 0x04
-        static let control: UInt = 0x2000
-        static let option: UInt = 0x40
-        static let command: UInt = 0x10
+        _ = ghostty_surface_key(surface, keyEvent)
     }
 
     private func modsFromEvent(_ event: NSEvent) -> ghostty_input_mods_e {
-        var mods = GHOSTTY_MODS_NONE.rawValue
-        let flags = event.modifierFlags
-        let raw = flags.rawValue
-        if flags.contains(.shift) { mods |= GHOSTTY_MODS_SHIFT.rawValue }
-        if flags.contains(.control) { mods |= GHOSTTY_MODS_CTRL.rawValue }
-        if flags.contains(.option) { mods |= GHOSTTY_MODS_ALT.rawValue }
-        if flags.contains(.command) { mods |= GHOSTTY_MODS_SUPER.rawValue }
-        if flags.contains(.capsLock) { mods |= GHOSTTY_MODS_CAPS.rawValue }
-        if raw & RightModifierMask.shift != 0 { mods |= GHOSTTY_MODS_SHIFT_RIGHT.rawValue }
-        if raw & RightModifierMask.control != 0 { mods |= GHOSTTY_MODS_CTRL_RIGHT.rawValue }
-        if raw & RightModifierMask.option != 0 { mods |= GHOSTTY_MODS_ALT_RIGHT.rawValue }
-        if raw & RightModifierMask.command != 0 { mods |= GHOSTTY_MODS_SUPER_RIGHT.rawValue }
-        return ghostty_input_mods_e(rawValue: mods)
+        GhosttyInputMods.from(event: event)
     }
 
     private func translatedOptionAsAlt(for event: NSEvent) -> Bool {
@@ -1017,13 +999,6 @@ final class GhosttyTerminalNSView: NSView {
         }
     }
 
-    private func filterSpecialCharacters(_ text: String) -> String {
-        guard let scalar = text.unicodeScalars.first else { return "" }
-        let value = scalar.value
-        if value < 0x20 || (0xF700 ... 0xF8FF).contains(value) { return "" }
-        return text
-    }
-
     private func shortcutText(from event: NSEvent) -> String {
         let normalized = KeyCombo.normalized(key: event.charactersIgnoringModifiers ?? "", keyCode: event.keyCode)
         if normalized.unicodeScalars.count == 1,
@@ -1036,21 +1011,6 @@ final class GhosttyTerminalNSView: NSView {
             return String(scalar)
         }
         return event.charactersIgnoringModifiers ?? event.characters ?? ""
-    }
-
-    private func unshiftedCodepoint(from event: NSEvent) -> UInt32 {
-        guard event.type == .keyDown || event.type == .keyUp else { return 0 }
-        let normalized = KeyCombo.normalized(key: event.charactersIgnoringModifiers ?? "", keyCode: event.keyCode)
-        if let scalar = normalized.unicodeScalars.first, normalized.unicodeScalars.count == 1 {
-            return scalar.value
-        }
-        if let scalar = KeyCombo.scalar(for: event.keyCode) {
-            return scalar.value
-        }
-        guard let chars = event.characters(byApplyingModifiers: []),
-              let scalar = chars.unicodeScalars.first
-        else { return 0 }
-        return scalar.value
     }
 
     func sendSearchQuery(_ needle: String) {
@@ -1310,8 +1270,10 @@ extension GhosttyTerminalNSView: @preconcurrency NSTextInputClient {
         guard !text.isEmpty else { return }
 
         if currentKeyEvent != nil {
+            if GhosttyInputText.isPrivateUseFunctionKey(text) { return }
             keyTextAccumulator.append(text)
         } else if let surface {
+            if GhosttyInputText.isPrivateUseFunctionKey(text) { return }
             text.withCString { ptr in
                 var keyEvent = ghostty_input_key_s()
                 keyEvent.action = GHOSTTY_ACTION_PRESS

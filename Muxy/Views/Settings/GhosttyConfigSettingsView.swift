@@ -12,7 +12,7 @@ struct GhosttyConfigSettingsView: View {
     @State private var fontSize = ""
     @State private var themeName = ""
     @State private var backgroundOpacity = ""
-    @State private var cursorStyle = CursorStyle.block
+    @State private var cursorStyle = CursorStyle.bar
     @State private var mouseHideWhileTyping = false
     @State private var copyOnSelect = false
     @State private var windowDecoration = true
@@ -225,7 +225,7 @@ struct GhosttyConfigSettingsView: View {
         fontSize = config.configValue(for: "font-size") ?? ""
         themeName = config.configValue(for: "theme")?.trimmingCharacters(in: CharacterSet(charactersIn: "\"")) ?? ""
         backgroundOpacity = config.configValue(for: "background-opacity") ?? ""
-        cursorStyle = CursorStyle(rawValue: config.configValue(for: "cursor-style") ?? "block") ?? .block
+        cursorStyle = CursorStyle(rawValue: config.configValue(for: "cursor-style") ?? "bar") ?? .bar
         mouseHideWhileTyping = parseBool(config.configValue(for: "mouse-hide-while-typing"))
         copyOnSelect = parseBool(config.configValue(for: "copy-on-select"))
         windowDecoration = parseBool(config.configValue(for: "window-decoration"), default: true)
