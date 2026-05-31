@@ -108,6 +108,7 @@ strip -Sx "$APP_BUNDLE/Contents/MacOS/Jade"
 
 if [[ -d "$SPM_BUILD_DIR/Muxy_Muxy.bundle" ]]; then
     cp -R "$SPM_BUILD_DIR/Muxy_Muxy.bundle" "$APP_BUNDLE/Contents/Resources/Muxy_Muxy.bundle"
+    cp "$PROJECT_ROOT/Muxy/Resources/AppIcon.png" "$APP_BUNDLE/Contents/Resources/Muxy_Muxy.bundle/AppIcon.png"
 fi
 
 echo "==> Removing experimental Moltis assets from release bundle"

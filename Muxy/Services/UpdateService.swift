@@ -45,9 +45,14 @@ final class UpdateService: NSObject {
     @ObservationIgnored private let controller: SPUStandardUpdaterController
     @ObservationIgnored private var cancellables = Set<AnyCancellable>()
     @ObservationIgnored private let feedDelegate: FeedDelegate
+    @ObservationIgnored private var hasStarted = false
 
     private(set) var canCheckForUpdates = false
     private(set) var availableUpdateVersion: String?
+
+    var isEnabled: Bool {
+        Self.isUpdateChecksEnabled()
+    }
 
     var channel: UpdateChannel {
         get { feedDelegate.channel }
@@ -56,6 +61,7 @@ final class UpdateService: NSObject {
             feedDelegate.channel = newValue
             UserDefaults.standard.set(newValue.rawValue, forKey: UpdateChannel.storageKey)
             availableUpdateVersion = nil
+            guard isEnabled, hasStarted else { return }
             updater.checkForUpdatesInBackground()
         }
     }
@@ -82,15 +88,42 @@ final class UpdateService: NSObject {
         applyFeatureFlags()
     }
 
+    nonisolated static func isUpdateChecksEnabled(defaults: UserDefaults = .standard) -> Bool {
+        #if DEBUG
+        guard ProcessInfo.processInfo.environment["JADE_ENABLE_UPDATES"] == "1" else { return false }
+        #endif
+        if defaults.object(forKey: GeneralSettingsKeys.automaticUpdateChecks) == nil {
+            return true
+        }
+        return defaults.bool(forKey: GeneralSettingsKeys.automaticUpdateChecks)
+    }
+
     func start() {
+        applyAutomaticChecksPreference()
+        guard isEnabled else {
+            logger.debug("Sparkle updater disabled for this build")
+            return
+        }
+        guard !hasStarted else { return }
         do {
             try updater.start()
+            hasStarted = true
         } catch {
             logger.warning("Sparkle updater failed to start: \(error.localizedDescription)")
         }
     }
 
+    func applyAutomaticChecksPreference(defaults: UserDefaults = .standard) {
+        let enabled = Self.isUpdateChecksEnabled(defaults: defaults)
+        updater.automaticallyChecksForUpdates = enabled
+        updater.automaticallyDownloadsUpdates = false
+        if !enabled {
+            availableUpdateVersion = nil
+        }
+    }
+
     func checkForUpdates() {
+        guard isEnabled, hasStarted else { return }
         controller.checkForUpdates(nil)
     }
 
@@ -107,6 +140,7 @@ final class UpdateService: NSObject {
             .compactMap { $0.userInfo?[SUUpdaterAppcastItemNotificationKey] as? SUAppcastItem }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] item in
+                guard self?.isEnabled == true else { return }
                 self?.availableUpdateVersion = item.displayVersionString
             }
             .store(in: &cancellables)

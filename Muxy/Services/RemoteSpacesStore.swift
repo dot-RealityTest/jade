@@ -102,6 +102,7 @@ final class RemoteSpacesStore {
     private func save() {
         do {
             try persistence.saveRemoteSpaces(spaces)
+            NotificationCenter.default.post(name: .remoteSpacesDidChange, object: nil)
         } catch {
             remoteSpacesLogger.error("Failed to save remote spaces: \(error.localizedDescription)")
         }

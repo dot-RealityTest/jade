@@ -210,24 +210,35 @@ private struct SettingsPageHeader: View {
     }
 }
 
+private final class SettingsWindowAnchorView: NSView {
+    var minSize = NSSize(width: WindowLayoutMetrics.settingsMinWidth, height: WindowLayoutMetrics.settingsMinHeight)
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        applyWindowPolicy()
+    }
+
+    func applyWindowPolicy() {
+        guard let window else { return }
+        var styleMask = window.styleMask
+        styleMask.insert(.resizable)
+        styleMask.insert(.miniaturizable)
+        window.styleMask = styleMask
+        window.minSize = minSize
+    }
+}
+
 private struct SettingsWindowConfigurator: NSViewRepresentable {
     let minSize: NSSize
 
-    func makeNSView(context _: Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async { [weak view] in
-            guard let window = view?.window else { return }
-            window.styleMask.insert(.resizable)
-            window.minSize = minSize
-            if window.frame.width < minSize.width || window.frame.height < minSize.height {
-                var frame = window.frame
-                frame.size.width = max(frame.size.width, minSize.width)
-                frame.size.height = max(frame.size.height, minSize.height)
-                window.setFrame(frame, display: true)
-            }
-        }
+    func makeNSView(context _: Context) -> SettingsWindowAnchorView {
+        let view = SettingsWindowAnchorView()
+        view.minSize = minSize
         return view
     }
 
-    func updateNSView(_: NSView, context _: Context) {}
+    func updateNSView(_ nsView: SettingsWindowAnchorView, context _: Context) {
+        nsView.minSize = minSize
+        nsView.applyWindowPolicy()
+    }
 }

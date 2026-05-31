@@ -64,6 +64,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
     case toggleSidebar
     case toggleFileTree
     case toggleSnippetsPanel
+    case toggleSnippetsScope
     case toggleProjectNotesPanel
     case toggleProjectTodoPanel
     case toggleInspectorPanel
@@ -131,6 +132,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         .toggleSidebar,
         .toggleFileTree,
         .toggleSnippetsPanel,
+        .toggleSnippetsScope,
         .toggleProjectNotesPanel,
         .toggleProjectTodoPanel,
         .toggleAIUsage,
@@ -218,6 +220,7 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         case .toggleSidebar: ShortcutMetadata(displayName: "Toggle Sidebar", category: "App", scope: .mainWindow)
         case .toggleFileTree: ShortcutMetadata(displayName: "Toggle File Tree", category: "App", scope: .mainWindow)
         case .toggleSnippetsPanel: ShortcutMetadata(displayName: "Toggle Snippets", category: "App", scope: .mainWindow)
+        case .toggleSnippetsScope: ShortcutMetadata(displayName: "Toggle Snippet Scope", category: "App", scope: .mainWindow)
         case .toggleProjectNotesPanel: ShortcutMetadata(displayName: "Toggle Notes", category: "App", scope: .mainWindow)
         case .toggleProjectTodoPanel: ShortcutMetadata(displayName: "Toggle Todo", category: "App", scope: .mainWindow)
         case .toggleInspectorPanel: ShortcutMetadata(displayName: "Toggle Notes", category: "App", scope: .mainWindow)
@@ -362,6 +365,7 @@ struct KeyBinding: Codable, Identifiable {
         Self(action: .toggleSidebar, combo: KeyCombo(key: "b", command: true)),
         Self(action: .toggleFileTree, combo: KeyCombo(key: "e", command: true)),
         Self(action: .toggleSnippetsPanel, combo: KeyCombo(key: "j", command: true)),
+        Self(action: .toggleSnippetsScope, combo: KeyCombo(key: "j", command: true, control: true)),
         Self(action: .toggleProjectNotesPanel, combo: KeyCombo(key: "j", command: true, shift: true)),
         Self(action: .toggleProjectTodoPanel, combo: KeyCombo(key: "j", command: true, option: true)),
         Self(action: .toggleAIUsage, combo: KeyCombo(key: "l", command: true)),

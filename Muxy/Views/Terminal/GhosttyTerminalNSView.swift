@@ -845,7 +845,6 @@ final class GhosttyTerminalNSView: NSView {
         return item
     }
 
-
     @objc
     private func handleContextPaste(_: Any?) {
         window?.makeFirstResponder(self)

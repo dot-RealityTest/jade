@@ -48,6 +48,22 @@ struct RemoteSpaceLauncherTests {
         #expect(themedSpace?.id == space.id)
     }
 
+    @Test("syncSidebarProjects adds every configured space without opening SSH")
+    func syncSidebarProjectsAddsEveryConfiguredSpace() {
+        let projectStore = ProjectStore(persistence: ProjectPersistenceStub())
+        let zen = RemoteSpace(name: "Zen", command: "ssh kika@100.86.62.100", colorID: "blue")
+        let alienware = RemoteSpace(name: "Alienware", command: "ssh kika@192.168.1.171", colorID: "green")
+
+        RemoteSpaceLauncher.syncSidebarProjects(spaces: [zen, alienware], projectStore: projectStore)
+
+        #expect(projectStore.projects.count == 2)
+        #expect(projectStore.projects.map(\.name).sorted() == ["Alienware", "Zen"])
+        #expect(projectStore.projects.map(\.path).sorted() == [
+            alienware.backingDirectory(create: false).path,
+            zen.backingDirectory(create: false).path,
+        ].sorted())
+    }
+
     @Test("open existing space selects existing SSH tab without duplicating project")
     func openExistingSpaceSelectsExistingSSHTab() throws {
         let (appState, projectStore, worktreeStore) = makeStores()

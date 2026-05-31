@@ -185,6 +185,8 @@ struct ShortcutActionDispatcher {
         case .toggleSnippetsPanel:
             notificationCenter.post(name: .toggleSnippetsPanel, object: nil)
             return true
+        case .toggleSnippetsScope:
+            return false
         case .toggleProjectNotesPanel:
             notificationCenter.post(name: .toggleProjectNotesPanel, object: nil)
             return true

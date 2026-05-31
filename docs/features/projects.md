@@ -2,6 +2,12 @@
 
 A project is a directory plus a bit of metadata (name, icon, color, last‑used IDE). Projects group your tabs, splits, and worktrees.
 
+## Home workspace
+
+When **General → Show Home in sidebar** is on (default), the sidebar lists **Home** above your projects. Home is a general-purpose shell workspace rooted at your home directory — useful for running agents, ad‑hoc commands, and tools that are not tied to one repo.
+
+The sidebar stays limited to **Home** and **real project folders**. Agent CLIs and custom tools are not added as sidebar rows; run them from Home tabs, **Settings → Custom Commands**, or the command palette (`⌘K`).
+
 ## Adding a project
 
 ```mermaid

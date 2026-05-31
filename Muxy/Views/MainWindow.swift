@@ -110,6 +110,7 @@ struct MainWindow: View {
     @State private var showProjectPicker = false
     @State private var overlayAnimatingOut = false
     @State private var snippetsPanelVisible = UserDefaults.standard.bool(forKey: "muxy.snippetsPanelVisible")
+    @State private var snippetsScopePreferences = SnippetsScopePreferences.shared
     @State private var notesPanelVisible = UserDefaults.standard.bool(forKey: "muxy.notesPanelVisible")
         || UserDefaults.standard.bool(forKey: "muxy.inspectorPanelVisible")
     @State private var todoPanelVisible = UserDefaults.standard.bool(forKey: "muxy.todoPanelVisible")
@@ -888,6 +889,14 @@ struct MainWindow: View {
                 aliases: ["branch", "workspace", "git"],
                 sortPriority: 11
             ),
+        ] + snippetsScopePaletteItems + [
+            commandItem(
+                .toggleSnippetsScope,
+                symbolName: "curlybraces",
+                subtitle: snippetsScopeToggleSubtitle,
+                aliases: ["snippet scope", "general", "project", "snippets mode"],
+                sortPriority: 19
+            ),
             commandItem(
                 .toggleSnippetsPanel,
                 symbolName: "curlybraces",
@@ -975,6 +984,7 @@ struct MainWindow: View {
                 target: .localPorts,
                 sortPriority: 52
             ),
+        ] + localCommandPaletteItems + [
             commandItem(
                 .reloadConfig,
                 symbolName: "arrow.clockwise",
@@ -983,6 +993,22 @@ struct MainWindow: View {
                 sortPriority: 53
             ),
         ]
+    }
+
+    private var localCommandPaletteItems: [CommandPaletteItem] {
+        let ollamaModel = NaturalCommandSettings.shared.ollamaModel
+        return LocalCommandPaletteAction.allCases.map { action in
+            CommandPaletteItem(
+                id: "app-local-\(action.rawValue)",
+                title: action.title,
+                subtitle: action.subtitle(ollamaModel: ollamaModel),
+                symbolName: action.symbolName,
+                section: .app,
+                searchText: action.searchText,
+                target: .localCommand(action),
+                sortPriority: action.sortPriority
+            )
+        }
     }
 
     private var activeCommandPaletteProjectPath: String? {
@@ -995,6 +1021,55 @@ struct MainWindow: View {
             return .remote(remoteSpace)
         }
         return .local(projectPath: activeCommandPaletteProjectPath)
+    }
+
+    private var snippetsScopeToggleSubtitle: String {
+        switch snippetsScopePreferences.mode {
+        case .general:
+            if activeProject == nil {
+                return "Switch to project snippets when a project is open"
+            }
+            return "Switch to project-specific snippets"
+        case .project:
+            return "Switch to general snippets shared across projects"
+        }
+    }
+
+    private var snippetsScopePaletteItems: [CommandPaletteItem] {
+        let mode = snippetsScopePreferences.mode
+        return [
+            CommandPaletteItem(
+                id: "snippets-scope-general",
+                title: "General Snippets",
+                subtitle: mode == .general ? "Active · shared across projects" : "Use snippets for every project",
+                symbolName: "curlybraces",
+                section: .app,
+                searchText: "snippets general shared global scope mode",
+                target: .snippetsScope(.general),
+                sortPriority: 17
+            ),
+            CommandPaletteItem(
+                id: "snippets-scope-project",
+                title: "Project Snippets",
+                subtitle: snippetsProjectScopeSubtitle,
+                symbolName: "curlybraces",
+                section: .app,
+                searchText: "snippets project workspace local scope mode",
+                target: .snippetsScope(.project),
+                sortPriority: 18
+            ),
+        ]
+    }
+
+    private var snippetsProjectScopeSubtitle: String {
+        let mode = snippetsScopePreferences.mode
+        guard let project = activeProject else {
+            return "Select a project first"
+        }
+        if mode == .project {
+            return "Active · \(project.name)"
+        }
+        return "Use snippets for \(project.name) only"
     }
 
     private func commandItem(
@@ -1120,10 +1195,11 @@ struct MainWindow: View {
     }
 
     private var activeSnippetScope: SnippetScope {
-        guard let project = activeProject,
-              let space = remoteSpacesStore.space(forProjectPath: project.path)
-        else { return .shared }
-        return .remote(space)
+        SnippetScopeResolver.resolve(
+            mode: snippetsScopePreferences.mode,
+            project: activeProject,
+            remoteSpace: activeRemoteSpace
+        )
     }
 
     private var activeRemoteSpace: RemoteSpace? {
@@ -1169,9 +1245,45 @@ struct MainWindow: View {
         if action == .toggleVoiceRecording {
             return openVoiceRecorder()
         }
+        if handleSnippetsScopeShortcut(action) {
+            return true
+        }
         return shortcutDispatcher.perform(action, activeProject: activeProject) { project in
             openVCS(for: project)
         }
+    }
+
+    private func handleSnippetsScopeShortcut(_ action: ShortcutAction) -> Bool {
+        switch action {
+        case .toggleSnippetsScope:
+            toggleSnippetsScope()
+            return true
+        default:
+            return false
+        }
+    }
+
+    private func toggleSnippetsScope() {
+        if snippetsScopePreferences.mode == .general {
+            guard activeProject != nil else {
+                ToastState.shared.show("Select a project first")
+                return
+            }
+            setSnippetsScopeMode(.project)
+            return
+        }
+        setSnippetsScopeMode(.general)
+    }
+
+    private func setSnippetsScopeMode(_ mode: SnippetsScopeMode) {
+        if mode == .project, activeProject == nil {
+            ToastState.shared.show("Select a project first")
+            return
+        }
+        guard snippetsScopePreferences.mode != mode else { return }
+        snippetsScopePreferences.setMode(mode)
+        SnippetsStore.shared.selectScope(activeSnippetScope)
+        ToastState.shared.show(activeSnippetScope.displayName)
     }
 
     private func openVoiceRecorder() -> Bool {
@@ -1236,6 +1348,8 @@ struct MainWindow: View {
             return
         case .localPorts:
             showLocalPorts = true
+        case let .localCommand(action):
+            runLocalCommandPaletteAction(action)
         case let .obsidianMCPTool(action, query):
             performObsidianMCPTool(action, query: query)
         case .journeyInitialize:
@@ -1244,6 +1358,8 @@ struct MainWindow: View {
             presentJourneyNextStep()
         case .journeyCompleteStep:
             completeJourneyStep()
+        case let .snippetsScope(mode):
+            setSnippetsScopeMode(mode)
         }
     }
 
@@ -1484,6 +1600,41 @@ struct MainWindow: View {
         ))
     }
 
+    private func runLocalCommandPaletteAction(_ action: LocalCommandPaletteAction) {
+        guard let projectID = appState.activeProjectID else {
+            ToastState.shared.show("Select a project first")
+            return
+        }
+        guard ensureLocalCommandWorkspace(for: projectID) else {
+            ToastState.shared.show("Open a workspace first")
+            return
+        }
+        appState.dispatch(.createCommandTab(
+            projectID: projectID,
+            areaID: nil,
+            name: action.tabTitle,
+            command: action.command(ollamaModel: NaturalCommandSettings.shared.ollamaModel)
+        ))
+    }
+
+    private func ensureLocalCommandWorkspace(for projectID: UUID) -> Bool {
+        if appState.workspaceRoot(for: projectID) != nil,
+           appState.focusedArea(for: projectID) != nil
+        {
+            return true
+        }
+        guard let project = projectStore.projects.first(where: { $0.id == projectID }) else { return false }
+        worktreeStore.ensurePrimary(for: project)
+        guard let worktree = worktreeStore.preferred(
+            for: projectID,
+            matching: appState.activeWorktreeID[projectID]
+        )
+        else { return false }
+        appState.selectWorktree(projectID: projectID, worktree: worktree)
+        return appState.workspaceRoot(for: projectID) != nil
+            && appState.focusedArea(for: projectID) != nil
+    }
+
     private func runSnippetFromPalette(_ snippetID: UUID) {
         SnippetsStore.shared.selectScope(activeSnippetScope)
         guard let snippet = SnippetsStore.shared.snippets.first(where: { $0.id == snippetID }) else { return }
@@ -1715,6 +1866,8 @@ struct MainWindow: View {
             return "No forward history"
         case .toggleAIUsage:
             return "AI usage tracking is disabled in Settings"
+        case .toggleSnippetsScope:
+            return "Select a project first"
         case .newProject:
             return "Use Open Project instead"
         case .submitRichInput,

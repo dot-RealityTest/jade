@@ -88,8 +88,17 @@ Download the latest release from the [releases page](https://github.com/muxy-app
 ```bash
 scripts/setup.sh          # downloads GhosttyKit.xcframework
 swift build               # debug build
-swift run Muxy             # run
+./scripts/run-jade.sh     # assemble Jade.app with icon and launch
 ```
+
+Replace the app icon with a square PNG (1024×1024 recommended):
+
+```bash
+scripts/update-app-icon.sh path/to/icon.png
+./scripts/run-jade.sh
+```
+
+Running `swift run Muxy` directly skips the app bundle and shows a generic Dock icon.
 
 ## CLI
 

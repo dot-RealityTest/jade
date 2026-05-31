@@ -2,6 +2,15 @@ import Foundation
 
 @MainActor
 enum RemoteSpaceLauncher {
+    static func syncSidebarProjects(
+        spaces: [RemoteSpace],
+        projectStore: ProjectStore
+    ) {
+        for space in spaces {
+            ensureSidebarProject(for: space, projectStore: projectStore)
+        }
+    }
+
     static func open(
         _ space: RemoteSpace,
         appState: AppState,
@@ -37,9 +46,23 @@ enum RemoteSpaceLauncher {
     }
 
     private static func project(for space: RemoteSpace, projectStore: ProjectStore) -> Project {
+        ensureSidebarProject(for: space, projectStore: projectStore)
+    }
+
+    @discardableResult
+    private static func ensureSidebarProject(
+        for space: RemoteSpace,
+        projectStore: ProjectStore
+    ) -> Project {
         let path = space.backingDirectory().path
         if let existing = projectStore.projects.first(where: { $0.path == path }) {
-            return existing
+            if existing.name != space.displayName {
+                projectStore.rename(id: existing.id, to: space.displayName)
+            }
+            if existing.iconColor != space.colorID {
+                projectStore.setIconColor(id: existing.id, to: space.colorID)
+            }
+            return projectStore.projects.first(where: { $0.path == path }) ?? existing
         }
         var project = Project(
             name: space.displayName,

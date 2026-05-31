@@ -14,11 +14,32 @@ struct SnippetScope: Equatable {
 
     static let shared = SnippetScope(
         id: "shared",
-        displayName: "Snippets",
+        displayName: "General Snippets",
         fileURL: MuxyFileStorage.fileURL(filename: "snippets.json"),
         starterSnippets: sharedStarterSnippets,
         starterSeedPolicy: .missingOrEmptyStorage
     )
+
+    static func project(_ project: Project) -> SnippetScope {
+        SnippetScope(
+            id: "project-\(project.id.uuidString)",
+            displayName: "\(project.name) Snippets",
+            fileURL: projectSnippetsFileURL(projectID: project.id),
+            starterSnippets: [],
+            starterSeedPolicy: .missingStorage
+        )
+    }
+
+    static func projectSnippetsFileURL(projectID: UUID) -> URL {
+        let directory = MuxyFileStorage.appSupportDirectory()
+            .appendingPathComponent("project-snippets", isDirectory: true)
+        try? FileManager.default.createDirectory(
+            at: directory,
+            withIntermediateDirectories: true,
+            attributes: [.posixPermissions: FilePermissions.privateDirectory]
+        )
+        return directory.appendingPathComponent("\(projectID.uuidString).json")
+    }
 
     static func remote(_ space: RemoteSpace) -> SnippetScope {
         SnippetScope(

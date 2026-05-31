@@ -29,6 +29,86 @@ enum CommandPaletteFileSearchPolicy {
     }
 }
 
+enum LocalCommandPaletteAction: String, CaseIterable {
+    case upgradeHomebrew
+    case ollamaList
+    case ollamaPull
+    case ollamaRun
+    case ollamaServe
+
+    var title: String {
+        switch self {
+        case .upgradeHomebrew: "Upgrade Homebrew"
+        case .ollamaList: "Ollama List Models"
+        case .ollamaPull: "Ollama Pull Model"
+        case .ollamaRun: "Ollama Run Model"
+        case .ollamaServe: "Ollama Serve"
+        }
+    }
+
+    func subtitle(ollamaModel: String) -> String {
+        switch self {
+        case .upgradeHomebrew: "brew update && brew upgrade"
+        case .ollamaList: "ollama list"
+        case .ollamaPull: "ollama pull \(OllamaCommand.resolvedModel(ollamaModel))"
+        case .ollamaRun: "ollama run \(OllamaCommand.resolvedModel(ollamaModel))"
+        case .ollamaServe: "ollama serve"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .upgradeHomebrew: "arrow.triangle.2.circlepath"
+        case .ollamaList: "list.bullet.rectangle"
+        case .ollamaPull: "arrow.down.circle"
+        case .ollamaRun: "play.circle"
+        case .ollamaServe: "server.rack"
+        }
+    }
+
+    var searchText: String {
+        switch self {
+        case .upgradeHomebrew:
+            "brew homebrew upgrade update packages formulae macos maintenance tap cask"
+        case .ollamaList:
+            "ollama list models local llm ai"
+        case .ollamaPull:
+            "ollama pull download model llm ai local"
+        case .ollamaRun:
+            "ollama run chat model llm ai local inference"
+        case .ollamaServe:
+            "ollama serve server start llm ai local api"
+        }
+    }
+
+    var tabTitle: String { title }
+
+    func command(ollamaModel: String) -> String {
+        switch self {
+        case .upgradeHomebrew:
+            HomebrewUpgradeCommand.shellScript
+        case .ollamaList:
+            OllamaCommand.listScript
+        case .ollamaPull:
+            OllamaCommand.pullScript(model: ollamaModel)
+        case .ollamaRun:
+            OllamaCommand.runScript(model: ollamaModel)
+        case .ollamaServe:
+            OllamaCommand.serveScript
+        }
+    }
+
+    var sortPriority: Int {
+        switch self {
+        case .upgradeHomebrew: 54
+        case .ollamaList: 55
+        case .ollamaPull: 56
+        case .ollamaRun: 57
+        case .ollamaServe: 58
+        }
+    }
+}
+
 enum RemoteCommandPaletteAction: String, CaseIterable {
     case openSession
     case copySSHCommand
@@ -177,10 +257,12 @@ struct CommandPaletteItem: Identifiable, Equatable {
         case worktree(projectID: UUID, worktreeID: UUID)
         case naturalCommand(String)
         case localPorts
+        case localCommand(LocalCommandPaletteAction)
         case obsidianMCPTool(ObsidianMCPToolAction, query: String?)
         case journeyInitialize
         case journeyNextStep
         case journeyCompleteStep
+        case snippetsScope(SnippetsScopeMode)
     }
 
     let id: String

@@ -56,10 +56,28 @@ final class ProjectStore {
 
     func reorder(fromOffsets source: IndexSet, toOffset destination: Int) {
         projects.move(fromOffsets: source, toOffset: destination)
+        normalizeSortOrders()
+        save()
+    }
+
+    func insertAtTop(_ project: Project) {
+        projects.insert(project, at: 0)
+        normalizeSortOrders()
+        save()
+    }
+
+    func pinToTop(id: UUID) {
+        guard let index = projects.firstIndex(where: { $0.id == id }), index > 0 else { return }
+        let project = projects.remove(at: index)
+        projects.insert(project, at: 0)
+        normalizeSortOrders()
+        save()
+    }
+
+    private func normalizeSortOrders() {
         for index in projects.indices {
             projects[index].sortOrder = index
         }
-        save()
     }
 
     func save() {

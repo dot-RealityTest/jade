@@ -55,7 +55,22 @@ struct MuxyApp: App {
                 .environment(MuxyConfig.shared)
                 .environment(ThemeService.shared)
                 .preferredColorScheme(MuxyTheme.colorScheme)
+                .onReceive(NotificationCenter.default.publisher(for: .remoteSpacesDidChange)) { _ in
+                    RemoteSpaceLauncher.syncSidebarProjects(
+                        spaces: RemoteSpacesStore.shared.spaces,
+                        projectStore: projectStore
+                    )
+                    HomeWorkspace.applyPreference(projectStore: projectStore)
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .homeWorkspacePreferenceDidChange)) { _ in
+                    HomeWorkspace.applyPreference(projectStore: projectStore)
+                }
                 .onAppear {
+                    RemoteSpaceLauncher.syncSidebarProjects(
+                        spaces: RemoteSpacesStore.shared.spaces,
+                        projectStore: projectStore
+                    )
+                    HomeWorkspace.applyPreference(projectStore: projectStore)
                     NotificationStore.shared.appState = appState
                     NotificationStore.shared.worktreeStore = worktreeStore
                     NotificationStore.shared.markAllAsRead()
@@ -145,6 +160,11 @@ struct MuxyApp: App {
             SettingsView()
                 .preferredColorScheme(MuxyTheme.colorScheme)
         }
+        .windowResizability(.contentMinSize)
+        .defaultSize(
+            width: WindowLayoutMetrics.settingsMinWidth + WindowLayoutMetrics.settingsSidebarIdealWidth,
+            height: WindowLayoutMetrics.settingsMinHeight + 80
+        )
     }
 }
 
@@ -443,12 +463,16 @@ extension AppDelegate {
 
     @MainActor
     private func setAppIcon() {
-        guard let url = Bundle.appResources.url(forResource: "AppIcon", withExtension: "png") else {
+        let candidates: [URL?] = [
+            Bundle.main.url(forResource: "AppIcon", withExtension: "icns"),
+            Bundle.appResources.url(forResource: "AppIcon", withExtension: "png"),
+        ]
+        for case let url? in candidates {
+            guard let image = NSImage(contentsOf: url) else { continue }
+            image.size = NSSize(width: 512, height: 512)
+            NSApp.applicationIconImage = image
             return
         }
-        guard let image = NSImage(contentsOf: url) else { return }
-        image.size = NSSize(width: 512, height: 512)
-        NSApp.applicationIconImage = image
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

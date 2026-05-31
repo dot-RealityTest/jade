@@ -30,4 +30,20 @@ struct SnippetScopeTests {
         #expect(scope.starterSnippets.contains { $0.command.contains("journalctl") })
         #expect(scope.starterSnippets.allSatisfy { $0.tags.contains("linux") })
     }
+
+    @Test("project scope uses per-project snippets file")
+    func projectScopeUsesProjectSnippetsFile() {
+        let project = Project(name: "Muxy", path: "/tmp/muxy")
+        let scope = SnippetScope.project(project)
+
+        #expect(scope.id == "project-\(project.id.uuidString)")
+        #expect(scope.displayName == "Muxy Snippets")
+        #expect(scope.fileURL == SnippetScope.projectSnippetsFileURL(projectID: project.id))
+        #expect(scope.starterSnippets.isEmpty)
+    }
+
+    @Test("shared scope display name is general")
+    func sharedScopeDisplayName() {
+        #expect(SnippetScope.shared.displayName == "General Snippets")
+    }
 }

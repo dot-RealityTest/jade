@@ -89,3 +89,17 @@ Mouse side buttons (3 / 4) and three‑finger horizontal trackpad swipes also na
 ## Custom command shortcuts
 
 Define your own command shortcuts in **Settings → Keyboard Shortcuts → Custom Commands**. Each entry has a display name, a shell command, an optional icon, and an optional keybinding. Triggering one creates a tab and runs the command.
+
+## Local dev commands (command palette)
+
+Open the command palette with `⌘K` and search for:
+
+| Command | What it does |
+| --- | --- |
+| Upgrade Homebrew | Runs `brew update && brew upgrade` in a new tab |
+| Ollama List Models | Runs `ollama list` |
+| Ollama Pull Model | Pulls the model from **Settings → Natural Commands** |
+| Ollama Run Model | Starts an interactive session with that model |
+| Ollama Serve | Runs `ollama serve` |
+
+These commands ensure Homebrew and Ollama are on `PATH` in GUI-launched shells and keep one-shot commands in an interactive tab when they finish.

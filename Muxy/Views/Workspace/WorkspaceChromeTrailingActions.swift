@@ -28,7 +28,10 @@ struct WorkspaceChromeTrailingActions: View {
                 DebugButton()
                     .padding(.trailing, UIMetrics.spacing3)
             }
-            if showsToolbarAction(.updates), let version = UpdateService.shared.availableUpdateVersion {
+            if showsToolbarAction(.updates),
+               UpdateService.shared.isEnabled,
+               let version = UpdateService.shared.availableUpdateVersion
+            {
                 UpdateBadge(version: version) {
                     UpdateService.shared.checkForUpdates()
                 }

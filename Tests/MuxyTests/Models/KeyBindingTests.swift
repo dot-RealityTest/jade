@@ -87,6 +87,8 @@ struct KeyBindingTests {
         #expect(ShortcutAction.toggleSnippetsPanel.category == "App")
         #expect(ShortcutAction.toggleSnippetsPanel.scope == .mainWindow)
         #expect(KeyBinding.defaults.first { $0.action == .toggleSnippetsPanel }?.combo == KeyCombo(key: "j", command: true))
+        #expect(ShortcutAction.toggleSnippetsScope.displayName == "Toggle Snippet Scope")
+        #expect(KeyBinding.defaults.first { $0.action == .toggleSnippetsScope }?.combo == KeyCombo(key: "j", command: true, control: true))
         #expect(ShortcutAction.toggleProjectNotesPanel.displayName == "Toggle Notes")
         #expect(KeyBinding.defaults.first { $0.action == .toggleProjectNotesPanel }?.combo == KeyCombo(key: "j", command: true, shift: true))
         #expect(ShortcutAction.toggleProjectTodoPanel.displayName == "Toggle Todo")

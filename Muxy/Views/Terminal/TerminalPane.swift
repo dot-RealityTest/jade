@@ -356,7 +356,9 @@ struct TerminalBridge: NSViewRepresentable {
 
     @MainActor
     private static func snippetScope(projectPath: String) -> SnippetScope {
-        guard let space = RemoteSpacesStore.shared.space(forProjectPath: projectPath) else { return .shared }
-        return .remote(space)
+        SnippetScopeResolver.resolve(
+            mode: SnippetsScopePreferences.shared.mode,
+            projectPath: projectPath
+        )
     }
 }

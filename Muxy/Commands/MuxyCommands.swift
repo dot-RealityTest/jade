@@ -65,7 +65,7 @@ struct MuxyCommands: Commands {
             } label: {
                 Label("Check for Updates...", systemImage: "arrow.triangle.2.circlepath")
             }
-            .disabled(!updateService.canCheckForUpdates)
+            .disabled(!updateService.isEnabled || !updateService.canCheckForUpdates)
 
             Divider()
 
@@ -285,6 +285,12 @@ struct MuxyCommands: Commands {
                 performShortcutAction(.toggleSnippetsPanel)
             }
             .shortcut(for: .toggleSnippetsPanel, store: keyBindings)
+
+            Button("Toggle Snippet Scope") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.toggleSnippetsScope)
+            }
+            .shortcut(for: .toggleSnippetsScope, store: keyBindings)
 
             Button("Toggle AI Assistant") {
                 guard isMainWindowFocused else { return }

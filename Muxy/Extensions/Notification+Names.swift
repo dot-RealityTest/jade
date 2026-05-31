@@ -40,6 +40,8 @@ extension Notification.Name {
     static let focusMCPToolsSettings = Notification.Name("MuxyFocusMCPToolsSettings")
     static let runObsidianMCPTool = Notification.Name("MuxyRunObsidianMCPTool")
     static let promptObsidianSearch = Notification.Name("MuxyPromptObsidianSearch")
+    static let remoteSpacesDidChange = Notification.Name("MuxyRemoteSpacesDidChange")
+    static let homeWorkspacePreferenceDidChange = Notification.Name("MuxyHomeWorkspacePreferenceDidChange")
 }
 
 enum ExternalDragHoverUserInfoKey {

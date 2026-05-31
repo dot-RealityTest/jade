@@ -111,6 +111,15 @@ struct CommandPaletteItemTests {
         ])
     }
 
+    @Test("local command actions expose search aliases")
+    func localCommandActionsExposeSearchAliases() {
+        #expect(LocalCommandPaletteAction.upgradeHomebrew.searchText.contains("homebrew"))
+        #expect(LocalCommandPaletteAction.upgradeHomebrew.command(ollamaModel: "").contains("brew update"))
+        #expect(LocalCommandPaletteAction.ollamaList.searchText.contains("ollama"))
+        #expect(LocalCommandPaletteAction.ollamaPull.command(ollamaModel: "mistral").contains("ollama pull"))
+        #expect(LocalCommandPaletteAction.ollamaRun.command(ollamaModel: "mistral").contains("ollama run"))
+    }
+
     @Test("remote command actions expose safety and aliases")
     func remoteCommandActionsExposeSafetyAndAliases() {
         #expect(RemoteCommandPaletteAction.reboot.requiresConfirmation)

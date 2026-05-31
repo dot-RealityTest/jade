@@ -4,6 +4,8 @@ import SwiftUI
 struct GeneralSettingsView: View {
     @AppStorage(GeneralSettingsKeys.autoExpandWorktreesOnProjectSwitch)
     private var autoExpandWorktrees = false
+    @AppStorage(GeneralSettingsKeys.showHomeWorkspaceInSidebar)
+    private var showHomeWorkspaceInSidebar = true
     @AppStorage(GeneralSettingsKeys.defaultWorktreeParentPath)
     private var defaultWorktreeParentPath = ""
     @AppStorage(GeneralSettingsKeys.fileTreeSource)
@@ -16,6 +18,8 @@ struct GeneralSettingsView: View {
     private var restoreSessionOnLaunch = true
     @AppStorage(UpdateChannel.storageKey)
     private var updateChannelRaw = UpdateChannel.stable.rawValue
+    @AppStorage(GeneralSettingsKeys.automaticUpdateChecks)
+    private var automaticUpdateChecks = true
     @AppStorage(ToolbarAction.storageKey)
     private var toolbarActionsRaw = ToolbarAction.defaultRawValue
     @AppStorage(ProjectPickerPreferences.storageKey)
@@ -31,9 +35,15 @@ struct GeneralSettingsView: View {
         SettingsContainer {
             SettingsSection(
                 "Updates",
-                footer: "The Beta channel ships every change merged to main and may be unstable. "
-                    + "Switch back to Stable to receive only tagged releases."
+                footer: updatesFooter
             ) {
+                SettingsToggleRow(
+                    label: "Check for updates automatically",
+                    isOn: $automaticUpdateChecks
+                )
+                .onChange(of: automaticUpdateChecks) { _, _ in
+                    UpdateService.shared.applyAutomaticChecksPreference()
+                }
                 SettingsRow("Update channel") {
                     Picker("", selection: channelBinding) {
                         ForEach(UpdateChannel.allCases) { channel in
@@ -43,12 +53,21 @@ struct GeneralSettingsView: View {
                     .labelsHidden()
                     .settingsControlFrame(alignment: .trailing)
                 }
+                .disabled(!automaticUpdateChecks || !UpdateService.shared.isEnabled)
             }
 
             SettingsSection(
                 "Sidebar",
-                footer: "Automatically reveal worktrees when you switch to a project."
+                footer: "Home opens a general-purpose shell in your user folder. "
+                    + "Automatically reveal worktrees when you switch to a project."
             ) {
+                SettingsToggleRow(
+                    label: "Home workspace in sidebar",
+                    isOn: $showHomeWorkspaceInSidebar
+                )
+                .onChange(of: showHomeWorkspaceInSidebar) { _, _ in
+                    NotificationCenter.default.post(name: .homeWorkspacePreferenceDidChange, object: nil)
+                }
                 SettingsToggleRow(
                     label: "Auto-expand worktrees on project switch",
                     isOn: $autoExpandWorktrees
@@ -179,6 +198,16 @@ struct GeneralSettingsView: View {
                 UpdateService.shared.channel = newValue
             }
         )
+    }
+
+    private var updatesFooter: String {
+        #if DEBUG
+        return "Local debug builds skip update checks unless you launch with JADE_ENABLE_UPDATES=1. "
+            + "The Beta channel ships every change merged to main and may be unstable."
+        #else
+        return "The Beta channel ships every change merged to main and may be unstable. "
+            + "Switch back to Stable to receive only tagged releases."
+        #endif
     }
 
     private func toolbarToggleRow(for action: ToolbarAction) -> some View {
