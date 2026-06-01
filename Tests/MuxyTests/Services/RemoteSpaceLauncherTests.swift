@@ -23,7 +23,7 @@ struct RemoteSpaceLauncherTests {
     @Test("open creates dedicated project space and SSH tab")
     func openCreatesDedicatedProjectSpaceAndSSHTab() throws {
         let (appState, projectStore, worktreeStore) = makeStores()
-        let space = RemoteSpace(name: "Zen", command: "ssh kika@100.86.62.100", colorID: "blue")
+        let space = RemoteSpace(name: "Zen", command: "ssh dev@203.0.113.20", colorID: "blue")
         var themedSpace: RemoteSpace?
 
         RemoteSpaceLauncher.open(
@@ -43,7 +43,7 @@ struct RemoteSpaceLauncherTests {
         let tab = try #require(area.activeTab)
         #expect(tab.customTitle == "Zen")
         #expect(tab.colorID == "blue")
-        #expect(tab.content.pane?.startupCommand == "ssh kika@100.86.62.100")
+        #expect(tab.content.pane?.startupCommand == "ssh dev@203.0.113.20")
         #expect(worktreeStore.primary(for: project.id)?.path == project.path)
         #expect(themedSpace?.id == space.id)
     }
@@ -51,8 +51,8 @@ struct RemoteSpaceLauncherTests {
     @Test("syncSidebarProjects adds every configured space without opening SSH")
     func syncSidebarProjectsAddsEveryConfiguredSpace() {
         let projectStore = ProjectStore(persistence: ProjectPersistenceStub())
-        let zen = RemoteSpace(name: "Zen", command: "ssh kika@100.86.62.100", colorID: "blue")
-        let alienware = RemoteSpace(name: "Alienware", command: "ssh kika@192.168.1.171", colorID: "green")
+        let zen = RemoteSpace(name: "Zen", command: "ssh dev@203.0.113.20", colorID: "blue")
+        let alienware = RemoteSpace(name: "Alienware", command: "ssh dev@203.0.113.10", colorID: "green")
 
         RemoteSpaceLauncher.syncSidebarProjects(spaces: [zen, alienware], projectStore: projectStore)
 
@@ -67,7 +67,7 @@ struct RemoteSpaceLauncherTests {
     @Test("open existing space selects existing SSH tab without duplicating project")
     func openExistingSpaceSelectsExistingSSHTab() throws {
         let (appState, projectStore, worktreeStore) = makeStores()
-        let space = RemoteSpace(name: "Alienware", command: "ssh kika@192.168.1.171", colorID: "green")
+        let space = RemoteSpace(name: "Alienware", command: "ssh dev@203.0.113.10", colorID: "green")
 
         RemoteSpaceLauncher.open(
             space,
@@ -96,8 +96,8 @@ struct RemoteSpaceLauncherTests {
         let space = RemoteSpace(
             name: "Zen",
             colorID: "blue",
-            user: "kika",
-            host: "100.86.62.100",
+            user: "dev",
+            host: "203.0.113.20",
             startupCommands: ["tmux attach || tmux new"]
         )
 

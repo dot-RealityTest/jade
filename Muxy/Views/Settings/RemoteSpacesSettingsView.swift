@@ -121,7 +121,7 @@ struct RemoteSpacesSettingsView: View {
             }
 
             SettingsRow("Host") {
-                TextField("100.86.62.100", text: $draft.host)
+                TextField("203.0.113.20", text: $draft.host)
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: SettingsMetrics.labelFontSize, design: .monospaced))
                     .settingsControlFrame()

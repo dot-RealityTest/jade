@@ -101,7 +101,7 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 ## Learned User Preferences
 
 - Prefer minimal top window chrome for Jade: one compact workspace chrome row (~32pt) under the native title bar; keep the trailing icon row sparse (Snippets, AI, etc.) — no Notes/Todo chrome toggles or in-panel Send/Notes segmented control; open Rich Input (including popup/preview capture) via shortcuts/commands, not inspector chrome; command palette omits Todos and notes/todo panel entries, groups MCP actions (e.g. Obsidian) under MCP, and prioritizes Rich Input, Find in Files, and Toggle Sidebar.
-- User-visible copy must say **Jade** (quit dialog, menus, settings); keep `muxy`/`Muxy` only for compatibility (bundle id, URL scheme, Application Support paths, internal types).
+- User-visible copy must say **Jade** (quit dialog, menus, settings); user declined a full Muxy→Jade rename — keep `com.muxy.app`, `muxy://`, `~/Library/Application Support/Muxy/`, and internal Muxy identifiers unless they explicitly widen migration scope; **Install CLI** writes **`jade`** only (no `muxy` CLI alias).
 - When polishing Jade UI, aim for a finer, smaller, premium feel rather than chunky controls or extra vertical bands.
 - For UI screenshot feedback, confirm the target is Jade/muxy before changing code; the user also has a separate PiecesTask app and has corrected mistaken cross-repo polish.
 - Inspector AI defaults to Ollama direct; bundled Moltis (Ollama-backed gateway) is dev-only when built with `MUXY_BUNDLE_MOLTIS=1` — keep Ghostty terminal PTYs independent from Moltis agent/exec.
@@ -109,22 +109,21 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 - When implementing an attached plan, do not edit the plan file; use existing todos and mark them in progress.
 - Jade project log UX: next step from project markdown (`todo.md`, then `goals.md`, then `.jade/journey.md` fallback) with no mood/energy prompts; user-facing copy uses “log” / “session” (Set Up Project Log, Confirm Next Step, Complete Step); soft blockers when `.jade/rules.md` disagrees; Obsidian vault layout `Jade/Logs/{slug}/` — auto-created `project.md` hub (`type: project-log`), session logs in `sessions/` (`type: project-session-log`), project captures in `notes/` (`type: project-capture`); inbox when no active project.
 - Keep Jade **project-aware** (projects/tabs/panes), not agent-orchestration like cmux; adopt cmux-style **project-level** attention cues (jump-to-unread, status), not multi-agent session routing.
-- Snippets use **general** (shared) vs **project** scopes; switch via command palette (“General Snippets”, “Project Snippets”, “Toggle Snippet Scope”) or **⌘⌃J** — do not add chrome icons for scope mode.
-- Expose MCP tools in Jade Settings; prioritize Obsidian vault capture (local `obsidian-mcp`) with a quick send-to-vault command.
+- Snippets use **general** (shared) vs **project** scopes (palette or **⌘⌃J**); expose MCP in Settings with Obsidian vault capture prioritized — do not add chrome icons for snippet scope mode.
+- README/docs: no Homebrew **cask** install for Jade; no Mac | Remote API | Discord header nav; no `update-app-icon.sh` walkthrough in README — command palette **Upgrade Homebrew** and the script itself stay for dev.
 - Command palette includes local dev shortcuts: **Upgrade Homebrew** and Ollama **list / pull / run / serve**; pull and run use the model from Natural Command Settings.
 
 ## Learned Workspace Facts
 
-- Launch Jade locally with `./scripts/run-jade.sh` (embeds `AppIcon.icns`, syncs `AppIcon.png` into the resource bundle) or `open .build/.../Jade.app`. Replace artwork with `scripts/update-app-icon.sh path/to/icon.png` (1024×1024 PNG). The bare SwiftPM `Muxy` binary shows a generic icon and can spawn a duplicate Dock entry separate from `Jade.app`; **DEBUG builds disable Sparkle update checks** unless `JADE_ENABLE_UPDATES=1`.
-- PiecesTask is a separate project at `/Users/kika_hub/Projects/PiecesTask`, not part of the muxy/Jade repo.
+- Launch Jade locally with `./scripts/run-jade.sh` (assembles `Jade.app` with icon) or `open .build/.../Jade.app` — prefer that over `swift run Muxy` (generic Dock icon). `scripts/update-app-icon.sh` exists for dev icon swaps but omit from README; **DEBUG builds disable Sparkle update checks** unless `JADE_ENABLE_UPDATES=1`.
+- PiecesTask is a separate app/repo outside muxy/Jade — do not polish it by mistake.
 - Jade main-window HIG work favors incremental changes (native title bar, consolidated chrome, `WindowLayoutMetrics`) over a full `NavigationSplitView` / single-inspector refactor unless the user widens scope; the **Settings** window is resizable with HIG min sizes via `SettingsView` window policy.
 - **Home** sidebar (`HomeWorkspace`) pins a general shell at `~` (toggle `muxy.general.showHomeWorkspaceInSidebar`, default on); **remote spaces** sync to sidebar projects on launch via `RemoteSpaceLauncher.syncSidebarProjects`.
 - Bundled Moltis is opt-in at build time via `MUXY_BUNDLE_MOLTIS=1` (default release builds omit the bundle); gateway state lives under `~/Library/Application Support/Muxy/moltis/` with Ollama URL/model from `NaturalCommandSettings`.
 - Right-rail panels use `SidePanelPolicy` mutual exclusion (Snippets, AI, Notes/Todo inspector — one primary panel at a time); notes/tasks UX prefers Rich Input over chrome or palette toggles.
-- MCP integrations: catalog at `/Users/kika_hub/Documents/CODEX tools/MCPS.md`; Obsidian vault `/Users/kika_hub/_KIKA_MAIN/Kika's_Obsidian/` with local server at `/Users/kika_hub/Projects/obsidian-mcp/` (`.venv/bin/python`, `server.py`).
-- Open-source reference repos live under `/Users/kika_hub/Documents/OPEN-Source-REPOS/` (e.g. Warp at `repos/warpdotdev/`); study patterns only — Warp is AGPL, do not copy its code into Jade.
+- MCP integrations are user-configured in Settings (Obsidian vault path, Python, server script); study open-source patterns only (Warp AGPL — no code copy).
 - Per-project log scaffold lives in `.jade/` (`journey.md`, `rules.md`, log folders) plus optional project-root `goals.md`, `todo.md`, `project-map.md` created only when missing; `JadeProjectContextReader` parses structured context from those files.
-- Git remotes: `origin` → `muxy-app/muxy` (upstream — do not push unless asked); `personal` → private https://github.com/dot-RealityTest/jade — push with `git push personal main` when the user asks to update/push their repo (not `origin`).
+- Git: `origin` → `muxy-app/muxy` (do not push unless asked); `personal` → **public** [dot-RealityTest/jade](https://github.com/dot-RealityTest/jade) — `git push personal main` when the user asks (not `origin`).
 - Snippet storage: general `snippets.json`, per-project `project-snippets/{projectID}.json`, remote under `remote-spaces/{slug}/snippets.json`; active scope mode in UserDefaults (`muxy.general.snippetsScopeMode`).
 - Continual learning updates `AGENTS.md` / `CLAUDE.md` / `.cursor/hooks/state/continual-learning-index.json` only (never plugin-cache global index); macOS verify via `scripts/checks.sh --fix --fast` when full checks fail on missing upstream `MuxyMobile` files; user docs hub `docs/README.md`.
 - **Jade is macOS-only** — no iOS/Android app under Jade branding; this repo has no `MuxyMobile` target; optional WebSocket remote server remains for third-party clients.

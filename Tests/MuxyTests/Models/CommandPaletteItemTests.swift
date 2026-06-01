@@ -10,7 +10,7 @@ struct CommandPaletteItemTests {
         let items = [
             item(title: "Source Control", subtitle: "Open git status", section: .app, searchText: "vcs"),
             item(title: "Update Linux", subtitle: "sudo apt update", section: .remoteCommand, searchText: "packages"),
-            item(title: "Open Alienware", subtitle: "kika@192.168.1.171", section: .remote, searchText: "nvidia"),
+            item(title: "Open Alienware", subtitle: "dev@203.0.113.10", section: .remote, searchText: "nvidia"),
             item(title: "GPU Console", subtitle: "nvtop", section: .snippet, searchText: "linux gpu"),
             item(title: "Generate shell command", subtitle: "Review a safe command", section: .app, searchText: "find large files"),
             item(title: "README.md", subtitle: "docs/README.md", section: .file, searchText: "/tmp/docs/README.md"),
@@ -133,7 +133,7 @@ struct CommandPaletteItemTests {
 
     @Test("remote command tab title includes the active space")
     func remoteCommandTabTitleIncludesActiveSpace() {
-        let space = RemoteSpace(name: "Zen", user: "kika", host: "100.86.62.100")
+        let space = RemoteSpace(name: "Zen", user: "dev", host: "203.0.113.20")
 
         #expect(RemoteCommandPaletteAction.updateLinux.tabTitle(for: space) == "Zen · Update Linux")
     }

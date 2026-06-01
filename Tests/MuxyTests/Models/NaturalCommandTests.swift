@@ -42,11 +42,11 @@ struct NaturalCommandTests {
 
     @Test("remote context is preserved")
     func remoteContextIsPreserved() {
-        let space = RemoteSpace(name: "Alienware", user: "kika", host: "192.168.1.171")
+        let space = RemoteSpace(name: "Alienware", user: "dev", host: "203.0.113.10")
         let context = NaturalCommandContext.remote(space)
 
         #expect(context.targetKind == .remote)
         #expect(context.displayName == "Alienware")
-        #expect(context.remoteSummary == "kika@192.168.1.171")
+        #expect(context.remoteSummary == "dev@203.0.113.10")
     }
 }

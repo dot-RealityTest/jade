@@ -6,8 +6,8 @@ import Testing
 struct ProjectSidebarStatusTests {
     @Test("display branch hides duplicate project name")
     func displayBranchHidesProjectName() {
-        let project = Project(name: "akakika", path: "/tmp/akakika", sortOrder: 0)
-        let worktree = Worktree(name: "akakika", path: "/tmp/akakika", branch: "akakika", isPrimary: true)
+        let project = Project(name: "example-app", path: "/tmp/example-app", sortOrder: 0)
+        let worktree = Worktree(name: "example-app", path: "/tmp/example-app", branch: "example-app", isPrimary: true)
         #expect(ProjectSidebarStatus.displayBranch(for: project, worktree: worktree) == nil)
     }
 

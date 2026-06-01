@@ -21,17 +21,17 @@ struct RemoteSpacesStoreTests {
         let zenID = UUID()
 
         store.replaceAll([
-            RemoteSpace(id: zenID, name: " Zen ", command: " ssh kika@100.86.62.100 ", colorID: "blue"),
+            RemoteSpace(id: zenID, name: " Zen ", command: " ssh dev@203.0.113.20 ", colorID: "blue"),
             RemoteSpace(name: "Empty", command: " "),
         ])
 
         let expected = [RemoteSpace(
             id: zenID,
             name: "Zen",
-            command: "ssh kika@100.86.62.100",
+            command: "ssh dev@203.0.113.20",
             colorID: "blue",
-            user: "kika",
-            host: "100.86.62.100",
+            user: "dev",
+            host: "203.0.113.20",
             themeName: "Muxy Zen"
         )]
         #expect(store.spaces == expected)
@@ -41,12 +41,12 @@ struct RemoteSpacesStoreTests {
     @Test("filter matches name and command")
     func filterMatchesNameAndCommand() {
         let store = RemoteSpacesStore(persistence: InMemoryRemoteSpacesPersistence(spaces: [
-            RemoteSpace(name: "Zen", command: "ssh kika@100.86.62.100", colorID: "blue"),
-            RemoteSpace(name: "Alienware", command: "ssh kika@192.168.1.171", colorID: "green"),
+            RemoteSpace(name: "Zen", command: "ssh dev@203.0.113.20", colorID: "blue"),
+            RemoteSpace(name: "Alienware", command: "ssh dev@203.0.113.10", colorID: "green"),
         ]))
 
         #expect(store.filteredSpaces(matching: "zen").map(\.displayName) == ["Zen"])
-        #expect(store.filteredSpaces(matching: "192.168").map(\.displayName) == ["Alienware"])
+        #expect(store.filteredSpaces(matching: "203.0.113.10").map(\.displayName) == ["Alienware"])
     }
 
     @Test("add update and delete persist spaces")
@@ -60,7 +60,7 @@ struct RemoteSpacesStoreTests {
         let updated = try #require(store.update(RemoteSpace(
             id: saved.id,
             name: "Zen Linux",
-            command: " ssh kika@host ",
+            command: " ssh dev@host ",
             colorID: "green"
         )))
 
@@ -68,9 +68,9 @@ struct RemoteSpacesStoreTests {
             RemoteSpace(
                 id: saved.id,
                 name: "Zen Linux",
-                command: "ssh kika@host",
+                command: "ssh dev@host",
                 colorID: "green",
-                user: "kika",
+                user: "dev",
                 host: "host",
                 themeName: "Muxy Zen"
             )
@@ -86,7 +86,7 @@ struct RemoteSpacesStoreTests {
 
     @Test("project path resolves matching remote space")
     func projectPathResolvesMatchingRemoteSpace() throws {
-        let zen = RemoteSpace(name: "Zen", command: "ssh kika@100.86.62.100", colorID: "blue")
+        let zen = RemoteSpace(name: "Zen", command: "ssh dev@203.0.113.20", colorID: "blue")
         let store = RemoteSpacesStore(persistence: InMemoryRemoteSpacesPersistence(spaces: [zen]))
 
         let space = try #require(store.space(forProjectPath: zen.backingDirectory(create: false).path))
@@ -101,15 +101,15 @@ struct RemoteSpacesStoreTests {
         let saved = try #require(store.add(RemoteSpace(
             name: "Zen",
             colorID: "blue",
-            user: " kika ",
-            host: " 100.86.62.100 ",
+            user: " dev ",
+            host: " 203.0.113.20 ",
             port: 2222,
             identityFile: " ~/.ssh/id_ed25519 ",
             jumpHost: " bastion ",
             startupCommands: [" cd ~/code ", " ", " tmux attach "]
         )))
 
-        #expect(saved.connectionCommand == "ssh -t -p 2222 -i ~/.ssh/id_ed25519 -J bastion kika@100.86.62.100 'cd ~/code && tmux attach; exec ${SHELL:-/bin/sh} -l'")
+        #expect(saved.connectionCommand == "ssh -t -p 2222 -i ~/.ssh/id_ed25519 -J bastion dev@203.0.113.20 'cd ~/code && tmux attach; exec ${SHELL:-/bin/sh} -l'")
         #expect(persistence.savedSpaces == [saved])
     }
 }

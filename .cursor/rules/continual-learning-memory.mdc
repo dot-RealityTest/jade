@@ -7,8 +7,9 @@ alwaysApply: true
 
 When running `continual-learning` or `agents-memory-updater` for this repo:
 
-- Update `/Users/kika_hub/Projects/muxy/AGENTS.md` and `/Users/kika_hub/Projects/muxy/.cursor/hooks/state/continual-learning-index.json` **in place** (StrReplace / surgical edits).
+- Update `AGENTS.md` and `.cursor/hooks/state/continual-learning-index.json` **in place** (StrReplace / surgical edits).
 - Do not use Write to replace entire `AGENTS.md` or `CLAUDE.md`.
 - Do not create new memory files or write indexes under plugin cache paths or other workspaces.
 - Preserve all non-learned sections of `AGENTS.md` unchanged; only mutate `## Learned User Preferences` and `## Learned Workspace Facts`.
 - Sync the same two learned sections in `CLAUDE.md` via in-place edits only.
+- Do not store personal filesystem paths, vault locations, or home-directory usernames in learned sections.

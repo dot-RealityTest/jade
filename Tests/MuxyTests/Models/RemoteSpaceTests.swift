@@ -7,11 +7,11 @@ import Testing
 struct RemoteSpaceTests {
     @Test("trims name and command")
     func trimsNameAndCommand() {
-        let space = RemoteSpace(name: " Zen ", command: " ssh kika@100.86.62.100 ")
+        let space = RemoteSpace(name: " Zen ", command: " ssh dev@203.0.113.20 ")
 
         #expect(space.displayName == "Zen")
-        #expect(space.trimmedCommand == "ssh kika@100.86.62.100")
-        #expect(space.connectionCommand == "ssh kika@100.86.62.100")
+        #expect(space.trimmedCommand == "ssh dev@203.0.113.20")
+        #expect(space.connectionCommand == "ssh dev@203.0.113.20")
         #expect(space.isConnectable)
     }
 
@@ -20,27 +20,27 @@ struct RemoteSpaceTests {
         let space = RemoteSpace(
             name: "Zen",
             colorID: "blue",
-            user: "kika",
-            host: "100.86.62.100",
+            user: "dev",
+            host: "203.0.113.20",
             port: 2222,
             identityFile: "~/.ssh/id_ed25519",
             jumpHost: "bastion",
             startupCommands: ["cd ~/code", "tmux attach || tmux new"]
         )
 
-        #expect(space.connectionSummary == "kika@100.86.62.100:2222")
+        #expect(space.connectionSummary == "dev@203.0.113.20:2222")
         #expect(
             space.connectionCommand ==
-                "ssh -t -p 2222 -i ~/.ssh/id_ed25519 -J bastion kika@100.86.62.100 'cd ~/code && tmux attach || tmux new; exec ${SHELL:-/bin/sh} -l'"
+                "ssh -t -p 2222 -i ~/.ssh/id_ed25519 -J bastion dev@203.0.113.20 'cd ~/code && tmux attach || tmux new; exec ${SHELL:-/bin/sh} -l'"
         )
     }
 
     @Test("simple SSH command parses into profile fields")
     func simpleSSHCommandParsesIntoProfileFields() throws {
-        let parsed = try #require(RemoteSpace.parsedSSHCommand("ssh -p 2222 -i ~/.ssh/id_ed25519 -J bastion kika@100.86.62.100"))
+        let parsed = try #require(RemoteSpace.parsedSSHCommand("ssh -p 2222 -i ~/.ssh/id_ed25519 -J bastion dev@203.0.113.20"))
 
-        #expect(parsed.user == "kika")
-        #expect(parsed.host == "100.86.62.100")
+        #expect(parsed.user == "dev")
+        #expect(parsed.host == "203.0.113.20")
         #expect(parsed.port == 2222)
         #expect(parsed.identityFile == "~/.ssh/id_ed25519")
         #expect(parsed.jumpHost == "bastion")

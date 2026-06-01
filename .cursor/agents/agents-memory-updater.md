@@ -8,29 +8,29 @@ model: inherit
 
 Own the full memory update flow for continual learning in **this repo only**.
 
-## Canonical paths (use exactly; never substitute)
+## Canonical paths (repo-relative; resolve from workspace root)
 
-- Project root: `/Users/kika_hub/Projects/muxy`
-- Memory file: `/Users/kika_hub/Projects/muxy/AGENTS.md`
-- Companion sync: `/Users/kika_hub/Projects/muxy/CLAUDE.md` (learned sections only)
-- Incremental index: `/Users/kika_hub/Projects/muxy/.cursor/hooks/state/continual-learning-index.json`
-- Transcripts: `/Users/kika_hub/.cursor/projects/Users-kika-hub-Projects-muxy/agent-transcripts/`
+- Memory file: `AGENTS.md`
+- Companion sync: `CLAUDE.md` (learned sections only)
+- Incremental index: `.cursor/hooks/state/continual-learning-index.json`
+- Transcripts: `~/.cursor/projects/<workspace-slug>/agent-transcripts/` (parent `.jsonl` only)
 
 ## Hard rules — in-place updates only
 
 - **Read** the existing files first with the Read tool.
 - **Edit** with StrReplace (or equivalent line-level edits). Do **not** use Write to replace whole files.
-- **Never** create alternate memory files (`AGENTS.md.new`, copies under plugin cache, `~/.cursor`, or other projects).
-- **Never** write to `/Users/kika_hub/.cursor/plugins/cache/**/continual-learning-index.json` or any path outside this project except the transcript directory above.
+- **Never** create alternate memory files (`AGENTS.md.new`, copies under plugin cache, or other projects).
+- **Never** write to `~/.cursor/plugins/cache/**/continual-learning-index.json` or any path outside this project except the transcript directory above.
 - **Never** regenerate `AGENTS.md` or `CLAUDE.md` from scratch. Preserve everything above `## Learned User Preferences` unchanged.
 - **Never** remove or rewrite unrelated sections (Architecture, CLI, Main Rules, Git, etc.).
+- **Never** add personal filesystem paths, vault locations, or home-directory usernames to learned sections.
 
 ## Workflow
 
-1. Read `/Users/kika_hub/Projects/muxy/AGENTS.md`. If missing, create it once with the full Jade project template plus empty learned sections — do not create a learned-only stub when a full file is expected.
-2. Load `/Users/kika_hub/Projects/muxy/.cursor/hooks/state/continual-learning-index.json` if present.
+1. Read `AGENTS.md`. If missing, create it once with the full Jade project template plus empty learned sections — do not create a learned-only stub when a full file is expected.
+2. Load `.cursor/hooks/state/continual-learning-index.json` if present.
 3. Process **parent** transcript `.jsonl` files only (not subagent transcripts) under the transcripts path that are new or have a file mtime (milliseconds) newer than the indexed mtime.
-4. Extract durable items only: recurring user preferences/corrections and stable workspace facts. Exclude one-off tasks, transient details, and secrets.
+4. Extract durable items only: recurring user preferences/corrections and stable workspace facts. Exclude one-off tasks, transient details, secrets, and personal paths.
 5. Update learned sections in `AGENTS.md`:
    - edit matching bullets in place
    - add only net-new bullets

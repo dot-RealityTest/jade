@@ -8,8 +8,8 @@ struct RemoteCommandBuilderTests {
     func wrapsCommandThroughSSH() {
         let space = RemoteSpace(
             name: "Alienware",
-            user: "kika",
-            host: "192.168.1.171",
+            user: "dev",
+            host: "203.0.113.10",
             port: 2222
         )
 
@@ -19,7 +19,7 @@ struct RemoteCommandBuilderTests {
         #expect(command.contains("-t"))
         #expect(command.contains("-p"))
         #expect(command.contains("2222"))
-        #expect(command.contains("kika@192.168.1.171"))
+        #expect(command.contains("dev@203.0.113.10"))
         #expect(command.contains("nvidia-smi"))
     }
 
@@ -27,8 +27,8 @@ struct RemoteCommandBuilderTests {
     func keepsExistingStartupCommands() {
         let space = RemoteSpace(
             name: "Zen",
-            user: "kika",
-            host: "100.86.62.100",
+            user: "dev",
+            host: "203.0.113.20",
             startupCommands: ["cd ~/projects"]
         )
 
@@ -39,7 +39,7 @@ struct RemoteCommandBuilderTests {
 
     @Test("empty commands stay empty")
     func emptyCommandsStayEmpty() {
-        let space = RemoteSpace(name: "Zen", user: "kika", host: "100.86.62.100")
+        let space = RemoteSpace(name: "Zen", user: "dev", host: "203.0.113.20")
 
         #expect(RemoteCommandBuilder.command("  ", for: space).isEmpty)
     }
