@@ -14,6 +14,25 @@
   <img src="https://img.shields.io/github/commit-activity/m/dot-RealityTest/jade" />
 </div>
 
+---
+
+## Why Jade?
+
+You live in your terminal—but switching between repos, losing context, and hunting for commands breaks flow. **Jade keeps every project's terminals, Git state, notes, and AI context in one persistent workspace.** Jump back in exactly where you left off.
+
+## Quick Start
+
+```bash
+# Install
+brew install --cask jade  # or download from Releases
+
+# Open a project
+jade /path/to/repo
+
+# Keyboard essentials
+⌘K  Command palette    ⌘P  Quick open    ⌘⇧U  Jump to unread    ⌘I  Rich input
+```
+
 ## Screenshots
 
 <p align="center">
@@ -30,97 +49,114 @@
   <img src="assets/screenshots/jade-voice-recording.png" alt="On-device voice dictation with listening timer and waveform" width="440" />
 </p>
 
+---
+
 ## Features
 
-### Core terminal workspace
+### 🗂️ Project Workspace
 
-- **Project-based workflow** — Organize terminals by project with persistent workspace state
+- **Persistent workspaces** — Tabs, splits, and focus state saved per project
+- **Vertical tabs** — Sidebar tab strip with drag-and-drop, pinning, middle-click close
+- **Split panes** — Horizontal/vertical splits with keyboard navigation
 - **Home workspace** — Optional pinned shell at `~` in the sidebar
-- **Vertical tabs** — Sidebar tab strip with drag-and-drop reordering, pinning, renaming, and middle-click close
-- **Split panes** — Horizontal and vertical splits with keyboard navigation and resizable dividers
-- **Git worktrees** — Create, switch, and manage worktrees from the sidebar with per-pane branch tracking
-- **Remote spaces** — SSH-backed sidebar projects with remote command palette actions
-- **Workspace persistence** — Tabs, splits, and focus state saved and restored per project
+- **Git worktrees** — Create, switch, and manage worktrees from the sidebar
+- **Remote spaces** — SSH-backed projects with remote command palette actions
 
-### Command palette & search
+### ⚡ Command Palette & Search
 
-- **Command palette (`⌘K`)** — Fuzzy actions, files, snippets, MCP tools, project-log steps, and natural shell generation
-- **Quick open & find in files** — `⌘P` / `⌘⇧F` plus palette file search
-- **Local dev shortcuts** — Upgrade Homebrew; Ollama list, pull, run, serve from the palette
-- **Local Ports** — Session listening and dead port overview from the palette
+- **Command palette (`⌘K`)** — Fuzzy search for actions, files, snippets, MCP tools, project-log steps, and natural shell generation
+- **Quick open (`⌘P`)** — Jump to any file
+- **Find in files (`⌘⇧F`)** — Project-wide search
+- **Local dev shortcuts** — Homebrew upgrades, Ollama commands (list, pull, run, serve)
+- **Local Ports** — Active listener overview and dead port detection
 
-### Editor, files & Git
+### 📝 Editor, Files & Git
 
-- **Built-in VCS** — Git status, diff (unified and split), commit history, branch picker, and PR creation/listing via `gh`
-- **File tree** — Gitignore-aware browser with file operations and clipboard
-- **Text editor** — Syntax highlighting, search, and history
-- **Markdown preview** — Render Markdown files inline
-- **IDE integration** — Open files and folders in your preferred IDE
+- **Built-in VCS** — Git status, diff (unified/split), commit history, branch picker, PR creation via `gh`
+- **File tree** — Gitignore-aware browser with file operations
+- **Text editor** — Syntax highlighting, search, history
+- **Markdown preview** — Render `.md` files inline
+- **IDE integration** — Open files/folders in your preferred editor
 
-### AI, capture & knowledge
+### 🤖 AI & Knowledge Capture
 
-- **Rich Input (`⌘I`)** — Multi-line compose with images; notes/tasks capture without extra chrome
-- **AI Assistant (`⌘⌃A`)** — Right-rail Ollama chat; natural shell command review
-- **Snippets** — General vs project scope (`⌘J`, `⌘⌃J`); right-click terminal selection → **Save as Snippet**; auto-copy on select (Settings → General)
-- **AI usage tracking (`⌘L`)** — Claude Code, Codex, Cursor, Copilot, Amp, Factory, Kimi, MiniMax, OpenCode, Z.ai
-- **Obsidian MCP** — Send to vault (`⌘⌃O`); session logs under `Jade/Logs/{project}/`
-- **Project log** — `.jade/` scaffold, todo/goals markdown, Confirm/Complete session workflow
+- **Rich Input (`⌘I`)** — Multi-line compose with images; capture notes/tasks without leaving the terminal
+- **AI Assistant (`⌘⌃A`)** — Right-rail Ollama chat; review generated shell commands before running
+- **Snippets** — General or project-scoped (`⌘J` / `⌘⌃J`); save terminal selection via right-click; auto-copy on select
+- **AI usage tracking (`⌘L`)** — Monitor Claude Code, Codex, Cursor, Copilot, Amp, Factory, Kimi, MiniMax, OpenCode, Z.ai
+- **Obsidian MCP** — Send notes to vault (`⌘⌃O`); session logs under `Jade/Logs/{project}/`
+- **Project log** — `.jade/` scaffold with todo/goals markdown and Confirm/Complete session workflow
 - **Voice recording** — On-device dictation via Apple Speech (Settings → Recording)
 
-### Notifications & attention
+### 🔔 Attention & Notifications
 
-- **Notification center** — Toasts, sounds, per-project panel, socket + AI hooks
-- **Jump to latest unread (`⌘⇧U`)** — Project-aware focus (cmux-inspired, project-scoped)
+- **Notification center** — Toasts, sounds, per-project panel with socket + AI hooks
+- **Jump to unread (`⌘⇧U`)** — Project-aware focus (inspired by cmux)
 - **Sidebar status** — Branch, ports, unread preview on expanded project rows
 - **Terminal attention ring** — Unread highlight on background panes
-- **CLI** — `jade notify`, `jade hooks setup`
+- **CLI hooks** — `jade notify`, `jade hooks setup`
 
-### Platform & polish
+### 🎨 Polish & Platform
 
-- **Remote WebSocket API** — Optional LAN server for third-party clients (no Jade iOS app shipped today)
-- **Terminal tools** — Lazygit `⌘⇧G`, yazi `⌘⇧Y`, in-terminal find; auto-copy selection; right-click **Save as Snippet**
-- **200+ themes** — Ghostty theme picker `⌘⇧K`
+- **Remote WebSocket API** — Optional LAN server for third-party clients (no mobile app shipped)
+- **Terminal tools** — Lazygit (`⌘⇧G`), yazi (`⌘⇧Y`), in-terminal find, auto-copy selection
+- **200+ themes** — Ghostty theme picker (`⌘⇧K`)
 - **Customizable shortcuts** — 40+ actions plus custom shell commands
-- **Customizable toolbar** — Sparse workspace chrome (Snippets, AI, …)
-- **Drag and drop** — Reorder tabs/projects; split by dragging tabs
+- **Customizable toolbar** — Minimal workspace chrome
+- **Drag and drop** — Reorder tabs/projects; split by dragging
 - **Project icons** — Custom logos and colors
 - **Auto-updates** — Sparkle (disabled in DEBUG unless `JADE_ENABLE_UPDATES=1`)
 
 Full documentation: [docs/README.md](docs/README.md) — command palette, Obsidian, voice, integrations, project log.
 
+---
+
+## How Jade Compares
+
+| Feature | Jade | iTerm2 | Warp | Ghostty |
+|---------|------|--------|------|---------|
+| Project workspaces | ✅ Persistent per-repo | ❌ | ✅ | ❌ |
+| Built-in Git UI | ✅ Full VCS panel | ❌ | ✅ | ❌ |
+| Command palette | ✅ Fuzzy + AI | ❌ | ✅ | ⚠️ Basic |
+| Local AI (Ollama) | ✅ Right-rail chat | ❌ | ✅ Cloud | ❌ |
+| Obsidian capture | ✅ MCP integration | ❌ | ❌ | ❌ |
+| Split panes | ✅ | ✅ | ✅ | ✅ |
+| macOS native | ✅ SwiftUI | ✅ | ✅ | ✅ |
+| Open source | ✅ MIT | ❌ | ❌ | ✅ |
+| Free | ✅ | ✅ | ⚠️ Limited | ✅ |
+
+**Jade is a project multiplexer**—not just a terminal emulator. It wraps libghostty's rendering with a workflow layer for persistent per-repo contexts, Git operations, snippets, and capture flows. Everything runs locally on your Mac.
+
+---
+
 ## FAQ
 
 **What is Jade?**  
-A native macOS terminal workspace that organizes shells by project — tabs, splits, Git worktrees, a command palette, local Ollama AI, and optional Obsidian capture. Not a cloud IDE; everything runs on your Mac.
+A native macOS terminal workspace that organizes shells by project — tabs, splits, Git worktrees, command palette, local Ollama AI, and optional Obsidian capture. Not a cloud IDE; everything runs on your Mac.
 
 **Is Jade free and open source?**  
 Yes. MIT license. Download from [Releases](https://github.com/dot-RealityTest/jade/releases) or build from source.
 
 **What platforms does Jade support?**  
-macOS 14+ only. This repo does not ship an iOS or Android app under the Jade name.
-
-**How is Jade different from iTerm, Warp, or Ghostty alone?**  
-Jade is a **project multiplexer**: persistent workspaces per repo, built-in Git/editor/file tree, command palette, snippets, and capture flows. It uses **libghostty** for terminal rendering but adds a SwiftUI shell around developer workflow.
+macOS 14+ only. No iOS or Android app under the Jade name.
 
 **Does Jade send my code or terminal data to the cloud?**  
-No by default. Ollama and Obsidian run locally with endpoints you configure. Optional SSH remote spaces and a LAN WebSocket API are opt-in.
+No by default. Ollama and Obsidian run locally with endpoints you configure. SSH remote spaces and LAN WebSocket API are opt-in.
 
 **Where can AI assistants read about Jade?**  
 See [llms.txt](llms.txt) and [docs/overview.md](docs/overview.md).
+
+---
 
 ## Requirements
 
 - macOS 14+
 - Swift 6.0+
-- `gh` installed (optional for PR management)
+- `gh` (optional, for PR management)
 
 ## Install
 
-Download a build from [Releases](https://github.com/dot-RealityTest/jade/releases), or build locally (see [Local Development](#local-development)).
-
-Jade is **macOS-only** today. There is no iOS or Android app under the Jade name. Upstream [Muxy](https://github.com/muxy-app/muxy) ships separate mobile companions; this repo does not include `MuxyMobile`. The desktop app still exposes an optional WebSocket API — see [Remote Server](docs/features/remote-server/README.md).
-
-## Local Development
+Download from [Releases](https://github.com/dot-RealityTest/jade/releases), or build locally:
 
 ```bash
 scripts/setup.sh          # downloads GhosttyKit.xcframework
@@ -130,28 +166,28 @@ swift build               # debug build
 
 Use `./scripts/run-jade.sh` rather than `swift run Muxy` — the bare binary skips the app bundle and shows a generic Dock icon.
 
-## Lineage & acknowledgments
-
-Jade is a personal macOS terminal workspace built on open-source foundations:
-
-- **[Muxy](https://github.com/muxy-app/muxy)** — Core terminal multiplexer: SwiftUI shell, libghostty rendering, project workspaces, splits, and persistence. Jade keeps `muxy` / `Muxy` identifiers for compatibility (bundle id, Application Support paths, URL scheme).
-- **[cmux](https://github.com/manaflow-ai/cmux)** — UX inspiration for project-aware attention: sidebar status, jump-to-unread, and terminal attention cues. Jade applies those patterns at the **project** level (tabs, panes, notifications), not as an agent orchestration layer.
-
 ## CLI
 
-Use **Jade → Install CLI** from the macOS menu to install the **`jade`** command.
+Install via **Jade → Install CLI** from the menu bar:
 
 ```bash
 jade .
 jade /path/to/project
 ```
 
-## Feedback & contributions
+## Lineage & Acknowledgments
 
-Feedback, bug reports, ideas, and pull requests are welcome.
+Jade builds on open-source foundations:
 
-- **Something broken or missing?** [Open an issue](https://github.com/dot-RealityTest/jade/issues/new/choose)
-- **Want to contribute code?** See [CONTRIBUTING.md](CONTRIBUTING.md) — fork, branch from `main`, run `scripts/checks.sh --fix --fast`, and open a PR
+- **[Muxy](https://github.com/muxy-app/muxy)** — Core multiplexer: SwiftUI shell, libghostty rendering, project workspaces, splits, persistence. Jade retains `muxy` identifiers for compatibility (bundle ID, Application Support paths, URL scheme).
+- **[cmux](https://github.com/manaflow-ai/cmux)** — UX inspiration for project-aware attention: sidebar status, jump-to-unread, terminal attention cues. Jade applies these at the **project level** (tabs, panes, notifications).
+
+## Feedback & Contributions
+
+Feedback, bug reports, ideas, and PRs welcome.
+
+- **Bug or missing feature?** [Open an issue](https://github.com/dot-RealityTest/jade/issues/new/choose)
+- **Want to contribute?** See [CONTRIBUTING.md](CONTRIBUTING.md) — fork, branch from `main`, run `scripts/checks.sh --fix --fast`, open a PR
 
 ## License
 
