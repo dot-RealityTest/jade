@@ -1,6 +1,6 @@
 # Architecture
 
-Muxy is a SwiftUI macOS app that uses [libghostty](https://github.com/ghostty-org/ghostty) for terminal emulation and a local-network WebSocket API for companion clients.
+**Jade** is a SwiftUI macOS app that uses [libghostty](https://github.com/ghostty-org/ghostty) for terminal emulation and a local-network WebSocket API for companion clients. End-user guides (command palette, Obsidian, project log, voice) are in [docs/README.md](../../README.md).
 
 ```mermaid
 flowchart TB

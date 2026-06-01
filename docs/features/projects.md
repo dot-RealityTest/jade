@@ -6,7 +6,9 @@ A project is a directory plus a bit of metadata (name, icon, color, last‑used 
 
 When **General → Show Home in sidebar** is on (default), the sidebar lists **Home** above your projects. Home is a general-purpose shell workspace rooted at your home directory — useful for running agents, ad‑hoc commands, and tools that are not tied to one repo.
 
-The sidebar stays limited to **Home** and **real project folders**. Agent CLIs and custom tools are not added as sidebar rows; run them from Home tabs, **Settings → Custom Commands**, or the command palette (`⌘K`).
+The sidebar stays limited to **Home** and **real project folders**. Agent CLIs and custom tools are not added as sidebar rows; run them from Home tabs, **Settings → Commands → Custom Commands**, or the [command palette](../user-guide/command-palette.md) (`⌘K`).
+
+Each project can use the [project log](project-log.md) workflow (`.jade/`, `todo.md`, Obsidian session notes).
 
 ## Adding a project
 
@@ -15,7 +17,7 @@ flowchart TB
   Plus["+ in sidebar"] --> Open[Open Project sheet]
   Menu["File → Open Project ⌘O"] --> Open
   Drag[Drag folder onto dock] --> Handler
-  CLI["muxy /path"] --> URL["muxy://open?path=…"]
+  CLI["jade /path or muxy /path"] --> URL["muxy://open?path=…"]
   URL --> Handler[AppDelegate.handleOpenProjectPath]
   Open --> Handler
   Handler --> Dedupe{Already added?}
@@ -28,7 +30,7 @@ flowchart TB
 | Sidebar | Click **+** at the bottom |
 | Menu | **File → Open Project…** (`⌘O`) |
 | Dock | Drag a folder onto the Muxy icon |
-| Shell | `muxy /path/to/project` (after **Muxy → Install CLI**) |
+| Shell | `jade /path/to/project` (primary CLI; `muxy` alias after **Jade → Install CLI**) |
 | URL | `muxy://open?path=/path/to/project` |
 
 All entry points dedupe — opening the same path twice activates the existing project.

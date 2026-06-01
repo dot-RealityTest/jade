@@ -2,6 +2,8 @@
 
 If something goes wrong, this page collects the common fixes. If your issue isn't here, please [open an issue](https://github.com/muxy-app/muxy/issues).
 
+See also the [documentation index](../README.md) for command palette, Obsidian MCP, project log, and voice setup.
+
 ## Logs
 
 Muxy writes logs through the unified macOS logging system. Stream them live:
@@ -18,13 +20,13 @@ log show --predicate 'subsystem == "app.muxy"' --last 10m --info --debug
 
 ## Terminal is blank or unresponsive
 
-- Try **Muxy → Reload Configuration** (`Cmd+Shift+R`).
+- Try **Jade → Reload Configuration** (`⌘⇧R`).
 - Check `~/.config/ghostty/config` parses by opening it in **Open Configuration…**.
 - If the issue is reproducible, check `log stream` while reproducing.
 
-## "muxy" CLI not found
+## CLI not found
 
-Run **Muxy → Install CLI** from the menu. This writes a wrapper to `/usr/local/bin/muxy`. Make sure `/usr/local/bin` is on your `$PATH`.
+Run **Jade → Install CLI**. This installs **`jade`** (primary) and **`muxy`** (alias) under `/usr/local/bin`. Ensure `/usr/local/bin` is on your `$PATH`.
 
 ## Project won't open via `muxy <path>`
 
@@ -51,6 +53,17 @@ After authenticating, restart Muxy or click **Refresh** in the PR list.
 - Check **Settings → Notifications** that the global toggle and the relevant per‑source toggle are on.
 - macOS may have suppressed Muxy's system notifications — check **System Settings → Notifications → Muxy**.
 - For socket‑based integrations, verify the socket exists: `ls -l ~/Library/Application\ Support/Muxy/muxy.sock`.
+
+## Obsidian MCP / project log
+
+- Enable **Settings → MCP Tools** and run **Test MCP** plus **Refresh Tools**.
+- Vault path must be the Obsidian vault root; Python must run your local `server.py`.
+- Read-only mode blocks `create_note` — session logs and Send to Obsidian need writes enabled.
+- Session notes land under `Jade/Logs/{project}/` in the vault; see [Obsidian MCP](../features/obsidian-mcp.md).
+
+## Voice recording or notifications on `⌘⇧I`
+
+Default shortcuts bind **Voice Recording** and **Project Notifications** to the same key. Remap one in **Settings → Commands → Keyboard Shortcuts**. Voice requires an on-device dictation language in **System Settings → Keyboard → Dictation**.
 
 ## AI usage shows nothing
 

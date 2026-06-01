@@ -20,31 +20,61 @@
 
 ## Features
 
+### Core terminal workspace
+
 - **Project-based workflow** — Organize terminals by project with persistent workspace state
+- **Home workspace** — Optional pinned shell at `~` in the sidebar
 - **Vertical tabs** — Sidebar tab strip with drag-and-drop reordering, pinning, renaming, and middle-click close
 - **Split panes** — Horizontal and vertical splits with keyboard navigation and resizable dividers
-- **Built-in VCS** — Git status, diff (unified and split), commit history, branch picker, and PR creation/listing via `gh`
 - **Git worktrees** — Create, switch, and manage worktrees from the sidebar with per-pane branch tracking
-- **File tree** — Built-in project file browser with file operations and clipboard
-- **Find in files** — Project-wide text search with match preview
-- **Quick open & command palette** — Fuzzy-find files and run commands without leaving the keyboard
-- **Text editor** — Native lightweight editor with syntax highlighting for most languages, search, and history
+- **Remote spaces** — SSH-backed sidebar projects with remote command palette actions
+- **Workspace persistence** — Tabs, splits, and focus state saved and restored per project
+
+### Command palette & search
+
+- **Command palette (`⌘K`)** — Fuzzy actions, files, snippets, MCP tools, project-log steps, and natural shell generation
+- **Quick open & find in files** — `⌘P` / `⌘⇧F` plus palette file search
+- **Local dev shortcuts** — Upgrade Homebrew; Ollama list, pull, run, serve from the palette
+- **Local Ports** — Session listening and dead port overview from the palette
+
+### Editor, files & Git
+
+- **Built-in VCS** — Git status, diff (unified and split), commit history, branch picker, and PR creation/listing via `gh`
+- **File tree** — Gitignore-aware browser with file operations and clipboard
+- **Text editor** — Syntax highlighting, search, and history
 - **Markdown preview** — Render Markdown files inline
-- **AI usage tracking** — Live token/cost usage panels for Claude Code, Codex, Cursor, Copilot, Amp, Factory, Kimi, MiniMax, OpenCode, and Z.ai
-- **IDE integration** — Open files and folders in your preferred IDE directly from Muxy
-- **Mobile companion apps** — Pair iOS and Android devices to control your Mac terminals remotely
-- **Rich input panel** — Compose multi-line input with image attachments and drafts before sending to the terminal
-- **Notifications** — In-app notification center with socket-based hooks (e.g. opencode plugin)
-- **Project tools** — Optional Snippets, Notes, and Todo buttons keep project context beside the terminal
-- **Terminal tools** — Launch lazygit with `Cmd+Shift+G` or yazi with `Cmd+Shift+Y`
-- **200+ themes** — Browse and search Ghostty themes with a built-in theme picker
-- **Customizable shortcuts** — 40+ configurable keyboard shortcuts with conflict detection
-- **Customizable toolbar** — Choose which tools appear in the titlebar from Settings
-- **Workspace persistence** — Tabs, splits, and focus state are saved and restored per project
-- **In-terminal search** — Find text in terminal output with match navigation
-- **Drag and drop** — Reorder tabs and projects, drag tabs between panes to create splits, drop file paths into the terminal
-- **Project icons** — Custom logos and color picker per project
-- **Auto-updates** — Built-in update checking via Sparkle
+- **IDE integration** — Open files and folders in your preferred IDE
+
+### AI, capture & knowledge
+
+- **Rich Input (`⌘I`)** — Multi-line compose with images; notes/tasks capture without extra chrome
+- **AI Assistant (`⌘⌃A`)** — Right-rail Ollama chat; natural shell command review
+- **Snippets** — General vs project scope (`⌘J`, `⌘⌃J`)
+- **AI usage tracking (`⌘L`)** — Claude Code, Codex, Cursor, Copilot, Amp, Factory, Kimi, MiniMax, OpenCode, Z.ai
+- **Obsidian MCP** — Send to vault (`⌘⌃O`); session logs under `Jade/Logs/{project}/`
+- **Project log** — `.jade/` scaffold, todo/goals markdown, Confirm/Complete session workflow
+- **Voice recording** — On-device dictation via Apple Speech (Settings → Recording)
+
+### Notifications & attention
+
+- **Notification center** — Toasts, sounds, per-project panel, socket + AI hooks
+- **Jump to latest unread (`⌘⇧U`)** — Project-aware focus (cmux-inspired, project-scoped)
+- **Sidebar status** — Branch, ports, unread preview on expanded project rows
+- **Terminal attention ring** — Unread highlight on background panes
+- **CLI** — `jade notify`, `jade hooks setup`
+
+### Platform & polish
+
+- **Mobile companion apps** — Pair iOS and Android devices to control Mac terminals remotely
+- **Terminal tools** — Lazygit `⌘⇧G`, yazi `⌘⇧Y`, in-terminal find
+- **200+ themes** — Ghostty theme picker `⌘⇧K`
+- **Customizable shortcuts** — 40+ actions plus custom shell commands
+- **Customizable toolbar** — Sparse workspace chrome (Snippets, AI, …)
+- **Drag and drop** — Reorder tabs/projects; split by dragging tabs
+- **Project icons** — Custom logos and colors
+- **Auto-updates** — Sparkle (disabled in DEBUG unless `JADE_ENABLE_UPDATES=1`)
+
+Full documentation: [docs/README.md](docs/README.md) — command palette, Obsidian, voice, integrations, project log.
 
 ## Requirements
 

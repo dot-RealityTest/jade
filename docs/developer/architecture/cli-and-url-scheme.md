@@ -1,12 +1,13 @@
 # CLI & URL Scheme
 
-External callers can open a project in Muxy through four coordinated paths, all funneled into `AppDelegate.handleOpenProjectPath(_:)` so persistence, dedupe, and activation behave consistently.
+External callers can open a project in Jade through coordinated paths, all funneled into `AppDelegate.handleOpenProjectPath(_:)` so persistence, dedupe, and activation behave consistently. The user-facing CLI command is **`jade`**; **`muxy`** remains a compatibility alias.
 
 ```mermaid
 flowchart TB
-  CLI["muxy /path<br/>shell wrapper"] --> URL
+  CLI["jade /path<br/>muxy-cli wrapper"] --> URL
   CLI --> AE[Apple Events<br/>open -b com.muxy.app]
   CLI --> Sock["socket: open-project|<path>"]
+  Notify["jade notify …"] --> SockN["socket: notification line"]
   URL["muxy://open?path=…"] --> Delegate
   AE --> Delegate
   Sock --> Server[NotificationSocketServer]
@@ -24,7 +25,7 @@ flowchart TB
 
 | Path | Behavior |
 | --- | --- |
-| `muxy` shell wrapper | `Muxy/Resources/scripts/muxy-cli`, installed to `/usr/local/bin/muxy` via `CLIAccessor.installCLI`. Resolves to an absolute directory and tries, in order via `\|\|` chaining: open `muxy://open?path=<percent-encoded>`, fall back to `open -b com.muxy.app`, finally pipe `open-project\|<path>` to the Unix socket. A small `python3`/`python` percent-encoder runs without taking a `jq` dependency. |
+| `jade` / `muxy` shell wrapper | `Muxy/Resources/scripts/muxy-cli`, installed via **Jade → Install CLI** to `/usr/local/bin/jade` and `/usr/local/bin/muxy`. Opens projects via `muxy://`, Apple Events, or `open-project\|<path>` on the socket. Subcommands: **`jade notify`**, **`jade hooks setup`**. |
 | `muxy://` URL scheme | `AppDelegate.application(_:open:)`. `resolveProjectPath(from:)` parses with `URLComponents`, prefers a `path` query item, falls back to `host + path`, percent-decodes, and standardizes via `URL(fileURLWithPath:).standardizedFileURL.path`. File URLs are accepted; foreign schemes rejected. |
 | Launch arguments | `applicationDidFinishLaunching` reads `CommandLine.arguments[1]` only when the candidate begins with `/` or `~` and resolves to an existing directory — Xcode/test runner flags are not treated as project paths. |
 | Notification socket | `NotificationSocketServer` accepts `open-project\|<path>` in addition to its notification format. It validates the path is an existing directory and dispatches via an injected `openProjectHandler` closure (wired in `MainWindow.onAppear`). |

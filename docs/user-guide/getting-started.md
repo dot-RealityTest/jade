@@ -1,15 +1,15 @@
 # Getting Started
 
-A 2-minute tour from install to a working session.
+A short tour from install to a productive Jade session.
 
 ```mermaid
 flowchart TB
-  Install[Install Muxy] --> CLI[Optional: Install CLI]
+  Install[Install Jade] --> CLI[Optional: Install CLI]
   CLI --> Add[Add a project]
   Install --> Add
-  Add --> Tabs[Open tabs / splits]
-  Tabs --> Worktree[Switch worktree<br/>⌘⇧O]
-  Tabs --> VCS[Source Control<br/>⌘K]
+  Add --> Palette[Command palette ⌘K]
+  Palette --> Tabs[Tabs / splits / tools]
+  Tabs --> Log[Optional: project log + Obsidian]
 ```
 
 ## Requirements
@@ -18,19 +18,36 @@ flowchart TB
 
 ## Install
 
-1. Download the latest build from the releases page.
-2. Drag `Muxy.app` to `/Applications` and launch it.
-3. Optional: **Muxy → Install CLI** writes a `muxy` wrapper to `/usr/local/bin/muxy`.
+1. Download a build from [releases](https://github.com/muxy-app/muxy/releases) or run locally with `./scripts/run-jade.sh`.
+2. Drag **Jade.app** to `/Applications` and launch.
+3. Optional: **Jade → Install CLI** installs `jade` with `muxy` as a compatibility alias.
 
 ## Add your first project
 
-A project is just a directory you've added to Muxy.
+A project is a directory you've added to Jade.
 
-1. Open the sidebar with `⌘B` (or **View → Toggle Sidebar**).
-2. Click **+** at the bottom of the sidebar — or **File → Open Project…** (`⌘O`).
-3. Right-click the project to rename, recolor, or change its icon.
+1. Open the sidebar with `⌘B` (**View → Toggle Sidebar**).
+2. Click **+** at the bottom — or **File → Open Project…** (`⌘O`).
+3. Right-click a project to rename, recolor, or change its icon.
 
 Projects persist in `~/Library/Application Support/Muxy/projects.json`.
+
+### Home workspace
+
+By default, a **Home** entry at `~` appears in the sidebar for general shells. Turn it off in **Settings → General → Show Home workspace in sidebar**.
+
+## Command palette (`⌘K`)
+
+The palette is the fastest way to discover Jade features:
+
+- **New tab**, splits, **Quick Open** (`⌘P`), **Find in Files**
+- **Rich Input**, **Snippets**, **AI Assistant**
+- **Set Up Project Log** → **Confirm Next Step** → **Complete Step**
+- **Upgrade Homebrew**, **Ollama** list/pull/run/serve
+- **Obsidian MCP** tools when configured
+- **Local Ports**, themes, AI usage
+
+See [Command Palette](command-palette.md).
 
 ## Tabs & splits cheat sheet
 
@@ -43,23 +60,38 @@ Projects persist in `~/Library/Application Support/Muxy/projects.json`.
 | Close pane / tab | `⌘⇧W` / `⌘W` |
 | Switch tabs | `⌘1…9`, `⌘]` / `⌘[` |
 
-Tabs can also hold a Source Control view, an editor, or a diff. See [Tabs & Splits](../features/tabs-and-splits.md).
+Tabs can also hold Source Control, the editor, or a diff viewer. See [Tabs & Splits](../features/tabs-and-splits.md).
+
+## Optional: project log + Obsidian
+
+1. **Settings → MCP Tools** — point at your Obsidian vault and MCP server.
+2. Open a project, `⌘K` → **Set Up Project Log**.
+3. `⌘K` → **Confirm Next Step** before a work session.
+4. `⌘K` → **Complete Step** when done — Jade writes a session note under `Jade/Logs/{project}/sessions/`.
+
+See [Project Log](../features/project-log.md) and [Obsidian MCP](../features/obsidian-mcp.md).
+
+## Voice dictation
+
+`⌘⇧I` opens on-device voice recording (may conflict with notifications — remap in Settings). See [Voice Recording](../features/voice-recording.md).
 
 ## Switching projects & worktrees
 
-- **Project navigation**: `⌃]` / `⌃[`, or `⌃1…9`.
-- **Switch worktree**: `⌘⇧O`. Each worktree has its own tabs/splits.
+- **Projects:** `⌃]` / `⌃[`, or `⌃1…9`.
+- **Worktrees:** `⌘⇧O` or palette **Switch Worktree**.
 
 ## Source Control
 
-`⌘K` opens the source-control view: staged/unstaged/untracked, commit box, branches, PRs. See [Source Control](../features/source-control.md).
+Open from the command palette (**Source Control**) or assign a shortcut in Settings. Staged/unstaged files, commit, branches, PRs via `gh`. See [Source Control](../features/source-control.md).
 
 ## Configuring Ghostty
 
-Muxy renders terminals through libghostty. Edit `~/.config/ghostty/config` from **Muxy → Open Configuration…** and reload with `⌘⇧R`.
+Jade renders terminals through libghostty. Edit `~/.config/ghostty/config` from **Jade → Open Configuration…** and reload with `⌘⇧R`.
 
 ## Next steps
 
-- [Keyboard Shortcuts](keyboard-shortcuts.md)
-- [Layouts](../features/layouts/README.md) — reproducible per-project workspaces
-- [Settings](settings.md) — every preference explained
+- [Keyboard Shortcuts](keyboard-shortcuts.md)  
+- [Settings](settings.md)  
+- [Integrations](../features/integrations.md) — Rich Input, AI, snippets, remote spaces  
+- [Notifications](../features/notifications.md) — hooks, jump to unread  
+- [Layouts](../features/layouts/README.md) — declarative workspaces  

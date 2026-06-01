@@ -1,60 +1,100 @@
 # Settings
 
-Open settings with `Cmd+,` (**Jade → Settings…**). Settings are grouped in the sidebar.
+Open settings with `⌘,` (**Jade → Settings…**). The window is resizable with HIG-friendly minimum sizes. Pages are listed in the sidebar.
 
 ## General
 
-- **Update channel** — *Stable* (tagged releases) or *Beta* (auto‑built per commit). Switching channels updates Sparkle's appcast immediately.
-- **Auto‑expand worktrees on project switch** — automatically opens the worktree list when you switch to a project that has more than one.
-- **Keep projects open after closing all tabs** — keeps a project visible in the sidebar even after its last tab is closed.
-- **Confirm before closing tab with running process** — prompts before killing a non‑idle terminal.
-- **Confirm before quitting Muxy** — confirmation dialog on `Cmd+Q`. Includes a "Don't ask again" toggle.
+- **Updates** — automatic Sparkle checks; stable vs beta channel.
+- **Sidebar** — show **Home** workspace at `~`; auto-expand worktrees when switching projects.
+- **Projects** — keep projects in the sidebar after closing all tabs; default worktree parent path.
+- **Tabs** — confirm before closing a tab with a running process; confirm before quit.
+- **Toolbar** — choose which chrome actions appear (Snippets, AI, etc.).
+- **File tree** — source preference for the tree panel.
+- **Session** — restore workspace on launch.
+- **Terminal** — auto-copy terminal selection to clipboard.
+- **Project picker** — default location and picker mode.
+- **Diagnostics** — optional Sentry crash reporting toggle.
 
 ## Appearance
 
-- **Theme** — paired light / dark theme picker.
-- **Syntax highlighting theme** — applied to the built‑in editor.
+- **Theme** — paired light / dark Ghostty theme.
+- **Syntax highlighting** — editor grammar colors.
 
 See [Themes](../features/themes.md).
 
+## Commands
+
+Container for command-related preferences:
+
+- Link to **Keyboard Shortcuts** recorder (all `ShortcutAction` bindings + conflict detection).
+- **Custom Commands** — named shell shortcuts with optional icons and keys.
+- **Natural Commands** — enable NL → shell generation; Ollama base URL and model (shared with AI assistant and Ollama palette commands); Apple Intelligence where available.
+
+See [Command Palette](command-palette.md) and [Integrations](../features/integrations.md).
+
 ## Editor
 
-- **Default editor** — built‑in Muxy editor, or an external command.
-- **External editor command** — used when default is set to "external". `{file}`, `{line}`, `{column}` placeholders are substituted. Terminal Command runs through your login interactive shell.
-- **Font** — font family and size for the built‑in editor.
+- **Default editor** — built-in Jade editor or external command.
+- **External editor command** — `{file}`, `{line}`, `{column}` placeholders.
+- **Rich Input** — floating panel, position, image attachment strategy.
+- **Font** — editor typography.
 
-## Keyboard Shortcuts
+## Sessions
 
-- All actions remappable via a key‑capture recorder.
-- **Custom Commands** — define reusable shell command shortcuts.
+Terminal session restore policies — what Jade remembers across launches per project/tab.
 
-See [Keyboard Shortcuts](keyboard-shortcuts.md).
+## Recording
+
+- **Voice Recording** — auto-press Return after insert; on-device dictation language.
+
+See [Voice Recording](../features/voice-recording.md).
 
 ## Notifications
 
-- **Enable notifications** — global toggle.
-- **Toast position** — top or bottom of the window.
-- **Sound** — play a system sound on arrival.
-- **Per‑source delivery** — separate toggles for Claude Code, OpenCode, OSC sequences, and the socket API.
+- **Delivery** — toast on/off.
+- **Sound** — notification sound preview.
+- **Toast position** — top or bottom of window.
+- **AI Providers** — per-provider toggles; **Install All** hooks for Claude Code, Codex, Cursor, OpenCode, etc.
 
 See [Notifications](../features/notifications.md).
 
 ## Network
 
-- **Allow remote access** — start / stop the WebSocket server for phones, tablets, and other clients on your LAN.
-- **How to connect** — copy the local `http://` URL shown when the server is running.
-- **Port** — defaults to 4865 (4866 in debug builds).
-
-Pair mobile devices and manage approvals under **Connections → Mobile**.
+- **Remote access** — WebSocket server for mobile companion apps on your LAN.
+- **Port** — default 4865 (4866 in debug).
+- Connection URL copy helper.
 
 See [Remote Server](../features/remote-server/README.md).
 
 ## Connections
 
-- **Enable AI usage tracking** — global toggle.
-- **Display mode** — show *used* or *remaining* values.
-- **Auto‑refresh** — Off / 5m / 15m / 30m / 1h.
-- **Show secondary limits** — keep / hide non‑primary metrics.
-- **Per‑provider toggles** — enable each provider individually.
+- **Mobile** — pairing, approvals, QR helper.
+- **Remote Spaces** — SSH profiles that appear as sidebar projects; theme and command templates.
+- **AI Usage** — enable tracking, display mode (used vs remaining), refresh interval, per-provider toggles.
 
-See [AI Usage](../features/ai-usage.md).
+See [Integrations](../features/integrations.md) and [AI Usage](../features/ai-usage.md).
+
+## AI Assistant
+
+Commit/PR generation and assistant options for the right-rail Ollama chat (`⌘⌃A`). Optional Moltis inspector settings when bundled at build time.
+
+## Ghostty
+
+Open/edit `~/.config/ghostty/config` and reload terminal settings.
+
+## MCP Tools
+
+Obsidian MCP integration:
+
+- Enable, vault path, Python interpreter, `server.py` path.
+- Inbox folder (default `Jade/Inbox`), default tags.
+- Read-only and backup-on-write toggles.
+- Test connection, refresh discovered MCP tool catalog.
+
+See [Obsidian MCP](../features/obsidian-mcp.md).
+
+## Related
+
+- [Keyboard Shortcuts](keyboard-shortcuts.md)  
+- [Getting Started](getting-started.md)  
+- [Troubleshooting](troubleshooting.md)  

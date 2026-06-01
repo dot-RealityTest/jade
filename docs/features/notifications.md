@@ -1,17 +1,40 @@
-# Notification Setup
+# Notifications
 
-Muxy ships built-in integrations for **Claude Code**, **Codex**, **Cursor**, **Droid**, and **OpenCode** — toggle them under **Settings → Notifications**. This page is for everything else: sending notifications into Muxy from any other tool (a custom CLI, a build script, a different AI agent, …).
+Jade collects session events from AI tools, OSC sequences, and a Unix socket API. Notifications drive toasts, sounds, the per-project panel, sidebar badges, and **project-aware attention** (jump-to-unread, metadata lines, terminal rings).
 
-```mermaid
-flowchart TB
-  Tool[External tool] -->|"pipe message"| Sock["~/Library/Application Support/Muxy/muxy.sock"]
-  Sock --> Server[NotificationSocketServer]
-  Server --> Store[NotificationStore]
-  Store --> Toast[Toast + sound]
-  Store --> Panel[Notification panel]
+## Built-in provider hooks
+
+Toggle providers under **Settings → Notifications → AI Providers**. Use **Install All** to register hooks for tools detected on this Mac (Claude Code, Codex, Cursor, OpenCode, etc.).
+
+Delivery options: toast on/off, position (top/bottom), sound.
+
+## Attention UX
+
+| Surface | Behavior |
+| --- | --- |
+| **Jump to Latest Unread** (`⌘⇧U`) | Focuses project/tab/pane with newest unread; marks read |
+| **Notification panel** (`⌘⇧I`*) | Lists session notifications for the active project |
+| **Sidebar badge** | Unread count on project icon |
+| **Expanded project row** | Branch, listening port count, latest unread preview |
+| **Terminal attention ring** | Accent border on unfocused panes with unread |
+| **Completion dot** | Subtle indicator when a command finished without unread |
+
+\* Shares default shortcut with **Voice Recording** — remap in Settings if needed.
+
+Project-attention patterns are inspired by [cmux](https://github.com/manaflow-ai/cmux) but scoped to **projects and panes**, not agent orchestration.
+
+## CLI
+
+After **Jade → Install CLI**:
+
+```bash
+jade notify <type> <pane-id> <title> [body]
+jade hooks setup
 ```
 
-## Socket location
+`jade hooks setup` installs notification hook scripts for supported AI CLIs. The primary command is `jade`; `muxy` remains an alias.
+
+## Socket API (custom integrations)
 
 Muxy listens on a Unix domain socket:
 
@@ -19,11 +42,14 @@ Muxy listens on a Unix domain socket:
 ~/Library/Application Support/Muxy/muxy.sock
 ```
 
-The path is exported to every Muxy terminal as `MUXY_SOCKET_PATH`, with a per-pane identifier `MUXY_PANE_ID`. Any process running inside a Muxy pane can read these and send a message.
+Every Jade terminal exports:
 
-## Wire format
+- `MUXY_SOCKET_PATH` — socket path  
+- `MUXY_PANE_ID` — pane UUID for routing  
 
-One message per connection: a single UTF-8 line with four pipe-separated fields:
+### Wire format
+
+One UTF-8 line per connection, pipe-separated:
 
 ```
 <type>|<paneID>|<title>|<body>
@@ -31,19 +57,14 @@ One message per connection: a single UTF-8 line with four pipe-separated fields:
 
 | Field | Required | Description |
 | --- | --- | --- |
-| `type` | yes | Source identifier. Unknown values are accepted and shown generically. Built-in: `claude_hook`, `codex_hook`, `cursor_hook`, `droid_hook`, `opencode`. |
-| `paneID` | yes | Pane the event belongs to. Use `$MUXY_PANE_ID` from inside a Muxy terminal. Leave empty to attach to the active pane. |
-| `title` | yes | Notification title. Empty falls back to `Task completed!`. |
-| `body` | no | Body. Must not contain `\|` or newlines — replace them first. |
+| `type` | yes | Source id (`claude_hook`, `codex_hook`, `cursor_hook`, `custom`, …) |
+| `paneID` | yes | Target pane; use `$MUXY_PANE_ID` inside Jade terminals |
+| `title` | yes | Notification title |
+| `body` | no | Body text (no `\|` or newlines) |
 
-Limits:
+Max message size: **64 KB**.
 
-- Max message size: **64 KB**.
-- Newlines terminate a message; you can send multiple by separating them with `\n`.
-
-## Examples
-
-### Shell
+### Shell example
 
 ```bash
 printf '%s|%s|%s|%s' \
@@ -51,7 +72,7 @@ printf '%s|%s|%s|%s' \
   | nc -U "$MUXY_SOCKET_PATH"
 ```
 
-Reusable function:
+Reusable helper:
 
 ```bash
 muxy_notify() {
@@ -61,58 +82,25 @@ muxy_notify() {
   printf '%s|%s|%s|%s' "custom" "${MUXY_PANE_ID:-}" "$title" "$safe_body" \
     | nc -U "$MUXY_SOCKET_PATH" 2>/dev/null || true
 }
-
-long-running-build && muxy_notify "Build finished" "main @ $(git rev-parse --short HEAD)"
 ```
 
-### Node.js
+### Node.js and Python
 
-```javascript
-import { createConnection } from "net"
+See prior examples in this file's history — same pattern: connect to `MUXY_SOCKET_PATH`, write one line, close.
 
-function muxyNotify(title, body = "") {
-  const socketPath = process.env.MUXY_SOCKET_PATH
-  const paneID = process.env.MUXY_PANE_ID || ""
-  if (!socketPath) return
-  const safeBody = String(body).replace(/[\n\r|]+/g, " ").slice(0, 500)
-  const payload = `custom|${paneID}|${title}|${safeBody}`
-  const conn = createConnection({ path: socketPath })
-  conn.on("error", () => {})
-  conn.write(payload, () => conn.end())
-}
-```
+## Reference scripts
 
-### Python
-
-```python
-import os, socket
-
-def muxy_notify(title: str, body: str = "") -> None:
-    path = os.environ.get("MUXY_SOCKET_PATH")
-    pane = os.environ.get("MUXY_PANE_ID", "")
-    if not path:
-        return
-    safe_body = body.replace("|", " ").replace("\n", " ")[:500]
-    payload = f"custom|{pane}|{title}|{safe_body}".encode("utf-8")
-    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-        s.connect(path)
-        s.sendall(payload)
-```
-
-## Reference implementations
-
-The built-in integrations are good templates:
-
-- **Shell hook (Claude Code):** [`Muxy/Resources/scripts/muxy-claude-hook.sh`](../../Muxy/Resources/scripts/muxy-claude-hook.sh)
-- **Node plugin (OpenCode):** [`Muxy/Resources/scripts/opencode-muxy-plugin.js`](../../Muxy/Resources/scripts/opencode-muxy-plugin.js)
+- Shell hook: `Muxy/Resources/scripts/muxy-claude-hook.sh`
+- OpenCode plugin: `Muxy/Resources/scripts/opencode-muxy-plugin.js`
 
 ## Tips
 
-- **Fire and forget.** If Muxy isn't running or the socket doesn't exist, the connection will fail — swallow the error rather than crashing.
-- **Don't block.** Open, write, close. Muxy doesn't send a response.
-- **Sanitize.** Strip `|`, `\n`, `\r` from user/model-generated content; cap body length (200–500 chars is plenty).
-- **Pane routing.** From outside a Muxy pane (e.g. cron), omit `paneID`; Muxy routes to the active pane.
+- **Fire and forget** if Jade is not running.
+- **Sanitize** model-generated bodies; cap length (~500 chars).
+- **Pane routing** — omit pane id only when targeting the active pane is acceptable.
 
-## Delivery settings
+## Related
 
-Muxy respects user choices under **Settings → Notifications**: toast on/off, position (top/bottom), sound. A dot also appears on the project and worktree rows in the sidebar until the notification is read.
+- [Command Palette](../user-guide/command-palette.md) — jump unread, notification panel  
+- [Keyboard Shortcuts](../user-guide/keyboard-shortcuts.md)  
+- Developer: [Notifications architecture](../developer/architecture/notifications.md)  

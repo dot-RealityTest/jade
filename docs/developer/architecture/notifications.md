@@ -17,7 +17,8 @@ flowchart TB
   Store -->|focused + active| Drop[suppress]
   Store --> Toast[Toast + sound]
   Store --> Persist[notifications.json<br/>debounced]
-  Store --> UI[badge + panel]
+  Store --> UI[badge + panel + sidebar metadata]
+  Store --> Attention[jump-to-unread · pane ring]
 ```
 
 | Source | Mechanism |
@@ -25,6 +26,19 @@ flowchart TB
 | OSC 9 / 777 | `GHOSTTY_ACTION_DESKTOP_NOTIFICATION` in `GhosttyRuntimeEventAdapter`. |
 | Agent CLIs (Claude Code, Codex, Cursor, Droid, OpenCode) | `AIProviderRegistry` installs per-tool hook scripts that route lifecycle events through the socket. |
 | Unix socket | `~/Library/Application Support/Muxy/muxy.sock`, pipe-delimited messages with paneID. |
+| CLI | `jade notify …` and `jade hooks setup` via `muxy-cli` wrapper. |
+
+## Attention layer
+
+| Component | Role |
+| --- | --- |
+| `NotificationStore` | Unread state, `latestUnread(for:)`, staging for tests |
+| `NotificationNavigator.jumpToLatestUnread` | Focus project/tab/pane; prefers active project |
+| `ProjectSidebarStatus` | Branch, listening port count, unread preview on expanded rows |
+| `TerminalPane.needsAttentionRing` | Accent border on unfocused panes with unread |
+| `KeyBinding` | `⌘⇧U` jump unread; `⌘⇧I` notification panel (conflicts with voice default) |
+
+User docs: [Notifications feature guide](../../features/notifications.md).
 
 ## Click-to-navigate
 

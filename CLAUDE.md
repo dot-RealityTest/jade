@@ -126,3 +126,4 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 - Continual learning for this repo updates learned sections in `AGENTS.md` / `CLAUDE.md` and `.cursor/hooks/state/continual-learning-index.json` only — never the plugin-cache global continual-learning index.
 - Snippet storage: general `snippets.json`, per-project `project-snippets/{projectID}.json`, remote under `remote-spaces/{slug}/snippets.json`; active scope mode in UserDefaults (`muxy.general.snippetsScopeMode`).
 - When full `scripts/checks.sh` fails on missing `MuxyMobile` Xcode project files, use `scripts/checks.sh --fix --fast` for macOS-only verification.
+- User documentation index: `docs/README.md` — command palette, Obsidian MCP, project log, voice, integrations, notification attention.

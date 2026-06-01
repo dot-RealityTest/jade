@@ -1,105 +1,151 @@
 # Keyboard Shortcuts
 
-Every shortcut listed here can be remapped in **Settings → Keyboard Shortcuts**. Defaults are shown.
+Every shortcut can be remapped in **Settings → Commands → Keyboard Shortcuts**. Defaults below use **Jade** user-facing names; internal action IDs still use `muxy` in preferences paths.
+
+## Command palette & navigation
+
+| Action | Shortcut |
+| --- | --- |
+| Command Palette | `⌘K` |
+| Quick Open (files) | `⌘P` |
+| Find in Files | `⌘⇧F` |
+| Open Project… | `⌘O` |
+| Toggle Sidebar | `⌘B` |
+| Toggle File Tree | `⌘E` |
+| Reload Ghostty Config | `⌘⇧R` |
+| Theme Picker | `⌘⇧K` |
+| AI Usage | `⌘L` |
+
+Source Control has **no default key** — open it from the palette (`⌘K` → “Source Control”) or assign a binding.
 
 ## Tabs
 
 | Action | Shortcut |
 | --- | --- |
-| New Tab | `Cmd+T` |
-| Close Tab | `Cmd+W` |
-| Rename Tab | `Cmd+Shift+T` |
-| Pin / Unpin Tab | `Cmd+Shift+P` |
+| New Tab | `⌘T` |
+| Reopen Closed Tab | `⌘⇧T` |
+| Close Tab | `⌘W` |
+| Rename Tab | `⌘⌥T` |
+| Pin / Unpin Tab | `⌘⇧P` |
 
 ## Panes
 
 | Action | Shortcut |
 | --- | --- |
-| Split Right | `Cmd+D` |
-| Split Down | `Cmd+Shift+D` |
-| Close Pane | `Cmd+Shift+W` |
-| Focus Pane Left | `Cmd+Opt+←` |
-| Focus Pane Right | `Cmd+Opt+→` |
-| Focus Pane Up | `Cmd+Opt+↑` |
-| Focus Pane Down | `Cmd+Opt+↓` |
-| Toggle Maximize Pane | `Cmd+Opt+Return` |
+| Split Right | `⌘D` |
+| Split Down | `⌘⇧D` |
+| Close Pane | `⌘⇧W` |
+| Focus Pane Left / Right / Up / Down | `⌘⌥←` / `→` / `↑` / `↓` |
+| Toggle Maximize Pane | `⌘⌥↩` |
 
 ## Tab navigation
 
 | Action | Shortcut |
 | --- | --- |
-| Next Tab | `Cmd+]` |
-| Previous Tab | `Cmd+[` |
-| Cycle Next Tab (All Panes) | `Ctrl+Tab` |
-| Cycle Previous Tab (All Panes) | `Ctrl+Shift+Tab` |
-| Tab 1–9 | `Cmd+1` … `Cmd+9` |
+| Next Tab | `⌘]` |
+| Previous Tab | `⌘[` |
+| Cycle Next Tab (All Panes) | `⌃Tab` |
+| Cycle Previous Tab (All Panes) | `⌃⇧Tab` |
+| Tab 1–9 | `⌘1` … `⌘9` |
 
 ## Project navigation
 
 | Action | Shortcut |
 | --- | --- |
-| Next Project | `Ctrl+]` |
-| Previous Project | `Ctrl+[` |
-| Project 1–9 | `Ctrl+1` … `Ctrl+9` |
-| Switch Worktree | `Cmd+Shift+O` |
+| Next Project | `⌃]` |
+| Previous Project | `⌃[` |
+| Project 1–9 | `⌃1` … `⌃9` |
+| Switch Worktree | `⌘⇧O` |
 
 ## Navigation history
 
 | Action | Shortcut |
 | --- | --- |
-| Navigate Back | `Cmd+Ctrl+←` |
-| Navigate Forward | `Cmd+Ctrl+→` |
+| Navigate Back | `⌘⌃←` |
+| Navigate Forward | `⌘⌃→` |
 
-Mouse side buttons (3 / 4) and three‑finger horizontal trackpad swipes also navigate Back / Forward.
+Mouse side buttons (3 / 4) and three-finger horizontal trackpad swipes also navigate Back / Forward.
 
-## App
+## Terminal tools
 
 | Action | Shortcut |
 | --- | --- |
-| Open Project… | `Cmd+O` |
-| Source Control | `Cmd+K` |
-| Quick Open | `Cmd+P` |
-| Toggle Sidebar | `Cmd+B` |
-| Toggle File Tree | `Cmd+E` |
-| Toggle AI Usage | `Cmd+L` |
-| Theme Picker | `Cmd+Shift+K` |
-| Reload Configuration | `Cmd+Shift+R` |
+| Find in Terminal | `⌘F` |
+| Lazygit | `⌘⇧G` |
+| Yazi | `⌘⇧Y` |
+
+## Rich Input
+
+| Action | Shortcut |
+| --- | --- |
+| Toggle Rich Input | `⌘I` |
+| Rich Input Preview | `⌘⌃N` |
+| Send Rich Input | `⌘↩` (when panel focused) |
+| Send without newline | `⌘⇧↩` (when panel focused) |
+
+## Capture & integrations
+
+| Action | Shortcut |
+| --- | --- |
+| Send to Obsidian | `⌘⌃O` |
+| Toggle Snippets | `⌘J` |
+| Toggle Snippet Scope | `⌘⌃J` |
+| Toggle AI Assistant | `⌘⌃A` |
+
+## Notifications & voice
+
+| Action | Shortcut | Notes |
+| --- | --- | --- |
+| Jump to Latest Unread | `⌘⇧U` | Active project first, then global |
+| Project Notifications | `⌘⇧I` | Notification panel |
+| Voice Recording | `⌘⇧I` | **Conflicts with notifications** — remap one |
+
+## Legacy inspector (optional)
+
+| Action | Shortcut |
+| --- | --- |
+| Toggle Project Notes Panel | `⌘⇧J` |
+| Toggle Project Todo Panel | `⌘⌥J` |
+
+Prefer Rich Input (`⌘I`) and the command palette for notes/tasks capture.
 
 ## Editor
 
 | Action | Shortcut |
 | --- | --- |
-| Save File | `Cmd+S` |
-| Find | `Cmd+F` |
+| Save File | `⌘S` |
+| Find | `⌘F` |
 
 ## Markdown preview
 
 | Action | Shortcut |
 | --- | --- |
-| Zoom In | `Cmd+=` |
-| Zoom Out | `Cmd+-` |
-| Reset Zoom | `Cmd+0` |
-
-## Terminal
-
-| Action | Shortcut |
-| --- | --- |
-| Find in Terminal | `Cmd+F` |
+| Zoom In | `⌘=` |
+| Zoom Out | `⌘-` |
+| Reset Zoom | `⌘0` |
 
 ## Custom command shortcuts
 
-Define your own command shortcuts in **Settings → Keyboard Shortcuts → Custom Commands**. Each entry has a display name, a shell command, an optional icon, and an optional keybinding. Triggering one creates a tab and runs the command.
+Define reusable shell shortcuts in **Settings → Commands → Keyboard Shortcuts → Custom Commands**. Each entry has a name, command, optional icon, and optional keybinding.
 
-## Local dev commands (command palette)
+## Command palette-only actions
 
-Open the command palette with `⌘K` and search for:
+Open `⌘K` and search for:
 
 | Command | What it does |
 | --- | --- |
-| Upgrade Homebrew | Runs `brew update && brew upgrade` in a new tab |
-| Ollama List Models | Runs `ollama list` |
-| Ollama Pull Model | Pulls the model from **Settings → Natural Commands** |
-| Ollama Run Model | Starts an interactive session with that model |
-| Ollama Serve | Runs `ollama serve` |
+| Set Up Project Log | Bootstrap `.jade/` and project markdown |
+| Confirm Next Step | Review next focus from todo/goals/journey |
+| Complete Step | Finish step + Obsidian session log |
+| Local Ports | Session listening / dead ports |
+| Upgrade Homebrew | `brew update && brew upgrade` in a new tab |
+| Ollama List / Pull / Run / Serve | Local LLM maintenance (model from Natural Commands settings) |
+| Obsidian MCP actions | When MCP Tools configured — see [Obsidian MCP](../features/obsidian-mcp.md) |
 
-These commands ensure Homebrew and Ollama are on `PATH` in GUI-launched shells and keep one-shot commands in an interactive tab when they finish.
+Full palette reference: [Command Palette](command-palette.md).
+
+## Related
+
+- [Getting Started](getting-started.md)  
+- [Settings](settings.md)  
+- [Voice Recording](../features/voice-recording.md)  
