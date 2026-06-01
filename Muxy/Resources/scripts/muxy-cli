@@ -1,25 +1,14 @@
 #!/bin/bash
 
 COMMAND_NAME="$(basename "$0")"
-TARGET_DIR="$1"
+SOCKET="$HOME/Library/Application Support/Muxy/muxy.sock"
 
-if [ -z "$TARGET_DIR" ]; then
-    echo "Usage: $COMMAND_NAME <path>"
-    echo "       $COMMAND_NAME ."
-    exit 1
-fi
-
-case "$TARGET_DIR" in
-    ~*) TARGET_DIR="${HOME}${TARGET_DIR:1}" ;;
-    .)  TARGET_DIR="$(pwd)" ;;
-    ..) TARGET_DIR="$(cd .. && pwd)" ;;
-    *)  TARGET_DIR="$(cd "$TARGET_DIR" 2>/dev/null && pwd)" ;;
-esac
-
-if [ ! -d "$TARGET_DIR" ]; then
-    echo "Error: $TARGET_DIR is not a valid directory"
-    exit 1
-fi
+usage() {
+    echo "Usage:"
+    echo "  $COMMAND_NAME <path>                 Open a project folder in Jade"
+    echo "  $COMMAND_NAME notify <type> <pane> <title> [body]"
+    echo "  $COMMAND_NAME hooks setup              Install agent notification hooks (Jade must be running)"
+}
 
 percent_encode() {
     if command -v python3 >/dev/null 2>&1; then
@@ -31,13 +20,89 @@ percent_encode() {
     fi
 }
 
-ENCODED_PATH="$(percent_encode "$TARGET_DIR")"
+open_project() {
+    local target_dir="$1"
+    case "$target_dir" in
+        ~*) target_dir="${HOME}${target_dir:1}" ;;
+        .)  target_dir="$(pwd)" ;;
+        ..) target_dir="$(cd .. && pwd)" ;;
+        *)  target_dir="$(cd "$target_dir" 2>/dev/null && pwd)" ;;
+    esac
 
-open "muxy://open?path=${ENCODED_PATH}" 2>/dev/null \
-    || open -b com.muxy.app "$TARGET_DIR" 2>/dev/null \
-    || {
-        SOCKET="$HOME/Library/Application Support/Muxy/muxy.sock"
-        if [ -e "$SOCKET" ]; then
-            printf 'open-project|%s\n' "$TARGET_DIR" | nc -U "$SOCKET" 2>/dev/null
+    if [ ! -d "$target_dir" ]; then
+        echo "Error: $target_dir is not a valid directory" >&2
+        exit 1
+    fi
+
+    local encoded_path
+    encoded_path="$(percent_encode "$target_dir")"
+
+    open "muxy://open?path=${encoded_path}" 2>/dev/null \
+        || open -b com.muxy.app "$target_dir" 2>/dev/null \
+        || {
+            if [ -e "$SOCKET" ]; then
+                printf 'open-project|%s\n' "$target_dir" | nc -U "$SOCKET" 2>/dev/null
+            else
+                echo "Error: Jade is not running and could not open the project URL." >&2
+                exit 1
+            fi
+        }
+}
+
+send_notify() {
+    local type="$1"
+    local pane_id="$2"
+    local title="$3"
+    local body="${4:-}"
+
+    if [ -z "$type" ] || [ -z "$pane_id" ] || [ -z "$title" ]; then
+        echo "Error: notify requires type, pane id, and title." >&2
+        usage
+        exit 1
+    fi
+
+    if [ ! -e "$SOCKET" ]; then
+        echo "Error: Jade is not running (missing socket at $SOCKET)." >&2
+        exit 1
+    fi
+
+    printf '%s|%s|%s|%s\n' "$type" "$pane_id" "$title" "$body" | nc -U "$SOCKET" 2>/dev/null
+}
+
+hooks_setup() {
+    if [ ! -e "$SOCKET" ]; then
+        echo "Error: Jade must be running to install hooks." >&2
+        echo "Launch Jade, then run: $COMMAND_NAME hooks setup" >&2
+        exit 1
+    fi
+
+    printf 'install-hooks\n' | nc -U "$SOCKET" 2>/dev/null
+    echo "Requested agent hook installation in Jade."
+    echo "Check Settings → Notifications for provider status."
+}
+
+case "${1:-}" in
+    notify)
+        shift
+        send_notify "$@"
+        ;;
+    hooks)
+        if [ "${2:-}" = "setup" ]; then
+            hooks_setup
+        else
+            echo "Error: unknown hooks command '${2:-}'." >&2
+            usage
+            exit 1
         fi
-    }
+        ;;
+    -h|--help|help)
+        usage
+        ;;
+    "")
+        usage
+        exit 1
+        ;;
+    *)
+        open_project "$1"
+        ;;
+esac

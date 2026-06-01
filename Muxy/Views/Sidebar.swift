@@ -80,7 +80,7 @@ struct Sidebar: View {
 
     private var projectList: some View {
         ScrollView(.vertical, showsIndicators: false) {
-            LazyVStack(spacing: UIMetrics.spacing2) {
+            LazyVStack(spacing: UIMetrics.spacing3) {
                 ForEach(Array(projectStore.projects.enumerated()), id: \.element.id) { index, project in
                     Group {
                         if isWide {

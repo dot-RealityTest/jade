@@ -136,6 +136,14 @@ final class NotificationSocketServer: @unchecked Sendable {
             return
         }
 
+        if message == "install-hooks" {
+            logger.info("Received install-hooks request via socket")
+            DispatchQueue.main.async {
+                AIProviderRegistry.shared.installAll(force: true)
+            }
+            return
+        }
+
         let parts = message.split(separator: "|", maxSplits: 3).map(String.init)
         guard parts.count >= 3 else {
             logger.warning("Invalid message on notification socket: expected type|paneID|title|body")

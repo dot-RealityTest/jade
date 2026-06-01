@@ -75,6 +75,8 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
     case toggleMaximizePane
     case toggleVoiceRecording
     case sendToObsidian
+    case toggleNotificationPanel
+    case jumpToLatestUnread
 
     static let allCases: [Self] = [
         .newTab,
@@ -142,6 +144,8 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
         .toggleMaximizePane,
         .toggleVoiceRecording,
         .sendToObsidian,
+        .toggleNotificationPanel,
+        .jumpToLatestUnread,
     ]
 
     var id: String { rawValue }
@@ -238,6 +242,16 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
                 category: "Integrations",
                 scope: .mainWindow
             )
+        case .toggleNotificationPanel: ShortcutMetadata(
+                displayName: "Project Notifications",
+                category: "Notifications",
+                scope: .mainWindow
+            )
+        case .jumpToLatestUnread: ShortcutMetadata(
+                displayName: "Jump to Latest Unread",
+                category: "Notifications",
+                scope: .mainWindow
+            )
         case .toggleThemePicker: ShortcutMetadata(displayName: "Theme Picker", category: "App", scope: .mainWindow)
         case .newProject: ShortcutMetadata(displayName: "New Project", category: "App", scope: .mainWindow)
         case .openProject: ShortcutMetadata(displayName: "Open Project", category: "App", scope: .mainWindow)
@@ -251,7 +265,19 @@ enum ShortcutAction: String, Codable, CaseIterable, Identifiable {
     var scope: ShortcutScope { metadata.scope }
 
     static var categories: [String] {
-        ["Tabs", "Panes", "Tab Navigation", "Project Navigation", "Navigation", "Terminal", "Rich Input", "Integrations", "Editor", "App"]
+        [
+            "Tabs",
+            "Panes",
+            "Tab Navigation",
+            "Project Navigation",
+            "Navigation",
+            "Terminal",
+            "Rich Input",
+            "Integrations",
+            "Notifications",
+            "Editor",
+            "App",
+        ]
     }
 
     static func tabAction(for index: Int) -> Self? {
@@ -375,5 +401,7 @@ struct KeyBinding: Codable, Identifiable {
         Self(action: .toggleMaximizePane, combo: KeyCombo(key: KeyCombo.returnKey, command: true, option: true)),
         Self(action: .toggleVoiceRecording, combo: KeyCombo(key: "i", command: true, shift: true)),
         Self(action: .sendToObsidian, combo: KeyCombo(key: "o", command: true, control: true)),
+        Self(action: .toggleNotificationPanel, combo: KeyCombo(key: "i", command: true, shift: true)),
+        Self(action: .jumpToLatestUnread, combo: KeyCombo(key: "u", command: true, shift: true)),
     ]
 }

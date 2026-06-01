@@ -27,6 +27,7 @@ struct ExpandedProjectRow: View {
     @State private var worktreesExpanded = false
     @State private var isRefreshingWorktrees = false
     @State private var showColorPicker = false
+    @State private var sidebarStatus = ProjectSidebarStatus.empty()
 
     private var isActive: Bool {
         appState.activeProjectID == project.id
@@ -44,6 +45,23 @@ struct ExpandedProjectRow: View {
         worktrees.first { $0.id == activeWorktreeID }
     }
 
+    private var projectRefreshKey: String {
+        [
+            project.path,
+            activeWorktreeID?.uuidString ?? "",
+            String(isActive),
+            String(NotificationStore.shared.readStateVersion),
+            String(LocalPortMonitor.shared.active.count),
+        ].joined(separator: "|")
+    }
+
+    private func refreshSidebarStatus() {
+        sidebarStatus = ProjectSidebarStatus.resolve(
+            project: project,
+            worktree: activeWorktree
+        )
+    }
+
     private var displayLetter: String {
         String(project.name.prefix(1)).uppercased()
     }
@@ -55,13 +73,15 @@ struct ExpandedProjectRow: View {
                 worktreeList
             }
         }
-        .task(id: project.path) {
+        .task(id: projectRefreshKey) {
             isGitRepo = await GitWorktreeService.shared.isGitRepository(project.path)
+            refreshSidebarStatus()
             if autoExpandWorktrees, isActive, isGitRepo {
                 worktreesExpanded = true
             }
         }
         .onChange(of: isActive) { _, active in
+            refreshSidebarStatus()
             guard autoExpandWorktrees, active, isGitRepo else { return }
             withAnimation(.easeInOut(duration: 0.15)) {
                 worktreesExpanded = true
@@ -122,11 +142,11 @@ struct ExpandedProjectRow: View {
     }
 
     private var projectHeader: some View {
-        HStack(spacing: UIMetrics.spacing4) {
+        HStack(alignment: .top, spacing: UIMetrics.spacing4) {
             projectIcon
 
-            VStack(alignment: .leading, spacing: UIMetrics.scaled(1)) {
-                HStack(spacing: 5) {
+            VStack(alignment: .leading, spacing: UIMetrics.spacing2) {
+                HStack(spacing: UIMetrics.spacing2) {
                     Text(project.name)
                         .font(.system(size: UIMetrics.fontEmphasis, weight: isActive ? .semibold : .medium))
                         .foregroundStyle(MuxyTheme.fg)
@@ -135,6 +155,12 @@ struct ExpandedProjectRow: View {
 
                     if activeWorktree?.isPrimary == true {
                         PrimaryWorktreeMarker()
+                    }
+
+                    Spacer(minLength: UIMetrics.spacing1)
+
+                    if isGitRepo {
+                        worktreeChevron
                     }
                 }
 
@@ -145,16 +171,19 @@ struct ExpandedProjectRow: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                 }
-            }
 
-            Spacer(minLength: UIMetrics.spacing2)
-
-            if isGitRepo {
-                worktreeChevron
+                ProjectSidebarMetadataLine(status: sidebarStatus, isActive: isActive)
             }
         }
-        .padding(UIMetrics.spacing2)
+        .padding(.horizontal, UIMetrics.spacing3)
+        .padding(.vertical, sidebarStatusHasContent ? UIMetrics.spacing3 : UIMetrics.spacing2)
         .background(headerBackground, in: RoundedRectangle(cornerRadius: UIMetrics.radiusLG))
+        .overlay {
+            if NotificationStore.shared.unreadCount(for: project.id) > 0 {
+                RoundedRectangle(cornerRadius: UIMetrics.radiusLG)
+                    .strokeBorder(MuxyTheme.accent.opacity(isActive ? 0.85 : 0.55), lineWidth: 1.5)
+            }
+        }
         .contentShape(RoundedRectangle(cornerRadius: UIMetrics.radiusLG))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(projectHeaderAccessibilityLabel)
@@ -268,6 +297,12 @@ struct ExpandedProjectRow: View {
         }
         .padding(.top, UIMetrics.spacing1)
         .padding(.bottom, UIMetrics.spacing2)
+    }
+
+    private var sidebarStatusHasContent: Bool {
+        sidebarStatus.branch != nil
+            || sidebarStatus.listeningPortCount > 0
+            || sidebarStatus.latestUnreadPreview != nil
     }
 
     private var projectHeaderAccessibilityLabel: String {

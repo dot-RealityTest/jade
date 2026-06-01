@@ -74,8 +74,12 @@ final class AIProviderRegistry {
     private init() {}
 
     func installAll() {
+        installAll(force: false)
+    }
+
+    func installAll(force: Bool) {
         #if DEBUG
-        guard ProcessInfo.processInfo.environment["FF_AI_HOOKS"] != nil else {
+        if !force, ProcessInfo.processInfo.environment["FF_AI_HOOKS"] == nil {
             logger.info("Skipping AI hooks install in dev mode (set FF_AI_HOOKS=true to enable)")
             return
         }

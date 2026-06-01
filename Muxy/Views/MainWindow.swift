@@ -926,6 +926,20 @@ struct MainWindow: View {
                 sortPriority: 23
             ),
             commandItem(
+                .jumpToLatestUnread,
+                symbolName: "bell.badge",
+                subtitle: "Jump to the latest unread session in this project",
+                aliases: ["notification", "unread", "attention", "session", "agent"],
+                sortPriority: 6
+            ),
+            commandItem(
+                .toggleNotificationPanel,
+                symbolName: "bell",
+                subtitle: "Show project session notifications",
+                aliases: ["notifications", "alerts", "messages"],
+                sortPriority: 7
+            ),
+            commandItem(
                 .quickOpen,
                 symbolName: "doc.text.magnifyingglass",
                 subtitle: "Search files in the current project",

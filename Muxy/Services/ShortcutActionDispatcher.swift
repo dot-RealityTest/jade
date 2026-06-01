@@ -154,6 +154,15 @@ struct ShortcutActionDispatcher {
         case .sendToObsidian:
             notificationCenter.post(name: .sendToObsidian, object: nil)
             return true
+        case .toggleNotificationPanel:
+            notificationCenter.post(name: .toggleNotificationPanel, object: nil)
+            return true
+        case .jumpToLatestUnread:
+            return NotificationNavigator.jumpToLatestUnread(
+                appState: appState,
+                notificationStore: NotificationStore.shared,
+                projectID: appState.activeProjectID
+            )
         case .submitRichInput,
              .submitRichInputWithoutReturn:
             return false

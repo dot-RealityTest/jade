@@ -30,6 +30,20 @@ struct NotificationSettingsView: View {
             }
 
             SettingsSection("AI Providers", showsDivider: false) {
+                HStack {
+                    Text("Install hooks for tools detected on this Mac.")
+                        .font(.system(size: SettingsMetrics.footnoteFontSize))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Install All") {
+                        AIProviderRegistry.shared.installAll(force: true)
+                    }
+                    .buttonStyle(.plain)
+                    .font(.system(size: SettingsMetrics.footnoteFontSize))
+                }
+                .padding(.horizontal, SettingsMetrics.horizontalPadding)
+                .padding(.top, SettingsMetrics.rowVerticalPadding)
+
                 ForEach(AIProviderRegistry.shared.providers, id: \.id) { provider in
                     ProviderToggleRow(provider: provider)
                 }
@@ -88,7 +102,7 @@ private struct ProviderToggleRow: View {
                 .controlSize(.small)
                 .onChange(of: enabled) { _, newValue in
                     provider.isEnabled = newValue
-                    AIProviderRegistry.shared.installAll()
+                    AIProviderRegistry.shared.installAll(force: true)
                 }
         }
         .padding(.horizontal, SettingsMetrics.horizontalPadding)

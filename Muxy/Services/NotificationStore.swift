@@ -60,6 +60,21 @@ final class NotificationStore {
         return notifications.contains { !$0.isRead && $0.tabID == tabID }
     }
 
+    func hasUnread(paneID: UUID) -> Bool {
+        _ = readStateVersion
+        return notifications.contains { !$0.isRead && $0.paneID == paneID }
+    }
+
+    func latestUnread(for projectID: UUID) -> MuxyNotification? {
+        _ = readStateVersion
+        return notifications.first { !$0.isRead && $0.projectID == projectID }
+    }
+
+    func latestUnread() -> MuxyNotification? {
+        _ = readStateVersion
+        return notifications.first { !$0.isRead }
+    }
+
     func markAsRead(tabID: UUID) {
         var changed = false
         for notification in notifications where !notification.isRead && notification.tabID == tabID {
@@ -179,6 +194,10 @@ final class NotificationStore {
             readStateVersion += 1
             scheduleSave()
         }
+    }
+
+    func stageNotification(_ notification: MuxyNotification) {
+        notifications.insert(notification, at: 0)
     }
 
     func remove(_ id: UUID) {

@@ -17,6 +17,13 @@ struct TerminalPane: View {
         if case let .remote(_, name) = ownership.owner(for: state.id) { name } else { nil }
     }
 
+    private var needsAttentionRing: Bool {
+        _ = NotificationStore.shared.readStateVersion
+        return remoteOwnerName == nil
+            && NotificationStore.shared.hasUnread(paneID: state.id)
+            && !focused
+    }
+
     var body: some View {
         terminalLayer
             .onAppear { state.branchObserver.start() }
@@ -46,6 +53,14 @@ struct TerminalPane: View {
             .accessibilityAddTraits(.allowsDirectInteraction)
             .opacity(remoteOwnerName == nil ? 1 : 0)
             .allowsHitTesting(remoteOwnerName == nil)
+            .overlay {
+                if needsAttentionRing {
+                    Rectangle()
+                        .strokeBorder(MuxyTheme.accent.opacity(0.9), lineWidth: 2)
+                        .padding(1)
+                        .allowsHitTesting(false)
+                }
+            }
 
             if let name = remoteOwnerName {
                 RemoteControlledPlaceholder(deviceName: name) {

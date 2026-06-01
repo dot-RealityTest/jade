@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 struct NavigationContext {
@@ -87,5 +88,22 @@ enum NotificationNavigator {
 
     static func isActiveTab(_ tabID: UUID, appState: AppState) -> Bool {
         activeTabID(appState: appState) == tabID
+    }
+
+    @discardableResult
+    static func jumpToLatestUnread(
+        appState: AppState,
+        notificationStore: NotificationStore = .shared,
+        projectID: UUID? = nil
+    ) -> Bool {
+        let notification: MuxyNotification? = if let projectID, let scoped = notificationStore.latestUnread(for: projectID) {
+            scoped
+        } else {
+            notificationStore.latestUnread()
+        }
+        guard let notification else { return false }
+        navigate(to: notification, appState: appState, notificationStore: notificationStore)
+        NSApp.activate(ignoringOtherApps: true)
+        return true
     }
 }

@@ -312,6 +312,18 @@ struct MuxyCommands: Commands {
             }
             .shortcut(for: .toggleRichInputPreview, store: keyBindings)
 
+            Button("Project Notifications") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.toggleNotificationPanel)
+            }
+            .shortcut(for: .toggleNotificationPanel, store: keyBindings)
+
+            Button("Jump to Latest Unread") {
+                guard isMainWindowFocused else { return }
+                performShortcutAction(.jumpToLatestUnread)
+            }
+            .shortcut(for: .jumpToLatestUnread, store: keyBindings)
+
             Divider()
 
             Button("Open Switcher...") {

@@ -552,6 +552,23 @@ originating pane.
 sequence: `selectProject` → `focusArea` → `selectTab`. System notifications encode
 the navigation context in `userInfo` and bring the app to front on click.
 
+`NotificationNavigator.jumpToLatestUnread` focuses the newest unread notification
+for the active project (falling back to any project), marks it read, and raises
+Jade. **⌘⇧U** triggers this from the main window; **⌘⇧I** opens the notification
+panel.
+
+### Project sidebar status
+
+Expanded sidebar rows show project-scoped metadata: git branch, a count of local
+listeners whose command line matches the project/worktree name, and the latest
+unread session preview. Unread projects get a subtle accent outline; terminal
+panes with unread notifications show an attention ring when unfocused.
+
+### CLI
+
+The bundled `jade` / `muxy` CLI supports `notify` (socket API) and `hooks setup`
+(install agent hooks while Jade is running). See `Muxy/Resources/scripts/muxy-cli`.
+
 ## AI Usage Tracking
 
 Muxy displays live usage quota for the user's AI coding tools in a sidebar
