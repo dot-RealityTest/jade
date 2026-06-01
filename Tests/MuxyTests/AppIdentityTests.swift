@@ -8,7 +8,6 @@ struct AppIdentityTests {
     func jadeKeepsLegacyLaunchCompatibility() {
         #expect(AppIdentity.displayName == "Jade")
         #expect(AppIdentity.cliName == "jade")
-        #expect(AppIdentity.legacyCLIName == "muxy")
         #expect(AppIdentity.legacyDisplayName == "Muxy")
         #expect(AppIdentity.bundleIdentifier == "com.muxy.app")
         #expect(AppIdentity.urlScheme == "muxy")

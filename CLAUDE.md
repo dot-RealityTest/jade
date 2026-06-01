@@ -21,7 +21,7 @@ Run `scripts/checks.sh --fix` after every task.
 
 - Jade is a macOS terminal multiplexer built with SwiftUI that uses [libghostty](https://github.com/ghostty-org/ghostty) for terminal emulation and rendering via Metal.
 - The architecture of the app is documented at `./docs/architecture.md` and must always be up to date.
-- Keep app identity centralized through `AppIdentity`. The user-facing app name is `Jade`; the primary CLI is `jade`; `muxy` remains a compatibility alias. Keep `com.muxy.app` and `muxy://` stable unless the user explicitly asks for a deeper migration.
+- Keep app identity centralized through `AppIdentity`. The user-facing app name is `Jade`; the CLI is `jade`. Keep `com.muxy.app` and `muxy://` stable unless the user explicitly asks for a deeper migration.
 - Release packaging copies the SwiftPM `Muxy` executable into the app bundle as `Contents/MacOS/Jade`.
 
 ### Core Components
@@ -51,7 +51,7 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 ## CLI
 
 - Install from the app menu item **Jade → Install CLI**.
-- The installer must install `jade` as the primary command and `muxy` as a legacy compatibility command.
+- The installer installs the **`jade`** command only.
 - The bundled wrapper lives at `Muxy/Resources/scripts/muxy-cli`; keep it command-name aware so usage text matches the executable name.
 - Do not manually overwrite `/usr/local/bin` during normal agent work unless the user explicitly asks for a system install.
 
@@ -101,7 +101,7 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 ## Learned User Preferences
 
 - Prefer minimal top window chrome for Jade: one compact workspace chrome row (~32pt) under the native title bar; keep the trailing icon row sparse (Snippets, AI, etc.) — no Notes/Todo chrome toggles or in-panel Send/Notes segmented control; open Rich Input (including popup/preview capture) via shortcuts/commands, not inspector chrome; command palette omits Todos and notes/todo panel entries, groups MCP actions (e.g. Obsidian) under MCP, and prioritizes Rich Input, Find in Files, and Toggle Sidebar.
-- User-visible copy must say **Jade** (quit dialog, menus, settings); keep `muxy`/`Muxy` only for compatibility (bundle id, URL scheme, CLI alias, Application Support paths, internal types).
+- User-visible copy must say **Jade** (quit dialog, menus, settings); keep `muxy`/`Muxy` only for compatibility (bundle id, URL scheme, Application Support paths, internal types).
 - When polishing Jade UI, aim for a finer, smaller, premium feel rather than chunky controls or extra vertical bands.
 - For UI screenshot feedback, confirm the target is Jade/muxy before changing code; the user also has a separate PiecesTask app and has corrected mistaken cross-repo polish.
 - Inspector AI defaults to Ollama direct; bundled Moltis (Ollama-backed gateway) is dev-only when built with `MUXY_BUNDLE_MOLTIS=1` — keep Ghostty terminal PTYs independent from Moltis agent/exec.

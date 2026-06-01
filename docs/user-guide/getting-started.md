@@ -20,7 +20,7 @@ flowchart TB
 
 1. Download a build from [releases](https://github.com/muxy-app/muxy/releases) or run locally with `./scripts/run-jade.sh`.
 2. Drag **Jade.app** to `/Applications` and launch.
-3. Optional: **Jade → Install CLI** installs `jade` with `muxy` as a compatibility alias.
+3. Optional: **Jade → Install CLI** installs the **`jade`** command to your PATH.
 
 ## Add your first project
 

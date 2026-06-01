@@ -483,8 +483,7 @@ so persistence, dedupe, and activation behave consistently.
   `muxy://open?path=<percent-encoded>` URL, fall back to `open -b com.muxy.app`
   Apple Events, and finally pipe `open-project|<path>` to the Unix socket. A
   small `python3`/`python` percent-encoder shells out without taking a
-  dependency on `jq`. `/usr/local/bin/muxy` is installed from the same wrapper
-  as a compatibility alias.
+  dependency on `jq`.
 - **`muxy://` URL scheme** — handled by `AppDelegate.application(_:open:)`.
   `AppDelegate.resolveProjectPath(from:)` parses with `URLComponents`,
   prefers a `path` query item, falls back to `host + path`, percent-decodes,
@@ -568,7 +567,7 @@ panes with unread notifications show an attention ring when unfocused.
 
 ### CLI
 
-The bundled `jade` / `muxy` CLI supports `notify` (socket API) and `hooks setup`
+The bundled **`jade`** CLI supports `notify` (socket API) and `hooks setup`
 (install agent hooks while Jade is running). See `Muxy/Resources/scripts/muxy-cli`.
 
 ## AI Usage Tracking

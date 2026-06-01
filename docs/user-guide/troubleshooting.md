@@ -26,7 +26,7 @@ log show --predicate 'subsystem == "app.muxy"' --last 10m --info --debug
 
 ## CLI not found
 
-Run **Jade → Install CLI**. This installs **`jade`** (primary) and **`muxy`** (alias) under `/usr/local/bin`. Ensure `/usr/local/bin` is on your `$PATH`.
+Run **Jade → Install CLI**. This installs **`jade`** under `/usr/local/bin` (or `~/bin` / `~/.local/bin` as fallback). Ensure that directory is on your `$PATH`.
 
 ## Project won't open via `muxy <path>`
 

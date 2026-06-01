@@ -32,7 +32,7 @@ jade notify <type> <pane-id> <title> [body]
 jade hooks setup
 ```
 
-`jade hooks setup` installs notification hook scripts for supported AI CLIs. The primary command is `jade`; `muxy` remains an alias.
+`jade hooks setup` installs notification hook scripts for supported AI CLIs.
 
 ## Socket API (custom integrations)
 

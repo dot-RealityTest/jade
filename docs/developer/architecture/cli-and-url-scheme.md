@@ -1,6 +1,6 @@
 # CLI & URL Scheme
 
-External callers can open a project in Jade through coordinated paths, all funneled into `AppDelegate.handleOpenProjectPath(_:)` so persistence, dedupe, and activation behave consistently. The user-facing CLI command is **`jade`**; **`muxy`** remains a compatibility alias.
+External callers can open a project in Jade through coordinated paths, all funneled into `AppDelegate.handleOpenProjectPath(_:)` so persistence, dedupe, and activation behave consistently. The CLI command is **`jade`**.
 
 ```mermaid
 flowchart TB
@@ -25,7 +25,7 @@ flowchart TB
 
 | Path | Behavior |
 | --- | --- |
-| `jade` / `muxy` shell wrapper | `Muxy/Resources/scripts/muxy-cli`, installed via **Jade → Install CLI** to `/usr/local/bin/jade` and `/usr/local/bin/muxy`. Opens projects via `muxy://`, Apple Events, or `open-project\|<path>` on the socket. Subcommands: **`jade notify`**, **`jade hooks setup`**. |
+| `jade` shell wrapper | `Muxy/Resources/scripts/muxy-cli`, installed via **Jade → Install CLI** to `/usr/local/bin/jade`. Opens projects via `muxy://`, Apple Events, or `open-project\|<path>` on the socket. Subcommands: **`jade notify`**, **`jade hooks setup`**. |
 | `muxy://` URL scheme | `AppDelegate.application(_:open:)`. `resolveProjectPath(from:)` parses with `URLComponents`, prefers a `path` query item, falls back to `host + path`, percent-decodes, and standardizes via `URL(fileURLWithPath:).standardizedFileURL.path`. File URLs are accepted; foreign schemes rejected. |
 | Launch arguments | `applicationDidFinishLaunching` reads `CommandLine.arguments[1]` only when the candidate begins with `/` or `~` and resolves to an existing directory — Xcode/test runner flags are not treated as project paths. |
 | Notification socket | `NotificationSocketServer` accepts `open-project\|<path>` in addition to its notification format. It validates the path is an existing directory and dispatches via an injected `openProjectHandler` closure (wired in `MainWindow.onAppear`). |

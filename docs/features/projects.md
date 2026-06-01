@@ -17,7 +17,7 @@ flowchart TB
   Plus["+ in sidebar"] --> Open[Open Project sheet]
   Menu["File → Open Project ⌘O"] --> Open
   Drag[Drag folder onto dock] --> Handler
-  CLI["jade /path or muxy /path"] --> URL["muxy://open?path=…"]
+  CLI["jade /path"] --> URL["muxy://open?path=…"]
   URL --> Handler[AppDelegate.handleOpenProjectPath]
   Open --> Handler
   Handler --> Dedupe{Already added?}
@@ -30,7 +30,7 @@ flowchart TB
 | Sidebar | Click **+** at the bottom |
 | Menu | **File → Open Project…** (`⌘O`) |
 | Dock | Drag a folder onto the Muxy icon |
-| Shell | `jade /path/to/project` (primary CLI; `muxy` alias after **Jade → Install CLI**) |
+| Shell | `jade /path/to/project` after **Jade → Install CLI** |
 | URL | `muxy://open?path=/path/to/project` |
 
 All entry points dedupe — opening the same path twice activates the existing project.

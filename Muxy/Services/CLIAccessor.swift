@@ -75,8 +75,6 @@ enum CLIAccessor {
                     Try manually:
                       sudo cp "\(resourceURL.path)" /usr/local/bin/\(AppIdentity.cliName)
                       sudo chmod +x /usr/local/bin/\(AppIdentity.cliName)
-                      sudo cp "\(resourceURL.path)" /usr/local/bin/\(AppIdentity.legacyCLIName)
-                      sudo chmod +x /usr/local/bin/\(AppIdentity.legacyCLIName)
                     """
                 )
             }
@@ -84,25 +82,23 @@ enum CLIAccessor {
     }
 
     private static func copyScripts(from resourceURL: URL, to binPath: String) -> Bool {
-        let targets = commandNames.map { URL(fileURLWithPath: "\(binPath)/\($0)") }
+        let target = URL(fileURLWithPath: "\(binPath)/\(AppIdentity.cliName)")
         let dir = URL(fileURLWithPath: binPath)
         if !FileManager.default.fileExists(atPath: binPath) {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
         do {
-            for target in targets where FileManager.default.fileExists(atPath: target.path) {
+            if FileManager.default.fileExists(atPath: target.path) {
                 try FileManager.default.removeItem(at: target)
             }
-            for target in targets {
-                try FileManager.default.copyItem(at: resourceURL, to: target)
-                try FileManager.default.setAttributes(
-                    [.posixPermissions: FilePermissions.executable],
-                    ofItemAtPath: target.path
-                )
-            }
+            try FileManager.default.copyItem(at: resourceURL, to: target)
+            try FileManager.default.setAttributes(
+                [.posixPermissions: FilePermissions.executable],
+                ofItemAtPath: target.path
+            )
             return true
         } catch {
-            for target in targets where FileManager.default.fileExists(atPath: target.path) {
+            if FileManager.default.fileExists(atPath: target.path) {
                 try? FileManager.default.removeItem(at: target)
             }
             return false
@@ -114,9 +110,7 @@ enum CLIAccessor {
         let shellCommand = """
         mkdir -p /usr/local/bin && \
         cp \(quotedSource) /usr/local/bin/\(AppIdentity.cliName) && \
-        chmod +x /usr/local/bin/\(AppIdentity.cliName) && \
-        cp \(quotedSource) /usr/local/bin/\(AppIdentity.legacyCLIName) && \
-        chmod +x /usr/local/bin/\(AppIdentity.legacyCLIName)
+        chmod +x /usr/local/bin/\(AppIdentity.cliName)
         """
         let escapedForAppleScript = shellCommand
             .replacingOccurrences(of: "\\", with: "\\\\")
@@ -150,7 +144,6 @@ enum CLIAccessor {
             title: "CLI Installed",
             body: """
             Installed to: \(binPath)/\(AppIdentity.cliName)
-            Compatibility alias: \(binPath)/\(AppIdentity.legacyCLIName)
             Run '\(AppIdentity.cliName) .' or '\(AppIdentity.cliName) /path/to/project'\(pathNote)
             """
         )
@@ -162,8 +155,7 @@ enum CLIAccessor {
         alert.informativeText = """
         This will install the '\(AppIdentity.cliName)' command-line tool to \
         /usr/local/bin so you can launch projects from your terminal \
-        (e.g. '\(AppIdentity.cliName) .'). The '\(AppIdentity.legacyCLIName)' \
-        command will also be installed as a compatibility alias.
+        (e.g. '\(AppIdentity.cliName) .').
 
         If /usr/local/bin is not writable, you will be prompted for your \
         administrator password. If that is declined, \(AppIdentity.displayName) \
@@ -182,9 +174,5 @@ enum CLIAccessor {
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.runModal()
-    }
-
-    private static var commandNames: [String] {
-        [AppIdentity.cliName, AppIdentity.legacyCLIName]
     }
 }

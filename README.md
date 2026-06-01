@@ -96,15 +96,6 @@ Full documentation: [docs/README.md](docs/README.md) — command palette, Obsidi
 
 ## Install
 
-### Homebrew
-
-```bash
-brew tap muxy-app/tap
-brew install --cask muxy
-```
-
-### Manual
-
 Download the latest release from the [releases page](https://github.com/muxy-app/muxy/releases)
 
 Jade is **macOS-only** today. There is no iOS or Android app under the Jade name. Upstream [Muxy](https://github.com/muxy-app/muxy) ships separate mobile companions; this repo does not include `MuxyMobile`. The desktop app still exposes an optional WebSocket API — see [Remote Server](docs/features/remote-server/README.md).
@@ -130,13 +121,12 @@ Running `swift run Muxy` directly skips the app bundle and shows a generic Dock 
 
 Jade is a personal macOS terminal workspace built on open-source foundations:
 
-- **[Muxy](https://github.com/muxy-app/muxy)** — Core terminal multiplexer: SwiftUI shell, libghostty rendering, project workspaces, splits, and persistence. Jade keeps `muxy` / `Muxy` identifiers for compatibility (bundle id, Application Support paths, CLI alias).
+- **[Muxy](https://github.com/muxy-app/muxy)** — Core terminal multiplexer: SwiftUI shell, libghostty rendering, project workspaces, splits, and persistence. Jade keeps `muxy` / `Muxy` identifiers for compatibility (bundle id, Application Support paths, URL scheme).
 - **[cmux](https://github.com/manaflow-ai/cmux)** — UX inspiration for project-aware attention: sidebar status, jump-to-unread, and terminal attention cues. Jade applies those patterns at the **project** level (tabs, panes, notifications), not as an agent orchestration layer.
 
 ## CLI
 
-Use **Jade → Install CLI** from the macOS menu to install the terminal command.
-It installs `jade` and keeps `muxy` as a compatibility alias.
+Use **Jade → Install CLI** from the macOS menu to install the **`jade`** command.
 
 ```bash
 jade .
