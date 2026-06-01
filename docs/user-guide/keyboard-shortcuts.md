@@ -73,6 +73,8 @@ Mouse side buttons (3 / 4) and three-finger horizontal trackpad swipes also navi
 | Find in Terminal | `⌘F` |
 | Lazygit | `⌘⇧G` |
 | Yazi | `⌘⇧Y` |
+| Copy selection | `⌘C` (with selection); also **auto-copy on mouse-up** when enabled in Settings → General |
+| Save as Snippet | Right-click terminal → **Save as Snippet** (no default key) |
 
 ## Rich Input
 

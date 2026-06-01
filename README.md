@@ -5,7 +5,7 @@
 <h1 align="center">Jade</h1>
 
 <p align="center">Lightweight, memory-efficient terminal for Mac built with SwiftUI and <a href="https://github.com/ghostty-org/ghostty">libghostty</a>.</p>
-<p align="center"><a href="#install">Mac</a> | <a href="#ios">iOS</a> | <a href="https://apps.apple.com/de/app/muxy/id6762464046?l=en-GB">App Store</a> | <a href="https://play.google.com/store/apps/details?id=com.muxy.app">Android</a> | <a href="https://discord.gg/4eMXAmJQ2n">Discord</a></p>
+<p align="center"><a href="#install">Mac</a> | <a href="docs/features/remote-server/README.md">Remote API</a> | <a href="https://discord.gg/4eMXAmJQ2n">Discord</a></p>
 
 <div align="center">
   <img src="https://img.shields.io/github/downloads/muxy-app/muxy/total" />
@@ -49,7 +49,7 @@
 
 - **Rich Input (`⌘I`)** — Multi-line compose with images; notes/tasks capture without extra chrome
 - **AI Assistant (`⌘⌃A`)** — Right-rail Ollama chat; natural shell command review
-- **Snippets** — General vs project scope (`⌘J`, `⌘⌃J`)
+- **Snippets** — General vs project scope (`⌘J`, `⌘⌃J`); right-click terminal selection → **Save as Snippet**; auto-copy on select (Settings → General)
 - **AI usage tracking (`⌘L`)** — Claude Code, Codex, Cursor, Copilot, Amp, Factory, Kimi, MiniMax, OpenCode, Z.ai
 - **Obsidian MCP** — Send to vault (`⌘⌃O`); session logs under `Jade/Logs/{project}/`
 - **Project log** — `.jade/` scaffold, todo/goals markdown, Confirm/Complete session workflow
@@ -65,8 +65,8 @@
 
 ### Platform & polish
 
-- **Mobile companion apps** — Pair iOS and Android devices to control Mac terminals remotely
-- **Terminal tools** — Lazygit `⌘⇧G`, yazi `⌘⇧Y`, in-terminal find
+- **Remote WebSocket API** — Optional LAN server for third-party clients (no Jade iOS app shipped today)
+- **Terminal tools** — Lazygit `⌘⇧G`, yazi `⌘⇧Y`, in-terminal find; auto-copy selection; right-click **Save as Snippet**
 - **200+ themes** — Ghostty theme picker `⌘⇧K`
 - **Customizable shortcuts** — 40+ actions plus custom shell commands
 - **Customizable toolbar** — Sparse workspace chrome (Snippets, AI, …)
@@ -95,23 +95,7 @@ brew install --cask muxy
 
 Download the latest release from the [releases page](https://github.com/muxy-app/muxy/releases)
 
-### iOS
-
-[Instructions](https://github.com/muxy-app/mobile)
-
-- Install the iOS app via TestFlight (https://testflight.apple.com/join/7t1AaYHW)
-- Open Jade on your Mac
-- Go to Settings (Cmd + `,`)
-- Go to Mobile tab
-- Toggle the `Allow mobile device connection`
-- Open the iOS app
-- Enter the IP and Port
-- Approve the connection on your Mac
-- Test and open issues for the bugs
-
-### Android
-
-[Instructions](https://github.com/muxy-app/mobile)
+Jade is **macOS-only** today. There is no iOS or Android app under the Jade name. Upstream [Muxy](https://github.com/muxy-app/muxy) ships separate mobile companions; this repo does not include `MuxyMobile`. The desktop app still exposes an optional WebSocket API — see [Remote Server](docs/features/remote-server/README.md).
 
 ## Local Development
 

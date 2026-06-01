@@ -11,7 +11,7 @@ Open settings with `⌘,` (**Jade → Settings…**). The window is resizable wi
 - **Toolbar** — choose which chrome actions appear (Snippets, AI, etc.).
 - **File tree** — source preference for the tree panel.
 - **Session** — restore workspace on launch.
-- **Terminal** — auto-copy terminal selection to clipboard.
+- **Terminal** — **Auto-copy selected text** (default on): releasing the mouse after a selection copies to the clipboard and shows a toast.
 - **Project picker** — default location and picker mode.
 - **Diagnostics** — optional Sentry crash reporting toggle.
 
@@ -60,7 +60,7 @@ See [Notifications](../features/notifications.md).
 
 ## Network
 
-- **Remote access** — WebSocket server for mobile companion apps on your LAN.
+- **Remote access** — Optional WebSocket server on your LAN for third-party clients (no Jade iOS app shipped).
 - **Port** — default 4865 (4866 in debug).
 - Connection URL copy helper.
 

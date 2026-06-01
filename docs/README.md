@@ -46,7 +46,7 @@ flowchart TB
 | [Layouts](features/layouts/README.md) | Declarative `.muxy/layouts/*.yaml` workspaces |
 | [AI Usage](features/ai-usage.md) | Claude Code, Copilot, Codex, Cursor, and more |
 | [Themes](features/themes.md) | Theme picker and Ghostty config |
-| [Remote Server](features/remote-server/README.md) | WebSocket API for mobile clients |
+| [Remote Server](features/remote-server/README.md) | WebSocket API (macOS server; no Jade mobile app) |
 
 ## Developer
 

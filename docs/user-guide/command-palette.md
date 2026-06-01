@@ -72,6 +72,8 @@ When Obsidian MCP is configured (**Settings → MCP Tools**), the palette lists 
 
 Shows snippets for the active scope (**general** or **project**). Remote spaces can have their own snippet store. Use **General Snippets**, **Project Snippets**, or `⌘⌃J` to change scope without opening the panel.
 
+Create snippets from the terminal: select text (auto-copied by default), right-click → **Save as Snippet**. Or save from natural-command review after **Generate shell command**.
+
 ## Files and worktrees
 
 - **Files:** starts searching after two characters (or immediately if the query contains `/`).

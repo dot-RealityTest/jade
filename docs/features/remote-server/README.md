@@ -1,6 +1,8 @@
 # Remote Server API
 
-Muxy embeds a WebSocket server that lets external clients connect to the desktop app over the local network — for mobile companions, dashboards, and custom integrations.
+Jade embeds a WebSocket server that lets external clients connect to the desktop app over the local network — for custom dashboards, automation, and third-party integrations.
+
+There is **no Jade iOS app** in this repo. Upstream Muxy ships separate mobile companions; pairing docs below describe the wire protocol the Mac server implements.
 
 ```mermaid
 flowchart TB

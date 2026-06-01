@@ -42,6 +42,7 @@ The palette is the fastest way to discover Jade features:
 
 - **New tab**, splits, **Quick Open** (`⌘P`), **Find in Files**
 - **Rich Input**, **Snippets**, **AI Assistant**
+- Terminal: select text to auto-copy; right-click → **Save as Snippet**
 - **Set Up Project Log** → **Confirm Next Step** → **Complete Step**
 - **Upgrade Homebrew**, **Ollama** list/pull/run/serve
 - **Obsidian MCP** tools when configured

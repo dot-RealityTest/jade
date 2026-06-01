@@ -39,8 +39,12 @@ Reusable shell snippets with **general** vs **project** scope (remote spaces can
 | --- | --- |
 | Toggle snippets panel | `⌘J` |
 | Toggle scope | `⌘⌃J` or **General Snippets** / **Project Snippets** |
+| Save from terminal | Right-click → **Save as Snippet** (selection or line under cursor) |
+| Save from natural command review | **Save as Snippet** after generating a shell command in the palette |
 
-Scope preference persists in UserDefaults (`muxy.general.snippetsScopeMode`).
+**Auto-copy** — selecting text in a terminal copies it on mouse release (default on; **Settings → General**). Pair with **Save as Snippet** to turn frequent commands into reusable snippets without retyping.
+
+Scope preference persists in UserDefaults (`muxy.general.snippetsScopeMode`). Storage: `snippets.json` (general), `project-snippets/{projectID}.json` (project), `remote-spaces/{slug}/snippets.json` (remote).
 
 ## Natural Commands
 

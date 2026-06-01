@@ -1,6 +1,6 @@
 # Remote Server (MuxyServer)
 
-The desktop app embeds a WebSocket server (`MuxyRemoteServer`) that exposes workspace state and terminal operations to remote clients (e.g. the MuxyMobile companion app) over the local network. The user-facing wire protocol is documented in [Remote Server feature docs](../../features/remote-server/README.md).
+The desktop app embeds a WebSocket server (`MuxyRemoteServer`) that exposes workspace state and terminal operations to remote clients over the local network. There is no Jade iOS app in this repo; upstream Muxy maintains separate mobile companions. User-facing wire protocol: [Remote Server feature docs](../../features/remote-server/README.md).
 
 ## Architecture
 

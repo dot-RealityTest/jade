@@ -1,8 +1,7 @@
 # Architecture
 
 Jade is a macOS terminal multiplexer built with SwiftUI that uses libghostty for terminal emulation.
-The SwiftPM module and source directory are still named Muxy. It is structured as a monorepo with a companion iOS app (MuxyMobile) that connects to the
-desktop app over the local network.
+The SwiftPM module and source directory are still named Muxy. **This repo is macOS-only** — there is no Jade iOS app and no `MuxyMobile` target here. Shared protocol types in `MuxyShared/` remain for the optional WebSocket remote server; upstream Muxy maintains separate mobile companion apps.
 
 **User-facing documentation** (command palette, Obsidian MCP, project log, voice, notifications attention, integrations) lives in [docs/README.md](../README.md). This file is the developer service inventory.
 
