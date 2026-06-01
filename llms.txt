@@ -1,0 +1,55 @@
+# Jade
+
+> Native macOS terminal workspace for project-based development — tabs, splits, Git, command palette, local Ollama AI, and Obsidian capture. Built with SwiftUI and libghostty (Metal rendering).
+
+## Summary
+
+Jade is a free, open-source macOS terminal multiplexer and developer workspace. Organize terminals by project with persistent tabs, split panes, and Git worktrees. Includes a built-in editor, source control UI, Raycast-style command palette, snippet library, on-device voice dictation, and optional Obsidian vault capture via MCP.
+
+## Audience
+
+- macOS developers who live in the terminal
+- Teams juggling multiple repos and worktrees
+- Users who want local-first AI (Ollama) without cloud lock-in
+- Obsidian users capturing session notes from the shell
+
+## Key features
+
+- Project-based terminal workspaces with sidebar tabs and split panes
+- Git worktrees, built-in VCS, diff viewer, and `gh` PR workflows
+- Command palette (⌘K): files, actions, MCP tools, Ollama, Homebrew
+- Rich Input capture, AI assistant panel (Ollama), general/project snippets
+- Project session logs with `.jade/` scaffold and Obsidian MCP export
+- `jade` CLI: open projects from the shell, agent notification hooks
+- Optional WebSocket remote API (no bundled mobile app)
+
+## Requirements
+
+- macOS 14+
+- Swift 6.0+ to build from source
+
+## Install
+
+- Releases: https://github.com/dot-RealityTest/jade/releases
+- Build from source: https://github.com/dot-RealityTest/jade#local-development
+
+## Links
+
+- Repository: https://github.com/dot-RealityTest/jade
+- Landing page: https://dot-realitytest.github.io/jade/
+- Documentation hub: https://github.com/dot-RealityTest/jade/tree/main/docs
+- Overview (GEO): https://github.com/dot-RealityTest/jade/blob/main/docs/overview.md
+- Issues: https://github.com/dot-RealityTest/jade/issues
+- License: MIT
+
+## Keywords
+
+macOS terminal, terminal multiplexer, SwiftUI terminal, libghostty, Ghostty, project-based terminal, command palette, Ollama, local AI, Obsidian MCP, Git worktrees, developer workspace, split panes, snippets, open source
+
+## Lineage
+
+Fork/evolution of Muxy (https://github.com/muxy-app/muxy). UX inspiration from cmux project-level attention cues. User-facing name: Jade; internal compatibility: Muxy bundle id and paths.
+
+## Privacy
+
+Terminal content, vault paths, and AI prompts stay on your Mac unless you configure remote spaces (SSH) or optional LAN WebSocket server. No account required.

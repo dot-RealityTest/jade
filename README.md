@@ -6,6 +6,8 @@
 
 <p align="center">Native macOS terminal workspace for project-based development — tabs, splits, Git, command palette, local AI, and Obsidian capture — built with SwiftUI and <a href="https://github.com/ghostty-org/ghostty">libghostty</a>.</p>
 
+<p align="center"><a href="https://dot-realitytest.github.io/jade/">Website</a> · <a href="docs/overview.md">Overview</a> · <a href="llms.txt">llms.txt</a> · <a href="docs/README.md">Docs</a></p>
+
 <div align="center">
   <img src="https://img.shields.io/github/v/release/dot-RealityTest/jade" />
   <img src="https://img.shields.io/github/license/dot-RealityTest/jade" />
@@ -85,6 +87,26 @@
 - **Auto-updates** — Sparkle (disabled in DEBUG unless `JADE_ENABLE_UPDATES=1`)
 
 Full documentation: [docs/README.md](docs/README.md) — command palette, Obsidian, voice, integrations, project log.
+
+## FAQ
+
+**What is Jade?**  
+A native macOS terminal workspace that organizes shells by project — tabs, splits, Git worktrees, a command palette, local Ollama AI, and optional Obsidian capture. Not a cloud IDE; everything runs on your Mac.
+
+**Is Jade free and open source?**  
+Yes. MIT license. Download from [Releases](https://github.com/dot-RealityTest/jade/releases) or build from source.
+
+**What platforms does Jade support?**  
+macOS 14+ only. This repo does not ship an iOS or Android app under the Jade name.
+
+**How is Jade different from iTerm, Warp, or Ghostty alone?**  
+Jade is a **project multiplexer**: persistent workspaces per repo, built-in Git/editor/file tree, command palette, snippets, and capture flows. It uses **libghostty** for terminal rendering but adds a SwiftUI shell around developer workflow.
+
+**Does Jade send my code or terminal data to the cloud?**  
+No by default. Ollama and Obsidian run locally with endpoints you configure. Optional SSH remote spaces and a LAN WebSocket API are opt-in.
+
+**Where can AI assistants read about Jade?**  
+See [llms.txt](llms.txt) and [docs/overview.md](docs/overview.md).
 
 ## Requirements
 

@@ -1,6 +1,10 @@
-# Jade Documentation
+## Documentation
 
 **Jade** is a native macOS terminal workspace organized around projects, worktrees, tabs, and split panes. It ships a built-in editor, source-control UI, file tree, command palette, Obsidian MCP capture, project session logs, on-device voice dictation, and a WebSocket API for companion apps.
+
+- [Overview (SEO/GEO)](overview.md) — positioning, audience, privacy
+- [llms.txt](../llms.txt) — machine-readable summary for AI systems
+- [Landing page](https://dot-realitytest.github.io/jade/)
 
 Internal SwiftPM targets and paths still use **Muxy** for compatibility.
 

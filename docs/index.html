@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jade — macOS Terminal Workspace | Project Tabs, Splits, Local AI</title>
+  <meta name="description" content="Jade is a native macOS terminal workspace: project tabs, split panes, Git worktrees, command palette, Ollama AI, and Obsidian capture. Built with SwiftUI and libghostty. Free and open source.">
+  <meta name="keywords" content="macOS terminal, terminal multiplexer, SwiftUI, libghostty, Ghostty, command palette, Ollama, Obsidian, Git worktrees, developer tools">
+  <link rel="canonical" href="https://dot-realitytest.github.io/jade/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Jade — macOS Terminal Workspace">
+  <meta property="og:description" content="Project-based terminal for macOS: tabs, splits, Git, command palette, local Ollama AI, Obsidian MCP. SwiftUI + libghostty.">
+  <meta property="og:url" content="https://dot-realitytest.github.io/jade/">
+  <meta property="og:image" content="https://raw.githubusercontent.com/dot-RealityTest/jade/main/assets/screenshots/jade-snippets-workspace.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Jade — macOS Terminal Workspace">
+  <meta name="twitter:description" content="Native macOS terminal workspace with project tabs, splits, command palette, and local AI.">
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/dot-RealityTest/jade/main/assets/screenshots/jade-snippets-workspace.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Jade",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "macOS 14+",
+    "description": "Native macOS terminal workspace for project-based development with tabs, splits, Git worktrees, command palette, Ollama AI, and Obsidian capture.",
+    "url": "https://github.com/dot-RealityTest/jade",
+    "downloadUrl": "https://github.com/dot-RealityTest/jade/releases",
+    "softwareHelp": "https://github.com/dot-RealityTest/jade/tree/main/docs",
+    "license": "https://opensource.org/licenses/MIT",
+    "programmingLanguage": "Swift",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0d0f12;
+      --fg: #e8eaed;
+      --muted: #9aa0a6;
+      --accent: #6ee7b7;
+      --card: #161a20;
+      --border: #2a3038;
+      --max: 960px;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8f9fb;
+        --fg: #1a1d21;
+        --muted: #5f6368;
+        --card: #ffffff;
+        --border: #e0e3e8;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.55;
+    }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+    header { text-align: center; margin-bottom: 2rem; }
+    h1 { font-size: 2.25rem; font-weight: 650; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
+    .tagline { font-size: 1.125rem; color: var(--muted); max-width: 42rem; margin: 0 auto 1.5rem; }
+    .cta { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-bottom: 2rem; }
+    .btn {
+      display: inline-block;
+      padding: 0.65rem 1.1rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .btn-primary { background: var(--accent); color: #0d0f12; }
+    .btn-secondary { border: 1px solid var(--border); color: var(--fg); }
+    .hero img {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      display: block;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+      margin: 2.5rem 0;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .card h2 { font-size: 1rem; margin: 0 0 0.5rem; }
+    .card p { margin: 0; color: var(--muted); font-size: 0.925rem; }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.875rem;
+      text-align: center;
+    }
+    footer a { color: var(--fg); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Jade</h1>
+      <p class="tagline">Native macOS terminal workspace — project tabs, split panes, Git worktrees, command palette, local Ollama AI, and Obsidian capture. Built with SwiftUI and libghostty.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="https://github.com/dot-RealityTest/jade/releases">Download</a>
+        <a class="btn btn-secondary" href="https://github.com/dot-RealityTest/jade">GitHub</a>
+        <a class="btn btn-secondary" href="https://github.com/dot-RealityTest/jade/tree/main/docs">Documentation</a>
+      </div>
+    </header>
+
+    <figure class="hero">
+      <img src="https://raw.githubusercontent.com/dot-RealityTest/jade/main/assets/screenshots/jade-snippets-workspace.png" alt="Jade macOS terminal workspace with snippets panel and project tabs" width="900" height="506">
+    </figure>
+
+    <div class="grid">
+      <article class="card">
+        <h2>Project-first terminal</h2>
+        <p>Organize shells by repo with persistent tabs, splits, and worktrees — not endless loose windows.</p>
+      </article>
+      <article class="card">
+        <h2>Command palette &amp; Git</h2>
+        <p>⌘K fuzzy actions, file search, built-in VCS, diff viewer, and GitHub PR workflows via <code>gh</code>.</p>
+      </article>
+      <article class="card">
+        <h2>Local AI &amp; capture</h2>
+        <p>Ollama assistant, Rich Input, snippets, on-device voice, and Obsidian vault export through MCP.</p>
+      </article>
+    </div>
+
+    <section class="card">
+      <h2>Requirements &amp; install</h2>
+      <p>macOS 14+. Download a release or clone the repo, run <code>scripts/setup.sh</code>, then <code>./scripts/run-jade.sh</code>. MIT licensed — feedback and contributions welcome.</p>
+      <p style="margin-top:0.75rem"><a href="overview.md">Read the overview</a> · <a href="https://github.com/dot-RealityTest/jade/blob/main/llms.txt">llms.txt</a> for AI systems</p>
+    </section>
+
+    <footer>
+      <p>Jade · <a href="https://github.com/dot-RealityTest/jade">dot-RealityTest/jade</a> · MIT · Lineage from <a href="https://github.com/muxy-app/muxy">Muxy</a> + libghostty</p>
+    </footer>
+  </div>
+</body>
+</html>
