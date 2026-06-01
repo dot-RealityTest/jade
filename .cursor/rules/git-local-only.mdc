@@ -1,0 +1,16 @@
+---
+description: Git work stays local unless the user explicitly asks to push or open a PR.
+alwaysApply: true
+---
+
+# Git — local only by default
+
+For this repo (`muxy` / Jade):
+
+- **Commits are local by default.** Create commits only when the user asks.
+- **Never push** to `origin` (or any remote) unless the user explicitly requests push, PR creation, or release publish.
+- **Never force-push** to `main` / `master`. Warn before any force push if the user requests it.
+- Do not install CLI to `/usr/local/bin` or overwrite system paths unless the user explicitly asks.
+- If push fails (permissions, auth, network), report the failure and leave the commit local — do not retry with credential hacks or remote URL changes unless the user directs it.
+
+When the user says "commit" without "push", stop after a successful local commit and `git status`.
