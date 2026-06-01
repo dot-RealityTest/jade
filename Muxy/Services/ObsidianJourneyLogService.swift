@@ -20,14 +20,24 @@ enum ObsidianJourneyLogService {
         let stepSlug = ObsidianNotePathBuilder.slugify(proposal.title)
         let timestamp = ObsidianNotePathBuilder.sessionTimestamp()
         let notePath = "Jade/Logs/\(slug)/sessions/\(timestamp)-\(stepSlug).md"
-        let context = JadeProjectContextReader.load(projectPath: projectPath)
+        let structured = JadeProjectContextReader.loadStructured(projectPath: projectPath)
+
+        if case let .failure(error) = await ObsidianProjectLogIndex.ensure(
+            projectName: projectName,
+            projectPath: projectPath,
+            settings: settings
+        ) {
+            return .failure(error)
+        }
+
         let content = JadeJourneyLogFormatter.sessionNote(
             input: JadeJourneyLogFormatter.SessionNoteInput(
                 outcome: outcome,
                 proposal: proposal,
                 projectName: projectName,
                 projectPath: projectPath,
-                context: context,
+                context: structured.paths,
+                structured: structured,
                 overriddenBlocker: overriddenBlocker
             )
         )
@@ -70,7 +80,15 @@ enum JadeJourneyLogFormatter {
         let projectName: String
         let projectPath: String
         let context: JadeProjectContext
+        let structured: JadeStructuredProjectContext
         let overriddenBlocker: Bool
+    }
+
+    struct CaptureNoteInput: Equatable {
+        let content: String
+        let projectName: String
+        let projectPath: String
+        let structured: JadeStructuredProjectContext
     }
 
     static func sessionNote(input: SessionNoteInput) -> String {
@@ -79,105 +97,314 @@ enum JadeJourneyLogFormatter {
         let projectName = input.projectName
         let projectPath = input.projectPath
         let context = input.context
+        let structured = input.structured
         let overriddenBlocker = input.overriddenBlocker
 
-        let date = ISO8601DateFormatter().string(from: Date()).prefix(10)
-        let escapedProject = projectName.replacingOccurrences(of: "\"", with: "'")
+        let now = Date()
+        let date = dayString(from: now)
+        let time = timeString(from: now)
+        let slug = ObsidianNotePathBuilder.slugify(projectName)
         let source = proposal.sourceFile ?? "project markdown"
+        let hubLink = "Jade/Logs/\(slug)/project"
 
         var body = """
         ---
         type: project-session-log
         date: "\(date)"
-        project: "\(escapedProject)"
-        project_note: "\(escapedProject)"
-        status: \(outcome.rawValue)
-        source: "\(source)"
+        time: "\(time)"
+        project: "\(yamlEscape(projectName))"
+        project_path: "\(yamlEscape(projectPath))"
+        session:
+          step: "\(yamlEscape(proposal.title))"
+          outcome: \(outcome.rawValue)
+          risk: \(proposal.risk.rawValue)
+          source: "\(yamlEscape(source))"
         tags:
+          - jade
           - project-log
           - session-log
-          - jade
+          - \(slug)
         ---
 
-        # \(projectName) — \(date)
+        # Session — \(proposal.title)
 
-        **Project:** [[\(projectName)]]
-        **Session Date:** \(date)
-        **Status:** \(outcomeLabel(outcome))
-        **Source:** `\(source)`
+        **Project:** [[\(hubLink)|\(projectName)]] · **Date:** \(date) · **Outcome:** \(outcomeLabel(outcome)) · **Risk:** \(proposal.risk
+            .displayName)
 
-        ## What We Did
+        ## Focus step
+
+        **\(proposal.title)** — \(proposal.summary)
+
+        *Why this step:* \(proposal.why)
+
+        ## Work log
 
         - \(proposal.summary)
-        - Step: \(proposal.title)
+        - [ ] Document what shipped, changed, or was verified this session
 
-        ## Decisions
+        ## Session notes
 
-        - \(proposal.why)
+        *(Decisions, snippets, commands, links, or context worth keeping.)*
 
-        ## Files / Repos / Surfaces
 
-        \(projectContextLines(context: context, projectPath: projectPath))
+        """
+
+        if !structured.goals.isEmpty {
+            body += """
+
+            ## Goals (reference)
+
+            \(bulletedLines(structured.goals))
+
+            """
+        }
+
+        body += """
+
+        ## Follow-up
+
+        \(followUpSection(proposal: proposal, structured: structured))
+
+        ## Project files
+
+        \(projectFilesTable(context: context, projectPath: projectPath))
 
         """
 
         if let blocked = proposal.blockedReason {
             body += """
 
-            ## Open Questions
+            ## Blockers
 
-            - Blocker: \(blocked)
-
+            - \(blocked)
             """
-            if overriddenBlocker {
-                body += "- User chose to override once and continue anyway.\n"
+            if let rule = proposal.matchedRule {
+                body += "\n- Matched rule: `\(rule)`"
             }
+            if overriddenBlocker {
+                body += "\n- Continued once with override."
+            }
+            body += "\n"
         }
 
         body += """
 
-        ## Next Moves
+        ## Related
 
-        - [ ] Next open item from `todo.md` or `goals.md`
-
-        ## Links
-
-        - Parent project: [[\(projectName)]]
-        - Source file: `\(source)`
+        - Project log: [[\(hubLink)|\(projectName) log]]
+        - Source: `\(source)`
+        - Repo: `\(projectPath)`
         """
 
         return body
     }
 
-    private static func projectContextLines(context: JadeProjectContext, projectPath: String) -> String {
-        var lines = ["- Project path: `\(projectPath)`"]
+    static func captureNote(input: CaptureNoteInput) -> String {
+        let trimmed = input.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = ObsidianNotePathBuilder.title(from: trimmed)
+        let now = Date()
+        let date = dayString(from: now)
+        let time = timeString(from: now)
+        let slug = ObsidianNotePathBuilder.slugify(input.projectName)
+        let hubLink = "Jade/Logs/\(slug)/project"
+
+        var body = """
+        ---
+        type: project-capture
+        date: "\(date)"
+        time: "\(time)"
+        project: "\(yamlEscape(input.projectName))"
+        project_path: "\(yamlEscape(input.projectPath))"
+        tags:
+          - jade
+          - project-capture
+          - \(slug)
+        ---
+
+        # Capture — \(title)
+
+        **Project:** [[\(hubLink)|\(input.projectName)]] · **Date:** \(date)
+
+        ## Note
+
+        \(trimmed)
+
+        """
+
+        if !input.structured.openTodos.isEmpty {
+            body += """
+
+            ## Open tasks (reference)
+
+            \(checkboxLines(input.structured.openTodos))
+
+            """
+        }
+
+        if !input.structured.goals.isEmpty {
+            body += """
+
+            ## Goals (reference)
+
+            \(bulletedLines(input.structured.goals))
+
+            """
+        }
+
+        body += """
+
+        ## Related
+
+        - Project log: [[\(hubLink)|\(input.projectName) log]]
+        - Repo: `\(input.projectPath)`
+        """
+
+        return body
+    }
+
+    static func projectLogIndex(
+        projectName: String,
+        projectPath: String,
+        structured: JadeStructuredProjectContext
+    ) -> String {
+        let date = dayString(from: Date())
+        let slug = ObsidianNotePathBuilder.slugify(projectName)
+
+        var body = """
+        ---
+        type: project-log
+        date: "\(date)"
+        project: "\(yamlEscape(projectName))"
+        project_path: "\(yamlEscape(projectPath))"
+        tags:
+          - jade
+          - project-log
+          - \(slug)
+        ---
+
+        # \(projectName) — project log
+
+        Central index for Jade session logs and captures in Obsidian.
+
+        **Repo:** `\(projectPath)` · **Updated:** \(date)
+
+        ## Status
+
+        - [ ] Define current focus in `todo.md` or `goals.md`
+        - [ ] Complete a session and log outcomes from Jade
+
+        ## Sessions
+
+        *(Session notes live in `Jade/Logs/\(slug)/sessions/`.)*
+
+        ## Captures
+
+        *(Quick notes live in `Jade/Logs/\(slug)/notes/`.)*
+
+        """
+
+        if !structured.openTodos.isEmpty {
+            body += """
+
+            ## Todo
+
+            \(checkboxLines(structured.openTodos))
+
+            """
+        }
+
+        if !structured.goals.isEmpty {
+            body += """
+
+            ## Goals
+
+            \(bulletedLines(structured.goals))
+
+            """
+        }
+
+        body += """
+
+        ## Project files
+
+        \(projectFilesTable(context: structured.paths, projectPath: projectPath))
+
+        ## Links
+
+        - Repo root: `\(projectPath)`
+        """
+
+        return body
+    }
+
+    private static func followUpSection(
+        proposal: JourneyStepProposal,
+        structured: JadeStructuredProjectContext
+    ) -> String {
+        let normalizedStep = proposal.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let remaining = structured.openTodos.filter {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != normalizedStep
+        }
+        if remaining.isEmpty {
+            return "- [ ] Add the next open item to `todo.md` or `goals.md`"
+        }
+        return checkboxLines(remaining)
+    }
+
+    private static func projectFilesTable(context: JadeProjectContext, projectPath: String) -> String {
+        var rows = [("Repo", "`\(projectPath)`")]
         if let path = context.todoPath {
-            lines.append("- `\(JadeProjectContextFiles.relativeName(for: path, projectPath: projectPath))`")
+            rows.append(("Todo", "`\(JadeProjectContextFiles.relativeName(for: path, projectPath: projectPath))`"))
         }
         if let path = context.goalsPath {
-            lines.append("- `\(JadeProjectContextFiles.relativeName(for: path, projectPath: projectPath))`")
-        }
-        if let path = context.agentsPath {
-            lines.append("- `\(JadeProjectContextFiles.relativeName(for: path, projectPath: projectPath))`")
+            rows.append(("Goals", "`\(JadeProjectContextFiles.relativeName(for: path, projectPath: projectPath))`"))
         }
         if let path = context.projectMapPath {
-            lines.append("- `\(JadeProjectContextFiles.relativeName(for: path, projectPath: projectPath))`")
+            rows.append(("Map", "`\(JadeProjectContextFiles.relativeName(for: path, projectPath: projectPath))`"))
+        }
+        if let path = context.agentsPath {
+            rows.append(("Agents", "`\(JadeProjectContextFiles.relativeName(for: path, projectPath: projectPath))`"))
         }
         if JadeJourneyBootstrapService.isInitialized(projectPath: projectPath) {
-            lines.append("- `.jade/journey.md`")
-            lines.append("- `.jade/rules.md`")
+            rows.append(("Log", "`.jade/journey.md`"))
+            rows.append(("Rules", "`.jade/rules.md`"))
         }
-        return lines.map { "\($0)" }.joined(separator: "\n")
+        let header = "| Surface | Location |\n| --- | --- |"
+        let lines = rows.map { "| \($0.0) | \($0.1) |" }
+        return ([header] + lines).joined(separator: "\n")
+    }
+
+    private static func checkboxLines(_ items: [String]) -> String {
+        items.map { "- [ ] \($0)" }.joined(separator: "\n")
+    }
+
+    private static func bulletedLines(_ items: [String]) -> String {
+        items.map { "- \($0)" }.joined(separator: "\n")
+    }
+
+    private static func dayString(from date: Date) -> String {
+        String(ISO8601DateFormatter().string(from: date).prefix(10))
+    }
+
+    private static func timeString(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private static func yamlEscape(_ value: String) -> String {
+        value.replacingOccurrences(of: "\"", with: "'")
     }
 
     private static func outcomeLabel(_ outcome: JourneySessionOutcome) -> String {
         switch outcome {
-        case .started: "started"
-        case .completed: "completed"
-        case .skipped: "skipped"
-        case .declined: "declined"
-        case .blocked: "blocked"
-        case .overridden: "overridden"
+        case .started: "Started"
+        case .completed: "Completed"
+        case .skipped: "Skipped"
+        case .declined: "Declined"
+        case .blocked: "Blocked"
+        case .overridden: "Overridden"
         }
     }
 }
@@ -188,5 +415,17 @@ extension ObsidianNotePathBuilder {
         formatter.formatOptions = [.withInternetDateTime]
         return formatter.string(from: Date())
             .replacingOccurrences(of: ":", with: "-")
+    }
+
+    static func projectCapturePath(projectName: String, content: String) -> String {
+        let slug = slugify(projectName)
+        let timestamp = sessionTimestamp()
+        let titleSlug = slugify(title(from: content))
+        return "Jade/Logs/\(slug)/notes/\(timestamp)-\(titleSlug).md"
+    }
+
+    static func projectLogIndexPath(projectName: String) -> String {
+        let slug = slugify(projectName)
+        return "Jade/Logs/\(slug)/project.md"
     }
 }

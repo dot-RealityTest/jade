@@ -132,8 +132,9 @@ Muxy/
     RemoteCommandBuilder.swift Wraps selected Linux commands through a remote space's SSH profile for command tabs
     NaturalCommand{Settings,Generator}.swift  Review-first natural-language shell command generation with Apple Intelligence and Ollama backends
     ObsidianMCPSettingsStore.swift  UserDefaults-backed obsidian-codex-mcp configuration (vault, Python, server.py, inbox folder)
-    ObsidianSendService.swift  Send-to-Obsidian command via MCP stdio `create_note`
-    ObsidianJourneyLogService.swift  Project session logs to Obsidian via MCP `create_note`
+    ObsidianProjectLogIndex.swift  Ensures `Jade/Logs/{slug}/project.md` vault hub exists before session logs or project captures
+    ObsidianSendService.swift  Send-to-Obsidian via MCP `create_note`; inbox when no project, else `Jade/Logs/{slug}/notes/` with `type: project-capture`
+    ObsidianJourneyLogService.swift  Project session logs via MCP `create_note` at `Jade/Logs/{slug}/sessions/` (`type: project-session-log`) using `JadeJourneyLogFormatter`
     JadeJourneyBootstrapService.swift  Creates `.jade/` plus optional project-root `goals.md`, `todo.md`, `project-map.md` scaffolds
     JadeProjectContextFiles.swift  Locates project markdown context files in the repo root
     JadeProjectContextReader.swift  Parses structured context from todo, goals, AGENTS, project-map markdown

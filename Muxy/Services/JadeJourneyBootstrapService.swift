@@ -41,7 +41,7 @@ enum JadeJourneyBootstrapService {
 
         let scaffolds: [(String, String)] = [
             ("goals.md", goalsTemplate(projectName: projectName)),
-            ("todo.md", todoTemplate),
+            ("todo.md", todoTemplate(projectName: projectName)),
             ("project-map.md", projectMapTemplate(projectName: projectName)),
         ]
 
@@ -56,15 +56,30 @@ enum JadeJourneyBootstrapService {
         """
         # Goals — \(projectName)
 
-        - Define the outcome this project should reach.
+        Outcomes this project should reach. Jade reads this file when proposing the next session step.
+
+        ## Primary outcome
+
+
+        ## Milestones
+
+        - [ ] First milestone
         """
     }
 
-    private static var todoTemplate: String {
+    private static func todoTemplate(projectName: String) -> String {
         """
-        # Todo
+        # Todo — \(projectName)
 
-        - [ ] First concrete task for this project
+        Open tasks for this project. Jade picks the next `- [ ]` item for session focus.
+
+        ## Now
+
+        - [ ] First concrete task
+
+        ## Later
+
+        - [ ] 
         """
     }
 
@@ -72,9 +87,13 @@ enum JadeJourneyBootstrapService {
         """
         # Project map — \(projectName)
 
-        - Source code:
-        - Docs:
-        - Related repos:
+        Quick orientation for humans and agents.
+
+        | Area | Location | Notes |
+        | --- | --- | --- |
+        | Source | | |
+        | Docs | | |
+        | Related | | |
         """
     }
 
@@ -82,33 +101,41 @@ enum JadeJourneyBootstrapService {
         """
         # Project log — \(projectName)
 
+        Local session history for this repo. Jade mirrors structured session logs to Obsidian under `Jade/Logs/`.
+
         ## Current focus
-        Project started. Jade proposes one step at a time and logs each session to Obsidian.
+
+        Project started. Confirm the next step from `todo.md`, `goals.md`, or the section below.
 
         ## Next step
-        Describe the first thing you want this project to do.
+
+        Describe the first thing you want to accomplish in this project.
 
         ### Why
-        One clear goal keeps the work focused.
+
+        One clear goal keeps each session focused and loggable.
 
         ## Done
+
         """
     }
 
     private static var rulesTemplate: String {
         """
-        # Rules
+        # Rules — project guardrails
 
-        Plain-language guardrails. Jade may disagree with a step if it breaks these rules.
+        Plain-language constraints. Jade may flag a step if it conflicts with this file.
 
         ## Not yet
+
         - deploy to production
         - add payments or billing
         - delete user data without a backup
 
         ## Always
+
         - keep changes small enough to test in one session
-        - log decisions and wins to Obsidian
+        - log decisions and outcomes to Obsidian
         """
     }
 }

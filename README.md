@@ -100,6 +100,13 @@ scripts/update-app-icon.sh path/to/icon.png
 
 Running `swift run Muxy` directly skips the app bundle and shows a generic Dock icon.
 
+## Lineage & acknowledgments
+
+Jade is a personal macOS terminal workspace built on open-source foundations:
+
+- **[Muxy](https://github.com/muxy-app/muxy)** — Core terminal multiplexer: SwiftUI shell, libghostty rendering, project workspaces, splits, and persistence. Jade keeps `muxy` / `Muxy` identifiers for compatibility (bundle id, Application Support paths, CLI alias).
+- **[cmux](https://github.com/manaflow-ai/cmux)** — UX inspiration for project-aware attention: sidebar status, jump-to-unread, and terminal attention cues. Jade applies those patterns at the **project** level (tabs, panes, notifications), not as an agent orchestration layer.
+
 ## CLI
 
 Use **Jade → Install CLI** from the macOS menu to install the terminal command.

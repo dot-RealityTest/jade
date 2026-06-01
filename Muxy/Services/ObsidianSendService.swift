@@ -5,6 +5,7 @@ struct ObsidianSendService {
     static func send(
         content: String,
         projectName: String?,
+        projectPath: String? = nil,
         settings: ObsidianMCPSettings = ObsidianMCPSettingsStore.shared.snapshot
     ) async -> Result<String, Error> {
         guard settings.isEnabled else {
@@ -19,16 +20,49 @@ struct ObsidianSendService {
             return .failure(MCPClientError.notConfigured("Nothing to send"))
         }
 
-        let notePath = ObsidianNotePathBuilder.inboxNotePath(
-            inboxFolder: settings.inboxFolder,
-            titleHint: ObsidianNotePathBuilder.title(from: trimmed)
-        )
         let title = ObsidianNotePathBuilder.title(from: trimmed)
+        let notePath: String
+        let noteContent: String
         var tags = settings.defaultTags
-        if let projectName {
+
+        if let projectName, let projectPath {
+            if case let .failure(error) = await ObsidianProjectLogIndex.ensure(
+                projectName: projectName,
+                projectPath: projectPath,
+                settings: settings
+            ) {
+                return .failure(error)
+            }
+
             let projectTag = ObsidianNotePathBuilder.slugify(projectName)
+            notePath = ObsidianNotePathBuilder.projectCapturePath(
+                projectName: projectName,
+                content: trimmed
+            )
+            let structured = JadeProjectContextReader.loadStructured(projectPath: projectPath)
+            noteContent = JadeJourneyLogFormatter.captureNote(
+                input: JadeJourneyLogFormatter.CaptureNoteInput(
+                    content: trimmed,
+                    projectName: projectName,
+                    projectPath: projectPath,
+                    structured: structured
+                )
+            )
+            tags.append("project-capture")
             if !projectTag.isEmpty, !tags.contains(projectTag) {
                 tags.append(projectTag)
+            }
+        } else {
+            notePath = ObsidianNotePathBuilder.inboxNotePath(
+                inboxFolder: settings.inboxFolder,
+                titleHint: title
+            )
+            noteContent = trimmed
+            if let projectName {
+                let projectTag = ObsidianNotePathBuilder.slugify(projectName)
+                if !projectTag.isEmpty, !tags.contains(projectTag) {
+                    tags.append(projectTag)
+                }
             }
         }
 
@@ -40,7 +74,7 @@ struct ObsidianSendService {
             )
             let encodedArguments = try JSONSerialization.data(withJSONObject: [
                 "path": notePath,
-                "content": trimmed,
+                "content": noteContent,
                 "title": title,
                 "tags": tags,
             ])

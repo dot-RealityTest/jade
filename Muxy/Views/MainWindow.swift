@@ -1764,7 +1764,8 @@ struct MainWindow: View {
 
         let result = await ObsidianSendService.send(
             content: content,
-            projectName: activeProject?.name
+            projectName: activeProject?.name,
+            projectPath: activeProject?.path
         )
         switch result {
         case let .success(path):
