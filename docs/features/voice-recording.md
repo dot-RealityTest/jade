@@ -2,12 +2,15 @@
 
 Jade includes on-device voice dictation using Apple's **Speech** framework. Transcription stays on your Mac — nothing is sent to a cloud STT service.
 
+![Voice recording overlay with listening timer and controls](../../assets/screenshots/jade-voice-recording.png)
+
 ## How to use
 
 1. Press the **Voice Recording** shortcut (default **`⌘⇧I`**) or use the mic control on the project status bar.
-2. Speak; Jade shows the recording panel with live feedback.
-3. Stop recording; the transcript is inserted at the text field or terminal focus you had **before** opening the recorder.
-4. If that target is gone, the transcript is copied to the clipboard instead.
+2. Speak; Jade shows the recording panel with live feedback (**Listening…**, timer, waveform).
+3. **Esc** cancels, **Space** pauses, **Return** sends the transcript.
+4. Stop or send; the transcript is inserted at the text field or terminal focus you had **before** opening the recorder.
+5. If that target is gone, the transcript is copied to the clipboard instead.
 
 ## Settings
 

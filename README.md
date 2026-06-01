@@ -16,7 +16,19 @@
 
 ## Screenshots
 
-<img width="3004" alt="Jade terminal workspace with project tools" src="assets/screenshots/jade-project-tools.png" />
+<p align="center">
+  <img src="assets/screenshots/jade-snippets-workspace.png" alt="Jade workspace with terminal, snippets panel, and voice recording" width="900" />
+</p>
+
+<p align="center">
+  <img src="assets/screenshots/jade-command-palette-dev.png" alt="Command palette with Homebrew upgrade and Ollama commands" width="440" />
+  &nbsp;
+  <img src="assets/screenshots/jade-rich-input-slash.png" alt="Rich Input slash commands for lists, headings, and tasks" width="440" />
+</p>
+
+<p align="center">
+  <img src="assets/screenshots/jade-voice-recording.png" alt="On-device voice dictation with listening timer and waveform" width="440" />
+</p>
 
 ## Features
 

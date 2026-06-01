@@ -4,6 +4,8 @@ The command palette is Jade's primary capture surface: search actions, files, sn
 
 **Open:** `⌘K` · **File → Command Palette**
 
+![Command palette with local dev commands](../../assets/screenshots/jade-command-palette-dev.png)
+
 Type to filter. Press **Return** to run the highlighted row. Some remote actions ask for confirmation on a second **Return**.
 
 ## Sections

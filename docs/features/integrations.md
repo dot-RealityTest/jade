@@ -6,6 +6,10 @@ AI, capture panels, snippets, natural shell generation, Home workspace, and remo
 
 Multi-line compose surface for notes, tasks, and terminal payloads.
 
+![Rich Input slash menu for tasks, lists, headings, and code blocks](../../assets/screenshots/jade-rich-input-slash.png)
+
+Type **`/`** in Rich Input for structured blocks: to-do, bullet/numbered lists, headings, quote, code block, divider.
+
 | Action | Default shortcut |
 | --- | --- |
 | Toggle Rich Input | `⌘I` |
@@ -34,6 +38,8 @@ Only one primary right-rail panel is visible at a time: Snippets, AI, or legacy 
 ## Snippets
 
 Reusable shell snippets with **general** vs **project** scope (remote spaces can have their own store).
+
+![Snippets panel with general-scope workflow commands](../../assets/screenshots/jade-snippets-workspace.png)
 
 | Action | Shortcut / palette |
 | --- | --- |
