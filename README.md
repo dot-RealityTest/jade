@@ -5,7 +5,6 @@
 <h1 align="center">Jade</h1>
 
 <p align="center">Lightweight, memory-efficient terminal for Mac built with SwiftUI and <a href="https://github.com/ghostty-org/ghostty">libghostty</a>.</p>
-<p align="center"><a href="#install">Mac</a> | <a href="docs/features/remote-server/README.md">Remote API</a> | <a href="https://discord.gg/4eMXAmJQ2n">Discord</a></p>
 
 <div align="center">
   <img src="https://img.shields.io/github/downloads/muxy-app/muxy/total" />
@@ -105,17 +104,10 @@ Jade is **macOS-only** today. There is no iOS or Android app under the Jade name
 ```bash
 scripts/setup.sh          # downloads GhosttyKit.xcframework
 swift build               # debug build
-./scripts/run-jade.sh     # assemble Jade.app with icon and launch
+./scripts/run-jade.sh     # assemble Jade.app and launch
 ```
 
-Replace the app icon with a square PNG (1024×1024 recommended):
-
-```bash
-scripts/update-app-icon.sh path/to/icon.png
-./scripts/run-jade.sh
-```
-
-Running `swift run Muxy` directly skips the app bundle and shows a generic Dock icon.
+Use `./scripts/run-jade.sh` rather than `swift run Muxy` — the bare binary skips the app bundle and shows a generic Dock icon.
 
 ## Lineage & acknowledgments
 
