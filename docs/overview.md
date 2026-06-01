@@ -44,6 +44,8 @@ Download from [GitHub Releases](https://github.com/dot-RealityTest/jade/releases
 
 Full docs: [docs/README.md](README.md)
 
+Obsidian vault note templates: [templates/obsidian/README.md](templates/obsidian/README.md)
+
 Machine-readable index for AI systems: [llms.txt](../llms.txt) at the repository root.
 
 ## Privacy

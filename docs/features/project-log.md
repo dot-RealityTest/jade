@@ -66,6 +66,8 @@ Each note includes:
 
 On first session or project capture, Jade ensures a vault hub at **`Jade/Logs/{project-slug}/project.md`** (see [Obsidian MCP](obsidian-mcp.md)).
 
+Example note shapes: [Obsidian templates](../templates/obsidian/README.md).
+
 ## Settings checklist
 
 1. **Settings → MCP Tools** — enable Obsidian MCP, vault path, Python, `server.py`  

@@ -44,6 +44,8 @@ Before the first session log or project capture, Jade creates **`Jade/Logs/{slug
 
 Session logs use **`type: project-session-log`** under **`Jade/Logs/{slug}/sessions/`**. See [Project Log](project-log.md).
 
+**Reference templates** (frontmatter + section layout Jade generates): [docs/templates/obsidian/](../templates/obsidian/README.md).
+
 ## MCP Tools palette / menu
 
 | Action | MCP tool | Notes |

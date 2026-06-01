@@ -38,6 +38,7 @@ Jade is a free, open-source macOS terminal multiplexer and developer workspace. 
 - Repository: https://github.com/dot-RealityTest/jade
 - Landing page: https://dot-realitytest.github.io/jade/
 - Documentation hub: https://github.com/dot-RealityTest/jade/tree/main/docs
+- Obsidian log templates: https://github.com/dot-RealityTest/jade/tree/main/docs/templates/obsidian
 - Overview (GEO): https://github.com/dot-RealityTest/jade/blob/main/docs/overview.md
 - Issues: https://github.com/dot-RealityTest/jade/issues
 - License: MIT

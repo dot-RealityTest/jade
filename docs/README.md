@@ -45,6 +45,7 @@ flowchart TB
 | [Integrations](features/integrations.md) | Rich Input, AI assistant, snippets, home, remote spaces |
 | [Project Log](features/project-log.md) | `.jade/`, todo/goals, session workflow |
 | [Obsidian MCP](features/obsidian-mcp.md) | Vault capture, session logs, project hub |
+| [Obsidian templates](templates/obsidian/README.md) | Vault note shapes (`project-log`, session, capture) |
 | [Voice Recording](features/voice-recording.md) | On-device dictation |
 | [Notifications](features/notifications.md) | Hooks, socket API, attention UX, `jade notify` |
 | [Layouts](features/layouts/README.md) | Declarative `.muxy/layouts/*.yaml` workspaces |
