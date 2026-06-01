@@ -4,13 +4,12 @@
 
 <h1 align="center">Jade</h1>
 
-<p align="center">Lightweight, memory-efficient terminal for Mac built with SwiftUI and <a href="https://github.com/ghostty-org/ghostty">libghostty</a>.</p>
+<p align="center">Native macOS terminal workspace for project-based development — tabs, splits, Git, command palette, local AI, and Obsidian capture — built with SwiftUI and <a href="https://github.com/ghostty-org/ghostty">libghostty</a>.</p>
 
 <div align="center">
-  <img src="https://img.shields.io/github/downloads/muxy-app/muxy/total" />
-  <img src="https://img.shields.io/github/v/release/muxy-app/muxy" />
-  <img src="https://img.shields.io/github/license/muxy-app/muxy" />
-  <img src="https://img.shields.io/github/commit-activity/m/muxy-app/muxy" />
+  <img src="https://img.shields.io/github/v/release/dot-RealityTest/jade" />
+  <img src="https://img.shields.io/github/license/dot-RealityTest/jade" />
+  <img src="https://img.shields.io/github/commit-activity/m/dot-RealityTest/jade" />
 </div>
 
 ## Screenshots
@@ -95,7 +94,7 @@ Full documentation: [docs/README.md](docs/README.md) — command palette, Obsidi
 
 ## Install
 
-Download the latest release from the [releases page](https://github.com/muxy-app/muxy/releases)
+Download a build from [Releases](https://github.com/dot-RealityTest/jade/releases), or build locally (see [Local Development](#local-development)).
 
 Jade is **macOS-only** today. There is no iOS or Android app under the Jade name. Upstream [Muxy](https://github.com/muxy-app/muxy) ships separate mobile companions; this repo does not include `MuxyMobile`. The desktop app still exposes an optional WebSocket API — see [Remote Server](docs/features/remote-server/README.md).
 
@@ -124,6 +123,13 @@ Use **Jade → Install CLI** from the macOS menu to install the **`jade`** comma
 jade .
 jade /path/to/project
 ```
+
+## Feedback & contributions
+
+Feedback, bug reports, ideas, and pull requests are welcome.
+
+- **Something broken or missing?** [Open an issue](https://github.com/dot-RealityTest/jade/issues/new/choose)
+- **Want to contribute code?** See [CONTRIBUTING.md](CONTRIBUTING.md) — fork, branch from `main`, run `scripts/checks.sh --fix --fast`, and open a PR
 
 ## License
 

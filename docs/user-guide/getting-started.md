@@ -18,7 +18,7 @@ flowchart TB
 
 ## Install
 
-1. Download a build from [releases](https://github.com/muxy-app/muxy/releases) or run locally with `./scripts/run-jade.sh`.
+1. Download a build from [Releases](https://github.com/dot-RealityTest/jade/releases) or run locally with `./scripts/run-jade.sh`.
 2. Drag **Jade.app** to `/Applications` and launch.
 3. Optional: **Jade → Install CLI** installs the **`jade`** command to your PATH.
 

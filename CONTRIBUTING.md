@@ -1,10 +1,10 @@
-# Contributing to Muxy
+# Contributing to Jade
 
-Thank you for your interest in contributing to Muxy! This guide will help you get started.
+Thank you for your interest in contributing to Jade! Feedback, bug reports, and pull requests are welcome. This guide will help you get started.
 
 ## Humans Only Policy
 
-Muxy is a community project and we want communication to stay between humans. **AI-generated text is not allowed** in:
+Muxy/Jade is a community-oriented project and we want communication to stay between humans. **AI-generated text is not allowed** in:
 
 - Issue descriptions and comments
 - Pull request titles, descriptions, summaries, and comments
@@ -23,8 +23,8 @@ You are welcome to use AI to help you write code, but the text you post on GitHu
 ### Setup
 
 ```bash
-git clone https://github.com/muxy-app/muxy.git
-cd muxy
+git clone https://github.com/dot-RealityTest/jade.git
+cd jade
 scripts/setup.sh          # downloads GhosttyKit.xcframework
 swift build               # verify everything compiles
 ```
@@ -32,7 +32,7 @@ swift build               # verify everything compiles
 ### Running
 
 ```bash
-swift run Muxy
+./scripts/run-jade.sh
 ```
 
 ## Development Workflow
