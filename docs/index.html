@@ -3,19 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Jade — macOS Terminal Workspace | Project Tabs, Splits, Local AI</title>
-  <meta name="description" content="Jade is a native macOS terminal workspace: project tabs, split panes, Git worktrees, command palette, Ollama AI, and Obsidian capture. Built with SwiftUI and libghostty. Free and open source.">
+  <title>Jade - Native macOS Terminal Workspace</title>
+  <meta name="description" content="Jade is a native macOS terminal workspace for project-based development: tabs, split panes, Git worktrees, command palette, local Ollama AI, and Obsidian capture.">
   <meta name="keywords" content="macOS terminal, terminal multiplexer, SwiftUI, libghostty, Ghostty, command palette, Ollama, Obsidian, Git worktrees, developer tools">
   <link rel="canonical" href="https://dot-realitytest.github.io/jade/">
+  <link rel="preload" as="image" href="assets/jade-hero-mockup.png" fetchpriority="high">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Jade — macOS Terminal Workspace">
-  <meta property="og:description" content="Project-based terminal for macOS: tabs, splits, Git, command palette, local Ollama AI, Obsidian MCP. SwiftUI + libghostty.">
+  <meta property="og:title" content="Jade - Native macOS Terminal Workspace">
+  <meta property="og:description" content="A project-based terminal for macOS with tabs, splits, Git, command palette, local Ollama AI, and Obsidian MCP capture.">
   <meta property="og:url" content="https://dot-realitytest.github.io/jade/">
-  <meta property="og:image" content="https://raw.githubusercontent.com/dot-RealityTest/jade/main/assets/screenshots/jade-snippets-workspace.png">
+  <meta property="og:image" content="https://dot-realitytest.github.io/jade/assets/jade-hero-mockup.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Jade — macOS Terminal Workspace">
-  <meta name="twitter:description" content="Native macOS terminal workspace with project tabs, splits, command palette, and local AI.">
-  <meta name="twitter:image" content="https://raw.githubusercontent.com/dot-RealityTest/jade/main/assets/screenshots/jade-snippets-workspace.png">
+  <meta name="twitter:title" content="Jade - Native macOS Terminal Workspace">
+  <meta name="twitter:description" content="Native macOS terminal workspace with project tabs, splits, command palette, Git, and local AI.">
+  <meta name="twitter:image" content="https://dot-realitytest.github.io/jade/assets/jade-hero-mockup.png">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -25,7 +26,6 @@
     "operatingSystem": "macOS 14+",
     "description": "Native macOS terminal workspace for project-based development with tabs, splits, Git worktrees, command palette, Ollama AI, and Obsidian capture.",
     "url": "https://github.com/dot-RealityTest/jade",
-    "downloadUrl": "https://github.com/dot-RealityTest/jade/releases",
     "softwareHelp": "https://github.com/dot-RealityTest/jade/tree/main/docs",
     "license": "https://opensource.org/licenses/MIT",
     "programmingLanguage": "Swift",
@@ -38,118 +38,1351 @@
   </script>
   <style>
     :root {
-      color-scheme: light dark;
-      --bg: #0d0f12;
-      --fg: #e8eaed;
-      --muted: #9aa0a6;
-      --accent: #6ee7b7;
-      --card: #161a20;
-      --border: #2a3038;
-      --max: 960px;
+      color-scheme: dark;
+      --bg: #090b0d;
+      --bg-soft: #101415;
+      --panel: #151a1f;
+      --panel-raised: #1d2328;
+      --fg: #f3f6f2;
+      --muted: #b5beb8;
+      --quiet: #7b8780;
+      --line: rgba(239, 247, 242, 0.14);
+      --line-strong: rgba(239, 247, 242, 0.24);
+      --jade: #70e6ad;
+      --blue: #82baff;
+      --amber: #f5c66f;
+      --rose: #f09aa7;
+      --shadow: rgba(0, 0, 0, 0.34);
+      --max: 1180px;
     }
+
     @media (prefers-color-scheme: light) {
       :root {
-        --bg: #f8f9fb;
-        --fg: #1a1d21;
-        --muted: #5f6368;
-        --card: #ffffff;
-        --border: #e0e3e8;
+        color-scheme: light;
+        --bg: #d6dad5;
+        --bg-soft: #d6dad5;
+        --panel: #ffffff;
+        --panel-raised: #eef1ec;
+        --fg: #151a18;
+        --muted: #52615a;
+        --quiet: #748078;
+        --line: rgba(20, 31, 27, 0.13);
+        --line-strong: rgba(20, 31, 27, 0.23);
+        --shadow: rgba(24, 35, 31, 0.12);
       }
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 5rem;
+    }
+
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-width: 320px;
+      overflow-x: clip;
       background: var(--bg);
       color: var(--fg);
-      line-height: 1.55;
+      font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      line-height: 1.5;
+      text-rendering: optimizeLegibility;
     }
-    .wrap { max-width: var(--max); margin: 0 auto; padding: 2rem 1.25rem 4rem; }
-    header { text-align: center; margin-bottom: 2rem; }
-    h1 { font-size: 2.25rem; font-weight: 650; letter-spacing: -0.02em; margin: 0 0 0.5rem; }
-    .tagline { font-size: 1.125rem; color: var(--muted); max-width: 42rem; margin: 0 auto 1.5rem; }
-    .cta { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-bottom: 2rem; }
-    .btn {
-      display: inline-block;
-      padding: 0.65rem 1.1rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.95rem;
+
+    a {
+      color: inherit;
+      text-decoration-color: rgba(112, 230, 173, 0.55);
+      text-underline-offset: 0.2em;
     }
-    .btn-primary { background: var(--accent); color: #0d0f12; }
-    .btn-secondary { border: 1px solid var(--border); color: var(--fg); }
-    .hero img {
-      width: 100%;
-      border-radius: 12px;
-      border: 1px solid var(--border);
+
+    img {
+      max-width: 100%;
       display: block;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+
+    figure {
+      margin: 0;
+    }
+
+    code {
+      font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .skip-link {
+      position: fixed;
+      left: 1rem;
+      top: 1rem;
+      z-index: 30;
+      transform: translateY(-150%);
+      border-radius: 6px;
+      background: var(--fg);
+      color: var(--bg);
+      padding: 0.6rem 0.8rem;
+      font-weight: 700;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .scroll-progress {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 24;
+      height: 3px;
+      transform: scaleX(0);
+      transform-origin: left;
+      background: linear-gradient(90deg, var(--jade), var(--blue), var(--amber));
+    }
+
+    .site-header {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 20;
+      border-bottom: 1px solid rgba(239, 247, 242, 0.1);
+      background: rgba(9, 11, 13, 0.76);
+      backdrop-filter: blur(22px);
+      transition: background 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+    }
+
+    .site-header.is-scrolled {
+      border-bottom-color: var(--line-strong);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.14);
+    }
+
+    @media (prefers-color-scheme: light) {
+      .site-header {
+        border-bottom-color: rgba(20, 31, 27, 0.1);
+        background: rgba(214, 218, 213, 0.82);
+      }
+
+      .site-header.is-scrolled {
+        background: rgba(214, 218, 213, 0.95);
+      }
+    }
+
+    .nav {
+      width: min(var(--max), calc(100% - 2rem));
+      min-height: 3.5rem;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       gap: 1rem;
-      margin: 2.5rem 0;
     }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.25rem;
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-width: 0;
+      font-weight: 760;
+      text-decoration: none;
     }
-    .card h2 { font-size: 1rem; margin: 0 0 0.5rem; }
-    .card p { margin: 0; color: var(--muted); font-size: 0.925rem; }
-    footer {
-      margin-top: 3rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--border);
+
+    .brand img {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 7px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 10px 24px var(--shadow);
+    }
+
+    .brand span {
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
       color: var(--muted);
-      font-size: 0.875rem;
-      text-align: center;
+      font-size: 0.92rem;
+      font-weight: 620;
     }
-    footer a { color: var(--fg); }
+
+    .nav-links a {
+      border-radius: 6px;
+      padding: 0.48rem 0.6rem;
+      text-decoration: none;
+    }
+
+    .nav-links a:hover {
+      background: rgba(112, 230, 173, 0.12);
+      color: var(--fg);
+    }
+
+    .nav-links a.is-active {
+      background: rgba(112, 230, 173, 0.18);
+      color: var(--fg);
+      box-shadow: inset 0 0 0 1px rgba(112, 230, 173, 0.22);
+    }
+
+    .hero {
+      position: relative;
+      min-height: clamp(700px, 91vh, 920px);
+      isolation: isolate;
+      overflow: clip;
+      border-bottom: 1px solid var(--line);
+      background: #050607;
+    }
+
+    .hero-image {
+      position: absolute;
+      inset: 0;
+      z-index: -3;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 57%;
+      opacity: 0.72;
+      transform: translate3d(0, calc(var(--scroll-y, 0) * 0.08px), 0) scale(1.04);
+      will-change: transform;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      background: linear-gradient(90deg, rgba(5, 6, 7, 0.96) 0%, rgba(5, 6, 7, 0.74) 40%, rgba(5, 6, 7, 0.28) 100%), linear-gradient(180deg, rgba(5, 6, 7, 0.05) 0%, rgba(5, 6, 7, 0.74) 100%);
+    }
+
+    .hero-inner {
+      width: min(var(--max), calc(100% - 2rem));
+      margin: 0 auto;
+      padding: clamp(7rem, 16vh, 10rem) 0 3rem;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 0 1rem;
+      color: var(--jade);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 0.62rem;
+      height: 0.62rem;
+      border-radius: 999px;
+      background: var(--jade);
+      box-shadow: 0 0 28px rgba(112, 230, 173, 0.8);
+    }
+
+    h1 {
+      max-width: 12ch;
+      margin: 0;
+      font-size: clamp(4rem, 14vw, 10.5rem);
+      line-height: 0.88;
+      letter-spacing: 0;
+      font-weight: 820;
+    }
+
+    .hero-copy {
+      max-width: 43rem;
+      margin: 1.5rem 0 0;
+      color: rgba(243, 246, 242, 0.88);
+      font-size: clamp(1.08rem, 2.1vw, 1.45rem);
+      line-height: 1.45;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin: 2rem 0 0;
+    }
+
+    .button {
+      min-height: 2.75rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 8px;
+      padding: 0.72rem 1rem;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-weight: 760;
+      text-decoration: none;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(112, 230, 173, 0.6);
+    }
+
+    .button.primary {
+      border-color: transparent;
+      background: var(--jade);
+      color: #07110d;
+    }
+
+    .hero-facts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin: 2.5rem 0 0;
+      padding: 0;
+      list-style: none;
+      color: rgba(243, 246, 242, 0.74);
+      font-size: 0.94rem;
+      font-weight: 650;
+    }
+
+    .hero-facts li {
+      border: 1px solid rgba(239, 247, 242, 0.16);
+      border-radius: 999px;
+      padding: 0.42rem 0.72rem;
+      background: rgba(9, 11, 13, 0.42);
+    }
+
+    .terminal-float {
+      width: min(31rem, calc(100% - 2rem));
+      margin-top: clamp(2.5rem, 10vh, 5rem);
+      border: 1px solid rgba(239, 247, 242, 0.18);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(9, 12, 14, 0.78);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(18px);
+    }
+
+    .terminal-top {
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.42rem;
+      border-bottom: 1px solid rgba(239, 247, 242, 0.1);
+      padding: 0 0.75rem;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .dot {
+      width: 0.68rem;
+      height: 0.68rem;
+      border-radius: 999px;
+      background: var(--quiet);
+    }
+
+    .dot.red {
+      background: var(--rose);
+    }
+
+    .dot.amber {
+      background: var(--amber);
+    }
+
+    .dot.green {
+      background: var(--jade);
+    }
+
+    .terminal-body {
+      height: 10.5rem;
+      padding: 0.9rem;
+      font: 0.82rem/1.65 "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      color: rgba(232, 242, 236, 0.82);
+    }
+
+    .terminal-line {
+      display: block;
+      width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      animation: typeLine 900ms steps(42) forwards;
+      animation-delay: var(--delay, 0ms);
+    }
+
+    .terminal-line.jade {
+      color: var(--jade);
+    }
+
+    .terminal-line.blue {
+      color: var(--blue);
+    }
+
+    .terminal-cursor {
+      display: inline-block;
+      width: 0.56rem;
+      height: 1rem;
+      margin-left: 0.2rem;
+      translate: 0 0.18rem;
+      background: var(--jade);
+      animation: blink 900ms steps(1) infinite;
+    }
+
+    .section {
+      padding: clamp(3.5rem, 7vw, 6rem) 0;
+      background: var(--bg);
+    }
+
+    .section.alt {
+      background: var(--bg-soft);
+      border-block: 1px solid var(--line);
+    }
+
+    .container {
+      width: min(var(--max), calc(100% - 2rem));
+      margin: 0 auto;
+    }
+
+    .section-heading {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(20rem, 0.62fr);
+      gap: clamp(1.25rem, 4vw, 4rem);
+      align-items: end;
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 4.2rem);
+      line-height: 0.98;
+      letter-spacing: 0;
+      font-weight: 800;
+    }
+
+    .section-heading p,
+    .section-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.02rem;
+    }
+
+    .mockup-frame {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 28px 80px var(--shadow);
+    }
+
+    .mockup-frame img {
+      width: 100%;
+      height: auto;
+    }
+
+    .mockup-caption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      border-top: 1px solid var(--line);
+      padding: 0.9rem 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .mockup-caption strong {
+      color: var(--fg);
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.9rem;
+      margin-top: 1rem;
+    }
+
+    .feature {
+      min-height: 13rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1.1rem;
+      background: var(--panel);
+      transform: translateY(0);
+      opacity: 1;
+      transition: transform 560ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 560ms ease;
+    }
+
+    .is-visible .feature {
+      transform: translateY(0);
+      opacity: 1;
+      transition-delay: calc(var(--i, 0) * 65ms);
+    }
+
+    .feature strong {
+      display: block;
+      max-width: 11rem;
+      font-size: 1.16rem;
+      line-height: 1.15;
+    }
+
+    .feature p {
+      margin: 1.75rem 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .feature.accent-jade {
+      border-top: 3px solid var(--jade);
+    }
+
+    .feature.accent-blue {
+      border-top: 3px solid var(--blue);
+    }
+
+    .feature.accent-amber {
+      border-top: 3px solid var(--amber);
+    }
+
+    .feature.accent-rose {
+      border-top: 3px solid var(--rose);
+    }
+
+    .scroll-story {
+      display: grid;
+      grid-template-columns: minmax(0, 0.95fr) minmax(18rem, 0.75fr);
+      gap: clamp(1.25rem, 5vw, 4rem);
+      align-items: start;
+    }
+
+    .terminal-stage {
+      position: sticky;
+      top: 5rem;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0b0e11;
+      box-shadow: 0 28px 80px var(--shadow);
+    }
+
+    .terminal-stage .terminal-body {
+      position: relative;
+      height: 25rem;
+      padding: 1rem;
+      overflow: hidden;
+    }
+
+    .terminal-stream {
+      position: absolute;
+      inset: 1rem;
+      display: grid;
+      gap: 0.48rem;
+      align-content: start;
+      animation: scrollStream 8s linear infinite;
+    }
+
+    .stream-row {
+      display: grid;
+      grid-template-columns: 4.8rem 1fr;
+      gap: 0.8rem;
+      align-items: center;
+      color: rgba(232, 242, 236, 0.72);
+      font: 0.78rem/1 "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    }
+
+    .stream-row span:last-child {
+      height: 0.44rem;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--jade), rgba(130, 186, 255, 0.6), transparent);
+      transform-origin: left;
+      animation: pulseBar 2.4s ease-in-out infinite;
+      animation-delay: var(--delay, 0ms);
+    }
+
+    .stage-overlay {
+      position: absolute;
+      left: 1rem;
+      right: 1rem;
+      bottom: 1rem;
+      border: 1px solid rgba(112, 230, 173, 0.25);
+      border-radius: 8px;
+      padding: 1rem;
+      background: rgba(14, 20, 22, 0.84);
+      backdrop-filter: blur(18px);
+    }
+
+    .stage-kicker {
+      margin: 0 0 0.35rem;
+      color: var(--jade);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .stage-title {
+      margin: 0;
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      line-height: 1.05;
+    }
+
+    .stage-copy {
+      min-height: 3rem;
+      margin: 0.65rem 0 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .story-steps {
+      display: grid;
+      gap: 1rem;
+      padding: 4rem 0;
+    }
+
+    .story-step {
+      min-height: 17rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 1.2rem;
+      background: var(--panel);
+      opacity: 0.58;
+      transition: opacity 220ms ease, border-color 220ms ease, transform 220ms ease;
+    }
+
+    .story-step.is-active {
+      opacity: 1;
+      border-color: rgba(112, 230, 173, 0.48);
+      transform: translateX(-0.25rem);
+    }
+
+    .story-step span {
+      display: inline-flex;
+      width: 2rem;
+      height: 2rem;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: rgba(112, 230, 173, 0.16);
+      color: var(--jade);
+      font-weight: 800;
+    }
+
+    .story-step h3 {
+      margin: 1rem 0 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .story-step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(18rem, 0.7fr);
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .live-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0b0e11;
+      box-shadow: 0 28px 80px var(--shadow);
+    }
+
+    .palette-demo,
+    .voice-demo {
+      padding: 1rem;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      height: 2.7rem;
+      border: 1px solid rgba(239, 247, 242, 0.13);
+      border-radius: 8px;
+      padding: 0 0.8rem;
+      color: rgba(232, 242, 236, 0.74);
+      font: 0.85rem "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    }
+
+    .palette-list {
+      display: grid;
+      gap: 0.5rem;
+      margin-top: 0.9rem;
+    }
+
+    .palette-row {
+      display: grid;
+      grid-template-columns: 1.7rem 1fr 3.2rem;
+      gap: 0.65rem;
+      align-items: center;
+      border-radius: 8px;
+      padding: 0.62rem;
+      color: rgba(232, 242, 236, 0.72);
+      animation: rowGlow 5.4s ease-in-out infinite;
+      animation-delay: var(--delay, 0ms);
+    }
+
+    .palette-row::before {
+      content: attr(data-icon);
+      display: grid;
+      width: 1.7rem;
+      height: 1.7rem;
+      place-items: center;
+      border-radius: 6px;
+      background: rgba(112, 230, 173, 0.12);
+      color: var(--jade);
+    }
+
+    .palette-row span {
+      height: 0.45rem;
+      border-radius: 999px;
+      background: rgba(232, 242, 236, 0.24);
+    }
+
+    .palette-row small {
+      height: 0.4rem;
+      border-radius: 999px;
+      background: rgba(130, 186, 255, 0.35);
+    }
+
+    .voice-demo {
+      min-height: 17rem;
+      display: grid;
+      align-content: center;
+      gap: 1.2rem;
+    }
+
+    .wave {
+      height: 8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.28rem;
+    }
+
+    .wave span {
+      width: 0.3rem;
+      height: var(--h, 34%);
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--jade), rgba(130, 186, 255, 0.72));
+      animation: wave 900ms ease-in-out infinite;
+      animation-delay: var(--delay, 0ms);
+    }
+
+    .voice-actions {
+      display: flex;
+      justify-content: center;
+      gap: 0.55rem;
+    }
+
+    .voice-actions span {
+      width: 2.4rem;
+      height: 2.4rem;
+      border: 1px solid rgba(239, 247, 242, 0.14);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .install {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.82fr);
+      gap: clamp(1.5rem, 5vw, 4rem);
+      align-items: center;
+    }
+
+    .install-copy p {
+      max-width: 39rem;
+      color: var(--muted);
+      font-size: 1.04rem;
+    }
+
+    .install .button:not(.primary) {
+      background: var(--panel);
+      color: var(--fg);
+    }
+
+    .install-terminal {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0b0e11;
+      color: #dce7df;
+      box-shadow: 0 24px 70px var(--shadow);
+    }
+
+    .install-terminal pre {
+      margin: 0;
+      padding: 1.1rem;
+      overflow-x: auto;
+      font: 0.92rem/1.65 "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+    }
+
+    .prompt {
+      color: var(--jade);
+    }
+
+    .muted {
+      color: #86958e;
+    }
+
+    .reveal {
+      transform: translateY(0);
+      opacity: 1;
+      transition: transform 680ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 680ms ease;
+    }
+
+    .reveal.is-visible {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .footer {
+      border-top: 1px solid var(--line);
+      padding: 2rem 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .footer .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 0.8rem;
+    }
+
+    .footer nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.85rem;
+    }
+
+    .footer a {
+      color: var(--fg);
+      text-decoration: none;
+    }
+
+    @keyframes typeLine {
+      to {
+        width: 100%;
+      }
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes scrollStream {
+      0% {
+        transform: translateY(0);
+      }
+      100% {
+        transform: translateY(-42%);
+      }
+    }
+
+    @keyframes pulseBar {
+      0%, 100% {
+        transform: scaleX(0.42);
+        opacity: 0.42;
+      }
+      50% {
+        transform: scaleX(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes rowGlow {
+      0%, 100% {
+        background: transparent;
+      }
+      42%, 58% {
+        background: rgba(112, 230, 173, 0.12);
+      }
+    }
+
+    @keyframes wave {
+      0%, 100% {
+        transform: scaleY(0.42);
+        opacity: 0.48;
+      }
+      50% {
+        transform: scaleY(1.18);
+        opacity: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 1ms !important;
+      }
+
+      .terminal-stream {
+        animation: none;
+      }
+    }
+
+    @media (max-width: 920px) {
+      .section-heading,
+      .scroll-story,
+      .gallery-grid,
+      .install {
+        grid-template-columns: 1fr;
+      }
+
+      .feature-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .terminal-stage {
+        position: relative;
+        top: auto;
+      }
+
+      .story-steps {
+        padding: 0;
+      }
+
+      .story-step {
+        min-height: 12rem;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .site-header {
+        position: absolute;
+      }
+
+      .nav {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 0.8rem 0;
+      }
+
+      .nav-links {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+      }
+
+      .nav-links a {
+        white-space: nowrap;
+        padding-inline: 0.48rem;
+      }
+
+      .hero {
+        min-height: 780px;
+      }
+
+      .hero-image {
+        object-position: 58% center;
+        opacity: 0.44;
+      }
+
+      .hero::after {
+        background: linear-gradient(180deg, rgba(5, 6, 7, 0.96) 0%, rgba(5, 6, 7, 0.84) 58%, rgba(5, 6, 7, 0.5) 100%);
+      }
+
+      .hero-inner {
+        padding-top: 8rem;
+      }
+
+      .hero-actions,
+      .hero-actions .button {
+        width: 100%;
+      }
+
+      .hero-facts {
+        gap: 0.5rem;
+      }
+
+      .terminal-float {
+        display: none;
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mockup-caption {
+        display: block;
+      }
+
+      .mockup-caption span {
+        display: block;
+        margin-top: 0.2rem;
+      }
+
+      .terminal-stage .terminal-body {
+        height: 22rem;
+      }
+
+      .install-terminal pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Jade</h1>
-      <p class="tagline">Native macOS terminal workspace — project tabs, split panes, Git worktrees, command palette, local Ollama AI, and Obsidian capture. Built with SwiftUI and libghostty.</p>
-      <div class="cta">
-        <a class="btn btn-primary" href="https://github.com/dot-RealityTest/jade/releases">Download</a>
-        <a class="btn btn-secondary" href="https://github.com/dot-RealityTest/jade">GitHub</a>
-        <a class="btn btn-secondary" href="https://github.com/dot-RealityTest/jade/tree/main/docs">Documentation</a>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="scroll-progress" aria-hidden="true"></div>
+  <header class="site-header">
+    <nav class="nav" aria-label="Main navigation">
+      <a class="brand" href="#">
+        <img src="assets/jade-app-icon.png" alt="" width="64" height="64">
+        <span>Jade</span>
+      </a>
+      <div class="nav-links">
+        <a href="#workspace">Workspace</a>
+        <a href="#features">Features</a>
+        <a href="#flow">Flow</a>
+        <a href="#mockups">Mockups</a>
+        <a href="#install">Install</a>
+        <a href="README.md">Docs</a>
+        <a href="https://github.com/dot-RealityTest/jade">GitHub</a>
       </div>
-    </header>
+    </nav>
+  </header>
 
-    <figure class="hero">
-      <img src="https://raw.githubusercontent.com/dot-RealityTest/jade/main/assets/screenshots/jade-snippets-workspace.png" alt="Jade macOS terminal workspace with snippets panel and project tabs" width="900" height="506">
-    </figure>
-
-    <div class="grid">
-      <article class="card">
-        <h2>Project-first terminal</h2>
-        <p>Organize shells by repo with persistent tabs, splits, and worktrees — not endless loose windows.</p>
-      </article>
-      <article class="card">
-        <h2>Command palette &amp; Git</h2>
-        <p>⌘K fuzzy actions, file search, built-in VCS, diff viewer, and GitHub PR workflows via <code>gh</code>.</p>
-      </article>
-      <article class="card">
-        <h2>Local AI &amp; capture</h2>
-        <p>Ollama assistant, Rich Input, snippets, on-device voice, and Obsidian vault export through MCP.</p>
-      </article>
-    </div>
-
-    <section class="card">
-      <h2>Requirements &amp; install</h2>
-      <p>macOS 14+. Download a release or clone the repo, run <code>scripts/setup.sh</code>, then <code>./scripts/run-jade.sh</code>. MIT licensed — feedback and contributions welcome.</p>
-      <p style="margin-top:0.75rem"><a href="overview.md">Read the overview</a> · <a href="https://github.com/dot-RealityTest/jade/blob/main/llms.txt">llms.txt</a> for AI systems</p>
+  <main id="main">
+    <section class="hero" aria-label="Jade overview">
+      <img class="hero-image" src="assets/jade-hero-mockup.png" alt="" width="1792" height="1024" fetchpriority="high" decoding="async">
+      <div class="hero-inner">
+        <p class="eyebrow">Native macOS terminal workspace</p>
+        <h1>Jade</h1>
+        <p class="hero-copy">A project-first terminal for builders who live across repos, branches, panes, notes, and local AI. Jade keeps the shell fast while giving the work around it a real home.</p>
+        <div class="hero-actions" aria-label="Primary actions">
+          <a class="button primary" href="https://github.com/dot-RealityTest/jade">Open GitHub</a>
+          <a class="button" href="overview.md">Read overview</a>
+          <a class="button" href="https://github.com/dot-RealityTest/jade">View source</a>
+        </div>
+        <ul class="hero-facts" aria-label="Key facts">
+          <li>macOS 14+</li>
+          <li>SwiftUI + libghostty</li>
+          <li>MIT licensed</li>
+          <li>Local-first by default</li>
+        </ul>
+        <div class="terminal-float" aria-label="Animated terminal preview">
+          <div class="terminal-top" aria-hidden="true">
+            <span class="dot red"></span>
+            <span class="dot amber"></span>
+            <span class="dot green"></span>
+          </div>
+          <div class="terminal-body">
+            <span class="terminal-line jade" style="--delay: 120ms">$ jade ~/work/atlas</span>
+            <span class="terminal-line" style="--delay: 880ms">opening project workspace...</span>
+            <span class="terminal-line blue" style="--delay: 1580ms">restored 4 tabs, 3 splits, 2 worktrees</span>
+            <span class="terminal-line" style="--delay: 2260ms">palette ready · snippets synced · local AI online</span>
+            <span class="terminal-line jade" style="--delay: 3000ms">$ <span class="terminal-cursor"></span></span>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <footer>
-      <p>Jade · <a href="https://github.com/dot-RealityTest/jade">dot-RealityTest/jade</a> · MIT · Lineage from <a href="https://github.com/muxy-app/muxy">Muxy</a> + libghostty</p>
-    </footer>
-  </div>
+    <section class="section reveal" id="workspace">
+      <div class="container">
+        <div class="section-heading">
+          <h2>Your projects, not a pile of terminal windows.</h2>
+          <p>Jade is organized around real development context: repo, worktree, tabs, splits, source control, snippets, captures, and the command palette that ties them together.</p>
+        </div>
+        <figure class="mockup-frame">
+          <img src="assets/jade-hero-mockup.png" alt="Generated mockup of Jade as a native macOS terminal workspace with split panes and a floating command palette" width="1792" height="1024">
+          <figcaption class="mockup-caption"><strong>Generated Jade workspace mockup</strong><span>Original mockup asset, not a product screenshot.</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section alt reveal" id="features">
+      <div class="container">
+        <div class="section-heading">
+          <h2>Built for the whole coding session.</h2>
+          <p>It is still a terminal first. The extra surface exists for the work that normally leaks into tabs, notes, floating windows, and half-remembered commands.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature accent-jade" style="--i: 0">
+            <strong>Project-scoped workspaces</strong>
+            <p>Persistent tabs, split panes, cwd memory, project icons, remote spaces, and a home workspace that stays separate from repo work.</p>
+          </article>
+          <article class="feature accent-blue" style="--i: 1">
+            <strong>Command palette that does work</strong>
+            <p>Fuzzy actions, file search, snippets, local ports, theme picker, Homebrew upgrade, Ollama commands, and project-log steps from one place.</p>
+          </article>
+          <article class="feature accent-amber" style="--i: 2">
+            <strong>Git without context switching</strong>
+            <p>Status, branches, worktrees, history, unified and split diffs, GitHub PR create/list through <code>gh</code>, and IDE handoff when needed.</p>
+          </article>
+          <article class="feature accent-rose" style="--i: 3">
+            <strong>Local AI and rich input</strong>
+            <p>Ollama-backed assistant, natural shell command review, image-aware Rich Input, on-device dictation, and AI usage tracking.</p>
+          </article>
+          <article class="feature accent-jade" style="--i: 4">
+            <strong>Capture to knowledge systems</strong>
+            <p>Snippets, terminal-selection capture, project logs, Obsidian MCP export, and session notes that follow the active project.</p>
+          </article>
+          <article class="feature accent-blue" style="--i: 5">
+            <strong>Native, fast, open source</strong>
+            <p>SwiftUI shell, Metal rendering through libghostty, Sparkle updates, no account requirement, and an MIT license.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section reveal" id="flow">
+      <div class="container">
+        <div class="section-heading">
+          <h2>Scroll through a focused session.</h2>
+          <p>The terminal stage updates as the page moves, mirroring the way Jade moves from project setup to active work to captured context.</p>
+        </div>
+        <div class="scroll-story">
+          <div class="terminal-stage" aria-label="Animated scrolling terminal stage">
+            <div class="terminal-top" aria-hidden="true">
+              <span class="dot red"></span>
+              <span class="dot amber"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="terminal-body">
+              <div class="terminal-stream" aria-hidden="true">
+                <div class="stream-row"><span>09:41:10</span><span style="--delay: 0ms"></span></div>
+                <div class="stream-row"><span>09:41:11</span><span style="--delay: 110ms"></span></div>
+                <div class="stream-row"><span>09:41:12</span><span style="--delay: 220ms"></span></div>
+                <div class="stream-row"><span>09:41:13</span><span style="--delay: 330ms"></span></div>
+                <div class="stream-row"><span>09:41:14</span><span style="--delay: 440ms"></span></div>
+                <div class="stream-row"><span>09:41:15</span><span style="--delay: 550ms"></span></div>
+                <div class="stream-row"><span>09:41:16</span><span style="--delay: 660ms"></span></div>
+                <div class="stream-row"><span>09:41:17</span><span style="--delay: 770ms"></span></div>
+                <div class="stream-row"><span>09:41:18</span><span style="--delay: 880ms"></span></div>
+                <div class="stream-row"><span>09:41:19</span><span style="--delay: 990ms"></span></div>
+                <div class="stream-row"><span>09:41:20</span><span style="--delay: 0ms"></span></div>
+                <div class="stream-row"><span>09:41:21</span><span style="--delay: 110ms"></span></div>
+              </div>
+              <div class="stage-overlay">
+                <p class="stage-kicker" data-stage-kicker>Open</p>
+                <h3 class="stage-title" data-stage-title>Open a project</h3>
+                <p class="stage-copy" data-stage-copy>Use the app, URL scheme, or CLI to create a project workspace with its own tabs, splits, and state.</p>
+              </div>
+            </div>
+          </div>
+          <div class="story-steps">
+            <article class="story-step is-active" data-kicker="Open" data-title="Open a project" data-copy="Use the app, URL scheme, or CLI to create a project workspace with its own tabs, splits, and state.">
+              <span>1</span>
+              <h3>Open a project</h3>
+              <p>Start from a repo path and keep the workspace scoped to that project.</p>
+            </article>
+            <article class="story-step" data-kicker="Shape" data-title="Shape the workspace" data-copy="Add terminal tabs, split panes, editor tabs, worktrees, and files without losing the active shell context.">
+              <span>2</span>
+              <h3>Shape the workspace</h3>
+              <p>Tabs, panes, branches, and editor surfaces stay attached to the repo.</p>
+            </article>
+            <article class="story-step" data-kicker="Reach" data-title="Command from one place" data-copy="Use fuzzy actions, Git tools, snippets, local ports, Ollama shortcuts, and MCP actions from the palette.">
+              <span>3</span>
+              <h3>Command from one place</h3>
+              <p>The palette reaches across development actions without crowding the chrome.</p>
+            </article>
+            <article class="story-step" data-kicker="Capture" data-title="Leave a trail" data-copy="Send captures and session logs to Obsidian or keep project notes in Jade's local project scaffold.">
+              <span>4</span>
+              <h3>Leave a trail</h3>
+              <p>Useful terminal context can become a snippet, note, or project session log.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt reveal" id="mockups">
+      <div class="container">
+        <div class="section-heading">
+          <h2>New mockups, live motion.</h2>
+          <p>The visuals here are generated mockups paired with code-driven terminal animation, palette highlighting, and voice waveform motion.</p>
+        </div>
+        <div class="gallery-grid">
+          <figure class="mockup-frame">
+            <img src="assets/jade-panel-mockups.png" alt="Generated mockup of Jade palette, rich input, and voice capture panels" width="1792" height="1024" loading="lazy" decoding="async">
+            <figcaption class="mockup-caption"><strong>Generated panel mockups</strong><span>Palette, Rich Input, and Voice capture as original rendered assets.</span></figcaption>
+          </figure>
+          <div class="live-panel" aria-label="Animated palette and voice UI">
+            <div class="terminal-top" aria-hidden="true">
+              <span class="dot red"></span>
+              <span class="dot amber"></span>
+              <span class="dot green"></span>
+            </div>
+            <div class="palette-demo">
+              <div class="search-bar"><span>⌘K</span><span class="terminal-line" style="--delay: 200ms">search commands</span><span class="terminal-cursor"></span></div>
+              <div class="palette-list">
+                <div class="palette-row" data-icon="⌁" style="--delay: 0ms"><span></span><small></small></div>
+                <div class="palette-row" data-icon="⌘" style="--delay: 540ms"><span></span><small></small></div>
+                <div class="palette-row" data-icon="⎇" style="--delay: 1080ms"><span></span><small></small></div>
+                <div class="palette-row" data-icon="↯" style="--delay: 1620ms"><span></span><small></small></div>
+              </div>
+            </div>
+            <div class="voice-demo">
+              <div class="wave" aria-hidden="true">
+                <span style="--h: 22%; --delay: 0ms"></span>
+                <span style="--h: 62%; --delay: 60ms"></span>
+                <span style="--h: 38%; --delay: 120ms"></span>
+                <span style="--h: 78%; --delay: 180ms"></span>
+                <span style="--h: 44%; --delay: 240ms"></span>
+                <span style="--h: 88%; --delay: 300ms"></span>
+                <span style="--h: 52%; --delay: 360ms"></span>
+                <span style="--h: 34%; --delay: 420ms"></span>
+                <span style="--h: 72%; --delay: 480ms"></span>
+                <span style="--h: 40%; --delay: 540ms"></span>
+                <span style="--h: 82%; --delay: 600ms"></span>
+                <span style="--h: 28%; --delay: 660ms"></span>
+              </div>
+              <div class="voice-actions" aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section reveal" id="install">
+      <div class="container install">
+        <div class="install-copy">
+          <p class="eyebrow">Install</p>
+          <h2>Build Jade locally from GitHub.</h2>
+          <p>Jade is macOS-only today and stores workspace state locally. There is no packaged download yet, so clone the repo and launch the app bundle from source.</p>
+          <div class="hero-actions" aria-label="Install actions">
+            <a class="button primary" href="https://github.com/dot-RealityTest/jade">Open GitHub</a>
+            <a class="button" href="README.md">Open docs</a>
+          </div>
+        </div>
+        <div class="install-terminal" aria-label="Build commands">
+          <div class="terminal-top" aria-hidden="true">
+            <span class="dot red"></span>
+            <span class="dot amber"></span>
+            <span class="dot green"></span>
+          </div>
+          <pre><code><span class="prompt">$</span> git clone https://github.com/dot-RealityTest/jade.git
+<span class="prompt">$</span> cd jade
+<span class="prompt">$</span> scripts/setup.sh
+<span class="prompt">$</span> ./scripts/run-jade.sh
+
+<span class="muted">Requires macOS 14+ and Swift 6.0+</span></code></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <span>Jade is MIT licensed and built on Muxy, SwiftUI, and libghostty.</span>
+      <nav aria-label="Footer links">
+        <a href="overview.md">Overview</a>
+        <a href="README.md">Docs</a>
+        <a href="https://github.com/dot-RealityTest/jade/blob/main/llms.txt">llms.txt</a>
+        <a href="templates/obsidian/README.md">Obsidian templates</a>
+        <a href="https://github.com/dot-RealityTest/jade/issues/new/choose">Feedback</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    const progress = document.querySelector(".scroll-progress");
+    const header = document.querySelector(".site-header");
+    const heroImage = document.querySelector(".hero-image");
+    const revealTargets = document.querySelectorAll(".reveal");
+    const storySteps = document.querySelectorAll(".story-step");
+    const sectionTargets = document.querySelectorAll("main section[id]");
+    const navLinks = document.querySelectorAll(".nav-links a[href^='#']");
+    const stageKicker = document.querySelector("[data-stage-kicker]");
+    const stageTitle = document.querySelector("[data-stage-title]");
+    const stageCopy = document.querySelector("[data-stage-copy]");
+
+    function setActiveNav(id) {
+      for (const link of navLinks) {
+        link.classList.toggle("is-active", link.getAttribute("href") === `#${id}`);
+      }
+    }
+
+    function updateActiveSection() {
+      const marker = window.innerHeight * 0.34;
+      let active = sectionTargets[0];
+
+      for (const section of sectionTargets) {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= marker && rect.bottom >= marker) {
+          active = section;
+          break;
+        }
+      }
+
+      if (active) {
+        setActiveNav(active.id);
+      }
+    }
+
+    function updateScrollState() {
+      const scrollTop = window.scrollY;
+      const scrollRange = document.documentElement.scrollHeight - window.innerHeight;
+      const ratio = scrollRange > 0 ? scrollTop / scrollRange : 0;
+      progress.style.transform = `scaleX(${Math.min(1, Math.max(0, ratio))})`;
+      if (heroImage) {
+        heroImage.style.setProperty("--scroll-y", scrollTop);
+      }
+      header.classList.toggle("is-scrolled", scrollTop > 16);
+      updateActiveSection();
+    }
+
+    const revealObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+        }
+      }
+    }, { threshold: 0.18 });
+
+    const storyObserver = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+      if (!visible) {
+        return;
+      }
+
+      for (const step of storySteps) {
+        step.classList.toggle("is-active", step === visible.target);
+      }
+
+      stageKicker.textContent = visible.target.dataset.kicker;
+      stageTitle.textContent = visible.target.dataset.title;
+      stageCopy.textContent = visible.target.dataset.copy;
+    }, {
+      threshold: [0.35, 0.55, 0.75],
+      rootMargin: "-18% 0px -22% 0px"
+    });
+
+    for (const target of revealTargets) {
+      revealObserver.observe(target);
+    }
+
+    for (const step of storySteps) {
+      storyObserver.observe(step);
+    }
+
+    updateScrollState();
+    window.addEventListener("scroll", updateScrollState, { passive: true });
+    window.addEventListener("resize", updateScrollState);
+  </script>
 </body>
 </html>
