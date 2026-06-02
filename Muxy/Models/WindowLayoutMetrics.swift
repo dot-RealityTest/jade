@@ -33,14 +33,11 @@ enum WindowLayoutMetrics {
         var fileTreeWidth: CGFloat
         var snippetsVisible: Bool
         var aiVisible: Bool
-        var notesVisible: Bool
-        var todoVisible: Bool
     }
 
     struct NarrowWidthAdjustments: Equatable {
         var hideAI: Bool = false
         var hideSnippets: Bool = false
-        var hideInspector: Bool = false
     }
 
     static func sidebarWidth(
@@ -67,9 +64,6 @@ enum WindowLayoutMetrics {
         }
         if visibility.aiVisible {
             width += aiAssistantWidth
-        }
-        if visibility.notesVisible || visibility.todoVisible {
-            width += inspectorWidth
         }
         return width
     }
@@ -102,12 +96,6 @@ enum WindowLayoutMetrics {
         }
         if workingVisibility.snippetsVisible, applyHideIfNeeded({ $0.hideSnippets = true }) {
             workingVisibility.snippetsVisible = false
-        }
-        if workingVisibility.notesVisible || workingVisibility.todoVisible,
-           applyHideIfNeeded({ $0.hideInspector = true })
-        {
-            workingVisibility.notesVisible = false
-            workingVisibility.todoVisible = false
         }
 
         return adjustments

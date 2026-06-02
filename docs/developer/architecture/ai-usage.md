@@ -25,9 +25,11 @@ The service is observed by `SidebarFooter` (preview icon + popover) and `AIUsage
 
 ## Providers
 
-`AIUsageProvider` is the read-only counterpart to `AIProviderIntegration`. A single concrete type can adopt both (e.g. `ClaudeCodeProvider` installs hooks AND fetches usage). `AIProviderRegistry.usageProviders` lists all usage providers — Claude Code, Codex, Copilot, Amp, Z.ai, MiniMax, Kimi, Factory.
+`AIUsageProvider` is the read-only counterpart to `AIProviderIntegration`. A single concrete type can adopt both (e.g. `ClaudeCodeProvider` installs hooks AND fetches usage). `AIProviderRegistry.usageProviders` lists the **frozen** usage set: **Claude Code, Codex CLI, Cursor CLI** only. Additional parsers may remain in the tree for tests but are not registered for production UI.
 
 Each provider has a matching `{Name}UsageParser` taking raw JSON → `[AIUsageMetricRow]`. Parsers are unit-tested against fixture payloads in `Tests/MuxyTests/Services/*UsageParserTests.swift`; HTTP paths are tested with `URLProtocol` stubs in `*UsageAPIClientTests.swift` where present.
+
+See [Product scope](../product-scope.md) before adding providers or OAuth readers.
 
 ## Credentials
 
@@ -37,7 +39,7 @@ Each provider has a matching `{Name}UsageParser` taking raw JSON → `[AIUsageMe
 2. JSON credential files written by the vendor CLI under `~/.claude`, `~/.codex`, etc. Some providers honor env-var overrides (`CLAUDE_CONFIG_DIR`, `CODEX_HOME`).
 3. macOS Keychain via `/usr/bin/security find-generic-password`. The account name is passed via `Process.arguments` (array form, not a shell string) to avoid argument injection.
 
-OAuth providers (Factory, Kimi) use `AIUsageOAuth.refreshAccessToken` to exchange a refresh token and persist the updated credential file with the same shape the vendor CLI wrote.
+OAuth refresh helpers exist for legacy providers; the frozen trio uses env/JSON/Keychain paths documented in [AI Usage](../../features/ai-usage.md).
 
 ## Refresh lifecycle
 

@@ -18,7 +18,7 @@ flowchart TB
 
 ## Install
 
-1. Download a build from [Releases](https://github.com/dot-RealityTest/jade/releases) or run locally with `./scripts/run-jade.sh`.
+1. Clone the repo, run `./scripts/setup.sh`, then `./scripts/run-jade.sh` (see [README](../README.md#local-development)). When [Releases](https://github.com/dot-RealityTest/jade/releases) are published, you can install a prebuilt **Jade.app** instead.
 2. Drag **Jade.app** to `/Applications` and launch.
 3. Optional: **Jade → Install CLI** installs the **`jade`** command to your PATH.
 

@@ -8,7 +8,7 @@ The SwiftPM module and source directory are still named Muxy. **This repo is mac
 ## Monorepo Structure
 
 ```
-MuxyShared/                    Shared types (macOS + iOS): protocol DTOs, messages, codec
+MuxyShared/                    Shared protocol DTOs (optional WebSocket server)
   ProjectDTO.swift             Project data transfer object
   WorktreeDTO.swift            Worktree data transfer object
   WorkspaceDTO.swift           Workspace layout DTOs (SplitNodeDTO, TabAreaDTO, TabDTO)
@@ -18,18 +18,14 @@ MuxyShared/                    Shared types (macOS + iOS): protocol DTOs, messag
   ProtocolParams.swift         Request parameter types for each method
   MuxyMessage.swift            Message envelope (request/response/event) + JSON codec
 
-MuxyServer/                    WebSocket server library (macOS only, embedded in Muxy.app)
+MuxyServer/                    Optional WebSocket server (embedded in Muxy.app; frozen — see platform-freeze.md)
   MuxyRemoteServer.swift       NWListener-based WebSocket server + delegate protocol + request routing
   ClientConnection.swift       Per-client NWConnection wrapper, WebSocket framing
-
-MuxyMobile/                    iOS companion app
-  MuxyMobileApp.swift          App entry point
-  ContentView.swift            Root view (connection state router)
-  ConnectView.swift            Host/port connection form
-  RemoteWorkspaceView.swift    Project list + workspace detail
-  ConnectionManager.swift      WebSocket client, state sync, request/response handling
-  DeviceCredentialsStore.swift Persistent deviceID + token stored in iOS Keychain
 ```
+
+**Not in this repo:** `MuxyMobile/` and other iOS/Android companion apps live in upstream [muxy-app/muxy](https://github.com/muxy-app/muxy). Jade ships macOS only; the WebSocket server exists for third-party automation, not a bundled mobile client.
+
+See [Platform freeze](developer/platform-freeze.md) and [Product scope](developer/product-scope.md).
 
 ## Desktop App Directory Map
 

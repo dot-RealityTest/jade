@@ -2,34 +2,40 @@
 
 **Jade** is a native **macOS terminal workspace** for developers who organize work by **project**, not by loose terminal windows.
 
+Product scope and freeze policy: [docs/developer/product-scope.md](developer/product-scope.md), [docs/developer/platform-freeze.md](developer/platform-freeze.md).
+
 ## One sentence
 
-Jade combines a **Ghostty-powered terminal**, **project tabs and split panes**, **Git and worktrees**, a **command palette**, **local Ollama AI**, and **Obsidian capture** in one SwiftUI app.
+Jade combines a **Ghostty-powered terminal**, **project tabs and split panes**, **Git worktrees**, a **command palette**, **Rich Input + Obsidian capture**, and **local Ollama AI** in one SwiftUI app.
 
 ## Who it is for
 
 | You are… | Jade helps with… |
 | --- | --- |
 | A macOS developer | Project-scoped shells, worktrees, and persistent workspace state |
-| A polyglot builder | Built-in editor, file tree, markdown preview, and IDE handoff |
-| An AI-assisted coder | Ollama chat, natural shell commands, agent notification hooks |
-| An Obsidian user | Send captures and session logs to your vault via MCP |
+| An Obsidian user | Rich Input capture and session logs to your vault via MCP |
+| An AI-assisted coder | Ollama chat in the inspector; optional usage readout for Claude/Codex/Cursor |
 
 ## What makes it different
 
 - **Project-first** — Each repo gets its own workspace (tabs, splits, cwd memory).
 - **Native and local-first** — SwiftUI + libghostty/Metal; Ollama runs on your machine.
-- **Capture without leaving the shell** — Command palette, Rich Input, snippets, vault export.
-- **Not a cloud IDE** — No account, no required backend; optional SSH remote spaces only.
+- **Capture without leaving the shell** — Rich Input, command palette, snippets, vault export.
+- **Not a cloud IDE** — No account, no required backend.
 
 ## Core capabilities
 
-1. **Terminal** — libghostty rendering, 200+ themes, find, auto-copy selection, save selection as snippet.
-2. **Layout** — Vertical tabs, horizontal/vertical splits, drag-and-drop reorder.
-3. **Git** — Status, diff, history, branches, PR create/list via GitHub CLI.
-4. **Command palette** — Fuzzy actions, file search, MCP tools, Ollama and Homebrew shortcuts.
-5. **Knowledge** — Project log (`.jade/`, todo/goals), Obsidian session logs, voice dictation.
-6. **CLI** — `jade /path/to/project`, `jade notify`, `jade hooks setup`.
+1. **Terminal** — libghostty rendering, themes, find, auto-copy selection, snippets from selection.
+2. **Layout** — Vertical tabs, horizontal/vertical splits, drag-and-drop reorder, worktrees.
+3. **Command palette** — Fuzzy actions, file search, MCP tools, project log steps, dev shortcuts.
+4. **Capture** — Rich Input, Obsidian send, structured project session logs.
+5. **CLI** — `jade /path/to/project`, `jade notify`, `jade hooks setup`.
+
+## Optional surfaces (fallback / frozen)
+
+- Built-in editor, file tree, and VCS tab — quick peek; prefer external IDE for deep work.
+- AI usage panel — Claude Code, Codex CLI, Cursor CLI quotas only.
+- Remote WebSocket server and Moltis — maintenance-only; see [platform freeze](developer/platform-freeze.md).
 
 ## Platform
 
@@ -38,7 +44,7 @@ Jade combines a **Ghostty-powered terminal**, **project tabs and split panes**, 
 
 ## Install
 
-Download from [GitHub Releases](https://github.com/dot-RealityTest/jade/releases) or build with `./scripts/run-jade.sh` after `scripts/setup.sh`.
+Download from [GitHub Releases](https://github.com/dot-RealityTest/jade/releases) when published, or build with `./scripts/run-jade.sh` after `scripts/setup.sh`.
 
 ## Documentation
 

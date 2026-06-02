@@ -1,27 +1,34 @@
 # Jade
 
-> Native macOS terminal workspace for project-based development — tabs, splits, Git, command palette, local Ollama AI, and Obsidian capture. Built with SwiftUI and libghostty (Metal rendering).
+> Native macOS terminal workspace — project tabs, split panes, Git worktrees, command palette, Rich Input + Obsidian capture, local Ollama AI. SwiftUI + libghostty (Metal).
 
 ## Summary
 
-Jade is a free, open-source macOS terminal multiplexer and developer workspace. Organize terminals by project with persistent tabs, split panes, and Git worktrees. Includes a built-in editor, source control UI, Raycast-style command palette, snippet library, on-device voice dictation, and optional Obsidian vault capture via MCP.
+Jade is a free, open-source macOS terminal multiplexer. Organize shells by project with persistent tabs, splits, and worktrees. Primary capture is **Rich Input** (`⌘I`) and Obsidian MCP; structured **project session logs** use the palette + vault templates. Built-in editor/VCS are fallback surfaces; deep editing belongs in your IDE.
 
 ## Audience
 
 - macOS developers who live in the terminal
-- Teams juggling multiple repos and worktrees
-- Users who want local-first AI (Ollama) without cloud lock-in
-- Obsidian users capturing session notes from the shell
+- Users juggling multiple repos and worktrees
+- Local-first AI (Ollama) without cloud lock-in
+- Obsidian users exporting session notes from the shell
 
-## Key features
+## Key features (core)
 
-- Project-based terminal workspaces with sidebar tabs and split panes
-- Git worktrees, built-in VCS, diff viewer, and `gh` PR workflows
-- Command palette (⌘K): files, actions, MCP tools, Ollama, Homebrew
-- Rich Input capture, AI assistant panel (Ollama), general/project snippets
-- Project session logs with `.jade/` scaffold and Obsidian MCP export
-- `jade` CLI: open projects from the shell, agent notification hooks
-- Optional WebSocket remote API (no bundled mobile app)
+- Project-based terminal workspaces: sidebar tabs, split panes, persistence
+- Git worktrees and light Git status in the sidebar
+- Command palette (⌘K): files, actions, MCP tools, project log, dev shortcuts
+- Rich Input capture, snippets (general/project), Ollama AI assistant panel
+- Project session logs (`.jade/`, todo/goals) → Obsidian via MCP
+- `jade` CLI: open projects, agent notification hooks
+
+## Optional / frozen (maintenance-only)
+
+- Built-in editor, file tree, VCS tab — quick peek; prefer external IDE
+- AI usage panel — Claude Code, Codex CLI, Cursor CLI only
+- WebSocket remote server — disabled by default; protocol frozen until a client ships
+- Moltis agent gateway — dev-only build flag; not default production path
+- Voice dictation, natural-language shell commands, remote SSH spaces
 
 ## Requirements
 
@@ -30,14 +37,17 @@ Jade is a free, open-source macOS terminal multiplexer and developer workspace. 
 
 ## Install
 
-- Releases: https://github.com/dot-RealityTest/jade/releases
 - Build from source: https://github.com/dot-RealityTest/jade#local-development
+- Releases (when published): https://github.com/dot-RealityTest/jade/releases
+- Website: https://dot-realitytest.github.io/jade/
 
 ## Links
 
 - Repository: https://github.com/dot-RealityTest/jade
 - Landing page: https://dot-realitytest.github.io/jade/
 - Documentation hub: https://github.com/dot-RealityTest/jade/tree/main/docs
+- Product scope: https://github.com/dot-RealityTest/jade/blob/main/docs/developer/product-scope.md
+- Platform freeze: https://github.com/dot-RealityTest/jade/blob/main/docs/developer/platform-freeze.md
 - Obsidian log templates: https://github.com/dot-RealityTest/jade/tree/main/docs/templates/obsidian
 - Overview (GEO): https://github.com/dot-RealityTest/jade/blob/main/docs/overview.md
 - Issues: https://github.com/dot-RealityTest/jade/issues
@@ -49,8 +59,8 @@ macOS terminal, terminal multiplexer, SwiftUI terminal, libghostty, Ghostty, pro
 
 ## Lineage
 
-Fork/evolution of Muxy (https://github.com/muxy-app/muxy). UX inspiration from cmux project-level attention cues. User-facing name: Jade; internal compatibility: Muxy bundle id and paths.
+Fork/evolution of Muxy (https://github.com/muxy-app/muxy). UX inspiration from cmux project-level attention cues. User-facing name: Jade; internal compatibility: Muxy bundle id and paths. **No Jade mobile app in this repo.**
 
 ## Privacy
 
-Terminal content, vault paths, and AI prompts stay on your Mac unless you configure remote spaces (SSH) or optional LAN WebSocket server. No account required.
+Terminal content, vault paths, and AI prompts stay on your Mac unless you opt into SSH remote spaces or the LAN WebSocket server. No account required.

@@ -1,5 +1,7 @@
 # Remote Server API
 
+> **Maintenance-only / frozen** — No new RPC methods or events until a first-party or committed third-party client exists. See [Platform freeze](../developer/platform-freeze.md).
+
 Jade embeds a WebSocket server that lets external clients connect to the desktop app over the local network — for custom dashboards, automation, and third-party integrations.
 
 There is **no Jade iOS app** in this repo. Upstream Muxy ships separate mobile companions; pairing docs below describe the wire protocol the Mac server implements.

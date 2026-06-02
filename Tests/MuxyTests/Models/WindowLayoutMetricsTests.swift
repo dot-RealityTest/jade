@@ -27,9 +27,7 @@ final class WindowLayoutMetricsTests: XCTestCase {
             fileTreeVisible: false,
             fileTreeWidth: 0,
             snippetsVisible: true,
-            aiVisible: true,
-            notesVisible: true,
-            todoVisible: true
+            aiVisible: true
         )
         let adjustments = WindowLayoutMetrics.narrowWidthAdjustments(
             windowWidth: 900,
@@ -38,7 +36,6 @@ final class WindowLayoutMetricsTests: XCTestCase {
         )
         XCTAssertTrue(adjustments.hideAI)
         XCTAssertTrue(adjustments.hideSnippets)
-        XCTAssertTrue(adjustments.hideInspector)
     }
 
     func testNarrowWidthAdjustmentsKeepContentWhenWideEnough() {
@@ -48,9 +45,7 @@ final class WindowLayoutMetricsTests: XCTestCase {
             fileTreeVisible: false,
             fileTreeWidth: 0,
             snippetsVisible: true,
-            aiVisible: true,
-            notesVisible: false,
-            todoVisible: false
+            aiVisible: true
         )
         let adjustments = WindowLayoutMetrics.narrowWidthAdjustments(
             windowWidth: 1400,

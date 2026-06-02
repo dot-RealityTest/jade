@@ -49,42 +49,38 @@
 - **Local dev shortcuts** — Upgrade Homebrew; Ollama list, pull, run, serve from the palette
 - **Local Ports** — Session listening and dead port overview from the palette
 
-### Editor, files & Git
+### Capture & local AI
 
-- **Built-in VCS** — Git status, diff (unified and split), commit history, branch picker, and PR creation/listing via `gh`
-- **File tree** — Gitignore-aware browser with file operations and clipboard
-- **Text editor** — Syntax highlighting, search, and history
-- **Markdown preview** — Render Markdown files inline
-- **IDE integration** — Open files and folders in your preferred IDE
-
-### AI, capture & knowledge
-
-- **Rich Input (`⌘I`)** — Multi-line compose with images; notes/tasks capture without extra chrome
-- **AI Assistant (`⌘⌃A`)** — Right-rail Ollama chat; natural shell command review
-- **Snippets** — General vs project scope (`⌘J`, `⌘⌃J`); right-click terminal selection → **Save as Snippet**; auto-copy on select (Settings → General)
-- **AI usage tracking (`⌘L`)** — Claude Code, Codex, Cursor, Copilot, Amp, Factory, Kimi, MiniMax, OpenCode, Z.ai
+- **Rich Input (`⌘I`)** — Primary notes, tasks, and capture surface (persists per project)
 - **Obsidian MCP** — Send to vault (`⌘⌃O`); session logs under `Jade/Logs/{project}/`
-- **Project log** — `.jade/` scaffold, todo/goals markdown, Confirm/Complete session workflow
-- **Voice recording** — On-device dictation via Apple Speech (Settings → Recording)
+- **Project log** — Palette workflow: set up log, confirm step, complete step → Obsidian session notes
+- **AI Assistant (`⌘⌃A`)** — Right-rail Ollama chat
+- **Snippets** — General vs project scope (`⌘J`, `⌘⌃J`); save terminal selection as snippet
 
 ### Notifications & attention
 
 - **Notification center** — Toasts, sounds, per-project panel, socket + AI hooks
-- **Jump to latest unread (`⌘⇧U`)** — Project-aware focus (cmux-inspired, project-scoped)
+- **Jump to latest unread (`⌘⇧U`)** — Project-aware focus
 - **Sidebar status** — Branch, ports, unread preview on expanded project rows
-- **Terminal attention ring** — Unread highlight on background panes
 - **CLI** — `jade notify`, `jade hooks setup`
 
-### Platform & polish
+## Platform & polish
 
-- **Remote WebSocket API** — Optional LAN server for third-party clients (no Jade iOS app shipped today)
-- **Terminal tools** — Lazygit `⌘⇧G`, yazi `⌘⇧Y`, in-terminal find; auto-copy selection; right-click **Save as Snippet**
-- **200+ themes** — Ghostty theme picker `⌘⇧K`
+- **Themes** — Ghostty theme picker `⌘⇧K` (200+ themes)
+- **Terminal tools** — Lazygit `⌘⇧G`, yazi `⌘⇧Y`, in-terminal find; auto-copy selection; save selection as snippet
 - **Customizable shortcuts** — 40+ actions plus custom shell commands
-- **Customizable toolbar** — Sparse workspace chrome (Snippets, AI, …)
 - **Drag and drop** — Reorder tabs/projects; split by dragging tabs
 - **Project icons** — Custom logos and colors
 - **Auto-updates** — Sparkle (disabled in DEBUG unless `JADE_ENABLE_UPDATES=1`)
+
+### Optional / maintenance-only
+
+- **Built-in editor, file tree, VCS tab** — Quick peek and small Git actions; prefer **Open in IDE** for serious editing
+- **AI usage (`⌘L`)** — Read-only quotas for Claude Code, Codex CLI, and Cursor CLI
+- **Remote WebSocket API** — Disabled by default; frozen until a client ships ([platform freeze](docs/developer/platform-freeze.md))
+- **Remote SSH spaces** — Power-user; deprioritized vs shell convergence
+- **Voice recording** — On-device dictation (Settings → Recording)
+- **Natural language shell commands** — Palette review flow; not core loop
 
 Full documentation: [docs/README.md](docs/README.md) — command palette, Obsidian, voice, integrations, project log.
 
@@ -94,7 +90,7 @@ Full documentation: [docs/README.md](docs/README.md) — command palette, Obsidi
 A native macOS terminal workspace that organizes shells by project — tabs, splits, Git worktrees, a command palette, local Ollama AI, and optional Obsidian capture. Not a cloud IDE; everything runs on your Mac.
 
 **Is Jade free and open source?**  
-Yes. MIT license. Download from [Releases](https://github.com/dot-RealityTest/jade/releases) or build from source.
+Yes. MIT license. Build from source (see [Local Development](#local-development)); packaged [Releases](https://github.com/dot-RealityTest/jade/releases) when published.
 
 **What platforms does Jade support?**  
 macOS 14+ only. This repo does not ship an iOS or Android app under the Jade name.
@@ -116,7 +112,12 @@ See [llms.txt](llms.txt) and [docs/overview.md](docs/overview.md).
 
 ## Install
 
-Download a build from [Releases](https://github.com/dot-RealityTest/jade/releases), or build locally (see [Local Development](#local-development)).
+Build locally (see [Local Development](#local-development)) — there is no packaged download on [Releases](https://github.com/dot-RealityTest/jade/releases) yet.
+
+```bash
+git clone https://github.com/dot-RealityTest/jade.git
+cd jade && ./scripts/setup.sh && ./scripts/run-jade.sh
+```
 
 Jade is **macOS-only** today. There is no iOS or Android app under the Jade name. Upstream [Muxy](https://github.com/muxy-app/muxy) ships separate mobile companions; this repo does not include `MuxyMobile`. The desktop app still exposes an optional WebSocket API — see [Remote Server](docs/features/remote-server/README.md).
 

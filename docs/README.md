@@ -1,8 +1,10 @@
 ## Documentation
 
-**Jade** is a native macOS terminal workspace organized around projects, worktrees, tabs, and split panes. It ships a built-in editor, source-control UI, file tree, command palette, Obsidian MCP capture, project session logs, on-device voice dictation, and a WebSocket API for companion apps.
+**Jade** is a native **macOS terminal workspace** — projects, worktrees, tabs, split panes, command palette, Rich Input + Obsidian capture, and local Ollama AI. Built-in editor/VCS and the WebSocket API are optional or maintenance-only surfaces.
 
 - [Overview (SEO/GEO)](overview.md) — positioning, audience, privacy
+- [Product scope](developer/product-scope.md) — capture path, AI cap, what to delay
+- [Platform freeze](developer/platform-freeze.md) — remote server + Moltis policy
 - [llms.txt](../llms.txt) — machine-readable summary for AI systems
 - [Landing page](https://dot-realitytest.github.io/jade/)
 
@@ -49,7 +51,7 @@ flowchart TB
 | [Voice Recording](features/voice-recording.md) | On-device dictation |
 | [Notifications](features/notifications.md) | Hooks, socket API, attention UX, `jade notify` |
 | [Layouts](features/layouts/README.md) | Declarative `.muxy/layouts/*.yaml` workspaces |
-| [AI Usage](features/ai-usage.md) | Claude Code, Copilot, Codex, Cursor, and more |
+| [AI Usage](features/ai-usage.md) | Claude Code, Codex CLI, Cursor CLI (read-only quotas) |
 | [Themes](features/themes.md) | Theme picker and Ghostty config |
 | [Remote Server](features/remote-server/README.md) | WebSocket API (macOS server; no Jade mobile app) |
 

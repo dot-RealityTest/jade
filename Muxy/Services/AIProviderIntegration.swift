@@ -62,13 +62,7 @@ final class AIProviderRegistry {
     lazy var usageProviders: [any AIUsageProvider] = [
         claudeCodeProvider,
         CodexUsageProvider(),
-        CopilotUsageProvider(),
         CursorUsageProvider(),
-        AmpUsageProvider(),
-        ZaiUsageProvider(),
-        MiniMaxUsageProvider(),
-        KimiUsageProvider(),
-        FactoryUsageProvider(),
     ]
 
     private init() {}

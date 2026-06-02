@@ -1,10 +1,12 @@
 # Integrations
 
-AI, capture panels, snippets, natural shell generation, Home workspace, and remote SSH spaces — how they fit together in Jade.
+AI, capture, snippets, natural shell generation, Home workspace, and remote SSH spaces — how they fit together in Jade.
 
-## Rich Input
+See [Product scope](../developer/product-scope.md) for the canonical capture and AI model.
 
-Multi-line compose surface for notes, tasks, and terminal payloads.
+## Rich Input (primary capture)
+
+Multi-line compose surface for notes, tasks, and terminal payloads. All freeform capture goes here — not through separate inspector panels.
 
 ![Rich Input slash menu for tasks, lists, headings, and code blocks](../../assets/screenshots/jade-rich-input-slash.png)
 
@@ -17,9 +19,13 @@ Type **`/`** in Rich Input for structured blocks: to-do, bullet/numbered lists, 
 | Send (with newline) | `⌘↩` when panel focused |
 | Send (no newline) | `⌘⇧↩` when panel focused |
 
-Open Rich Input from the command palette or shortcuts — not from extra title-bar toggles. Supports image attachments and draft persistence. Configure floating vs docked layout in **Settings → Editor**.
+Open Rich Input from the command palette or shortcuts — not from extra title-bar toggles. Supports image attachments and draft persistence. Markdown persists via **ProjectInspectorStore** per project. Configure floating vs docked layout in **Settings → Editor**.
 
-Rich Input is the preferred path for notes/tasks capture; legacy inspector notes/todo panels remain in shortcuts (`⌘⇧J`, `⌘⌥J`) but are de-emphasized in chrome.
+Legacy notes/todo shortcuts (`⌘⇧J`, `⌘⌥J`) open Rich Input in notes mode.
+
+## Project log (structured sessions)
+
+Palette workflow: **Set Up Project Log** → **Confirm Next Step** → work → **Complete Step**. Reads `todo.md` / `goals.md` / `.jade/journey.md`; writes Obsidian session logs. Confirming a step may prefill Rich Input. See [Project log](project-log.md).
 
 ## AI Assistant
 
@@ -31,9 +37,9 @@ Right-rail chat backed by **Ollama** using URL and model from **Settings → Com
 
 **Settings → AI Assistant** — commit message / PR generation options and assistant behavior.
 
-When built with `MUXY_BUNDLE_MOLTIS=1`, an optional bundled Moltis gateway appears in settings (dev-only); terminal PTYs stay independent from agent exec.
+Moltis gateway is **dev-only** and frozen — see [Platform freeze](../developer/platform-freeze.md).
 
-Only one primary right-rail panel is visible at a time: Snippets, AI, or legacy inspector panels.
+Only one primary right-rail panel is visible at a time: Snippets or AI.
 
 ## Snippets
 
