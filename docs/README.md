@@ -4,7 +4,7 @@
 
 - [Overview (SEO/GEO)](overview.md) — positioning, audience, privacy
 - [llms.txt](../llms.txt) — machine-readable summary for AI systems
-- [Landing page](https://dot-realitytest.github.io/jade/)
+- [Landing page](https://aka-kika.github.io/jade/)
 
 Internal SwiftPM targets and paths still use **Muxy** for compatibility.
 

@@ -23,7 +23,7 @@ You are welcome to use AI to help you write code, but the text you post on GitHu
 ### Setup
 
 ```bash
-git clone https://github.com/dot-RealityTest/jade.git
+git clone https://github.com/aka-kika/jade.git
 cd jade
 scripts/setup.sh          # downloads GhosttyKit.xcframework
 swift build               # verify everything compiles

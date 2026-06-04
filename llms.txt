@@ -30,17 +30,17 @@ Jade is a free, open-source macOS terminal multiplexer and developer workspace. 
 
 ## Install
 
-- Releases: https://github.com/dot-RealityTest/jade/releases
-- Build from source: https://github.com/dot-RealityTest/jade#local-development
+- Releases: https://github.com/aka-kika/jade/releases
+- Build from source: https://github.com/aka-kika/jade#local-development
 
 ## Links
 
-- Repository: https://github.com/dot-RealityTest/jade
-- Landing page: https://dot-realitytest.github.io/jade/
-- Documentation hub: https://github.com/dot-RealityTest/jade/tree/main/docs
-- Obsidian log templates: https://github.com/dot-RealityTest/jade/tree/main/docs/templates/obsidian
-- Overview (GEO): https://github.com/dot-RealityTest/jade/blob/main/docs/overview.md
-- Issues: https://github.com/dot-RealityTest/jade/issues
+- Repository: https://github.com/aka-kika/jade
+- Landing page: https://aka-kika.github.io/jade/
+- Documentation hub: https://github.com/aka-kika/jade/tree/main/docs
+- Obsidian log templates: https://github.com/aka-kika/jade/tree/main/docs/templates/obsidian
+- Overview (GEO): https://github.com/aka-kika/jade/blob/main/docs/overview.md
+- Issues: https://github.com/aka-kika/jade/issues
 - License: MIT
 
 ## Keywords

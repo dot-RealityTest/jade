@@ -1,7 +1,7 @@
 import Foundation
 
 struct ObsidianMCPSettings: Codable, Equatable {
-    static let repositoryURL = "https://github.com/dot-RealityTest/obsidian-codex-mcp"
+    static let repositoryURL = "https://github.com/aka-kika/obsidian-codex-mcp"
     static let defaultInboxFolder = "Jade/Inbox"
 
     var isEnabled: Bool

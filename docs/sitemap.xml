@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://dot-realitytest.github.io/jade/</loc>
+    <loc>https://aka-kika.github.io/jade/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://github.com/dot-RealityTest/jade</loc>
+    <loc>https://github.com/aka-kika/jade</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://github.com/dot-RealityTest/jade/blob/main/docs/overview.md</loc>
+    <loc>https://github.com/aka-kika/jade/blob/main/docs/overview.md</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://github.com/dot-RealityTest/jade/blob/main/llms.txt</loc>
+    <loc>https://github.com/aka-kika/jade/blob/main/llms.txt</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://github.com/dot-RealityTest/jade/tree/main/docs</loc>
+    <loc>https://github.com/aka-kika/jade/tree/main/docs</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://github.com/dot-RealityTest/jade/blob/main/docs/templates/obsidian/README.md</loc>
+    <loc>https://github.com/aka-kika/jade/blob/main/docs/templates/obsidian/README.md</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

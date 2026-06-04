@@ -6,12 +6,12 @@
 
 <p align="center">Native macOS terminal workspace for project-based development — tabs, splits, Git, command palette, local AI, and Obsidian capture — built with SwiftUI and <a href="https://github.com/ghostty-org/ghostty">libghostty</a>.</p>
 
-<p align="center"><a href="https://dot-realitytest.github.io/jade/">Website</a> · <a href="docs/overview.md">Overview</a> · <a href="llms.txt">llms.txt</a> · <a href="docs/README.md">Docs</a></p>
+<p align="center"><a href="https://aka-kika.github.io/jade/">Website</a> · <a href="docs/overview.md">Overview</a> · <a href="llms.txt">llms.txt</a> · <a href="docs/README.md">Docs</a></p>
 
 <div align="center">
-  <img src="https://img.shields.io/github/v/release/dot-RealityTest/jade" />
-  <img src="https://img.shields.io/github/license/dot-RealityTest/jade" />
-  <img src="https://img.shields.io/github/commit-activity/m/dot-RealityTest/jade" />
+  <img src="https://img.shields.io/github/v/release/aka-kika/jade" />
+  <img src="https://img.shields.io/github/license/aka-kika/jade" />
+  <img src="https://img.shields.io/github/commit-activity/m/aka-kika/jade" />
 </div>
 
 ---
@@ -135,7 +135,7 @@ Full documentation: [docs/README.md](docs/README.md) — command palette, Obsidi
 A native macOS terminal workspace that organizes shells by project — tabs, splits, Git worktrees, command palette, local Ollama AI, and optional Obsidian capture. Not a cloud IDE; everything runs on your Mac.
 
 **Is Jade free and open source?**  
-Yes. MIT license. Download from [Releases](https://github.com/dot-RealityTest/jade/releases) or build from source.
+Yes. MIT license. Download from [Releases](https://github.com/aka-kika/jade/releases) or build from source.
 
 **What platforms does Jade support?**  
 macOS 14+ only. No iOS or Android app under the Jade name.
@@ -156,7 +156,7 @@ See [llms.txt](llms.txt) and [docs/overview.md](docs/overview.md).
 
 ## Install
 
-Download from [Releases](https://github.com/dot-RealityTest/jade/releases), or build locally:
+Download from [Releases](https://github.com/aka-kika/jade/releases), or build locally:
 
 ```bash
 scripts/setup.sh          # downloads GhosttyKit.xcframework
@@ -186,7 +186,7 @@ Jade builds on open-source foundations:
 
 Feedback, bug reports, ideas, and PRs welcome.
 
-- **Bug or missing feature?** [Open an issue](https://github.com/dot-RealityTest/jade/issues/new/choose)
+- **Bug or missing feature?** [Open an issue](https://github.com/aka-kika/jade/issues/new/choose)
 - **Want to contribute?** See [CONTRIBUTING.md](CONTRIBUTING.md) — fork, branch from `main`, run `scripts/checks.sh --fix --fast`, open a PR
 
 ## License

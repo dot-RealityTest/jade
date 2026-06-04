@@ -123,7 +123,7 @@ The xcframework is built via GitHub Actions on the [muxy-app/ghostty](https://gi
 - Right-rail panels use `SidePanelPolicy` mutual exclusion (Snippets, AI, Notes/Todo inspector — one primary panel at a time); notes/tasks UX prefers Rich Input over chrome or palette toggles.
 - MCP integrations are user-configured in Settings (Obsidian vault path, Python, server script); study open-source patterns only (Warp AGPL — no code copy).
 - Per-project log scaffold lives in `.jade/` (`journey.md`, `rules.md`, log folders) plus optional project-root `goals.md`, `todo.md`, `project-map.md` created only when missing; `JadeProjectContextReader` parses structured context from those files.
-- Git: `origin` → `muxy-app/muxy` (do not push unless asked); `personal` → **public** [dot-RealityTest/jade](https://github.com/dot-RealityTest/jade) — `git push personal main` when the user asks (not `origin`).
+- Git: `origin` → `muxy-app/muxy` (do not push unless asked); `personal` → **public** [aka-kika/jade](https://github.com/aka-kika/jade) — `git push personal main` when the user asks (not `origin`).
 - Snippet storage: general `snippets.json`, per-project `project-snippets/{projectID}.json`, remote under `remote-spaces/{slug}/snippets.json`; active scope mode in UserDefaults (`muxy.general.snippetsScopeMode`).
 - Continual learning updates `AGENTS.md` / `CLAUDE.md` / `.cursor/hooks/state/continual-learning-index.json` only (never plugin-cache global index); macOS verify via `scripts/checks.sh --fix --fast` when full checks fail on missing upstream `MuxyMobile` files; user docs hub `docs/README.md`.
 - **Jade is macOS-only** — no iOS/Android app under Jade branding; this repo has no `MuxyMobile` target; optional WebSocket remote server remains for third-party clients.

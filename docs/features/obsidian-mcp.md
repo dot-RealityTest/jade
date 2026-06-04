@@ -1,6 +1,6 @@
 # Obsidian MCP
 
-Jade talks to your Obsidian vault through a local MCP server ([obsidian-codex-mcp](https://github.com/dot-RealityTest/obsidian-codex-mcp) or compatible). Capture snippets, search notes, and write **project session logs** without leaving the terminal workspace.
+Jade talks to your Obsidian vault through a local MCP server ([obsidian-codex-mcp](https://github.com/aka-kika/obsidian-codex-mcp) or compatible). Capture snippets, search notes, and write **project session logs** without leaving the terminal workspace.
 
 ## Setup
 
