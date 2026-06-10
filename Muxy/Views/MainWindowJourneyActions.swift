@@ -19,23 +19,27 @@ enum MainWindowJourneyActions {
         "# \(proposal.title)\n\n\(proposal.why)\n"
     }
 
+    struct SessionLogRequest {
+        let outcome: JourneySessionOutcome
+        let proposal: JourneyStepProposal
+        let project: Project
+        let worktreePath: String
+        let overrideBlocker: Bool
+        let settings: ObsidianMCPSettings
+    }
+
     static func logSession(
-        outcome: JourneySessionOutcome,
-        proposal: JourneyStepProposal,
-        project: Project,
-        worktreePath: String,
-        overrideBlocker: Bool,
-        settings: ObsidianMCPSettings,
+        _ request: SessionLogRequest,
         onComplete: @escaping @MainActor (Result<String, Error>, String?) -> Void
     ) {
         Task {
             let result = await ObsidianJourneyLogService.logSession(
-                outcome: outcome,
-                proposal: proposal,
-                projectName: project.name,
-                projectPath: worktreePath,
-                overriddenBlocker: overrideBlocker,
-                settings: settings
+                outcome: request.outcome,
+                proposal: request.proposal,
+                projectName: request.project.name,
+                projectPath: request.worktreePath,
+                overriddenBlocker: request.overrideBlocker,
+                settings: request.settings
             )
             await MainActor.run {
                 switch result {

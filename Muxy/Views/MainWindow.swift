@@ -1215,12 +1215,14 @@ struct MainWindow: View {
     ) {
         let path = activeWorktreePath(for: project)
         MainWindowJourneyActions.logSession(
-            outcome: outcome,
-            proposal: proposal,
-            project: project,
-            worktreePath: path,
-            overrideBlocker: overrideBlocker,
-            settings: ObsidianMCPSettingsStore.shared.snapshot
+            MainWindowJourneyActions.SessionLogRequest(
+                outcome: outcome,
+                proposal: proposal,
+                project: project,
+                worktreePath: path,
+                overrideBlocker: overrideBlocker,
+                settings: ObsidianMCPSettingsStore.shared.snapshot
+            )
         ) { result, _ in
             switch result {
             case let .success(notePath):

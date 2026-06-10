@@ -324,7 +324,7 @@ struct TerminalBridge: NSViewRepresentable {
     }
 
     private func configureSearchCallbacks(_ view: GhosttyTerminalNSView) {
-        view.onSearchStart = { [weak state] needle in
+        view.onSearchStart = { [weak state, weak view] needle in
             guard let state else { return }
             let searchState = state.searchState
             if let needle, !needle.isEmpty {
@@ -332,7 +332,7 @@ struct TerminalBridge: NSViewRepresentable {
             }
             searchState.isVisible = true
             searchState.focusVersion += 1
-            searchState.startPublishing { [weak view] query in
+            searchState.startPublishing { query in
                 view?.sendSearchQuery(query)
             }
             if !searchState.needle.isEmpty {

@@ -81,13 +81,16 @@ struct TextSearchServiceTests {
         defer { try? FileManager.default.removeItem(at: directory) }
 
         let coordinator = SearchCoordinator()
-        async let first = TextSearchService.search(
-            query: "foo123bar", in: directory.path, coordinator: coordinator
-        )
-        async let second = TextSearchService.search(
+        let first = Task {
+            await TextSearchService.search(
+                query: "foo123bar", in: directory.path, coordinator: coordinator
+            )
+        }
+        try await Task.sleep(for: .milliseconds(50))
+        let secondResults = await TextSearchService.search(
             query: "안녕", in: directory.path, coordinator: coordinator
         )
-        let (firstResults, secondResults) = await (first, second)
+        let firstResults = await first.value
 
         #expect(secondResults.contains { $0.lineText == "안녕하세요" })
         #expect(firstResults.isEmpty || firstResults.contains { $0.lineText == "foo123bar" })

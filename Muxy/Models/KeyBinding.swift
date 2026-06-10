@@ -401,7 +401,7 @@ struct KeyBinding: Codable, Identifiable {
         Self(action: .toggleMaximizePane, combo: KeyCombo(key: KeyCombo.returnKey, command: true, option: true)),
         Self(action: .toggleVoiceRecording, combo: KeyCombo(key: "i", command: true, shift: true)),
         Self(action: .sendToObsidian, combo: KeyCombo(key: "o", command: true, control: true)),
-        Self(action: .toggleNotificationPanel, combo: KeyCombo(key: "i", command: true, shift: true)),
+        Self(action: .toggleNotificationPanel, combo: KeyCombo(key: "n", command: true, shift: true)),
         Self(action: .jumpToLatestUnread, combo: KeyCombo(key: "u", command: true, shift: true)),
     ]
 }
