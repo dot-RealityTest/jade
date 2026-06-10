@@ -51,6 +51,17 @@ struct SnippetScope: Equatable {
         )
     }
 
+    private static let remotePrefix = "remote-"
+
+    var isRemote: Bool {
+        id.hasPrefix(Self.remotePrefix)
+    }
+
+    var remoteSpaceID: UUID? {
+        guard isRemote else { return nil }
+        return UUID(uuidString: String(id.dropFirst(Self.remotePrefix.count)))
+    }
+
     private static let sharedStarterSnippets: [Snippet] = [
         Snippet(
             name: "Project Status",

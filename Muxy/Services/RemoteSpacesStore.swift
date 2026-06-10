@@ -55,6 +55,10 @@ final class RemoteSpacesStore {
         }
     }
 
+    func space(id: UUID) -> RemoteSpace? {
+        spaces.first { $0.id == id }
+    }
+
     func space(forProjectPath path: String) -> RemoteSpace? {
         let standardizedPath = URL(fileURLWithPath: path).standardizedFileURL.path
         return spaces.first {

@@ -129,6 +129,7 @@ struct SnippetsPanel: View {
             LazyVStack(spacing: 0) {
                 ForEach(snippets) { snippet in
                     SnippetRow(
+                        scope: scope,
                         snippet: snippet,
                         onRunVariables: { mode = .run(snippet) },
                         onEdit: { mode = .edit(snippet) },
@@ -145,12 +146,12 @@ struct SnippetsPanel: View {
 }
 
 private struct SnippetRow: View {
+    let scope: SnippetScope
     let snippet: Snippet
     let onRunVariables: () -> Void
     let onEdit: () -> Void
     let onDelete: () -> Void
     @Environment(AppState.self) private var appState
-    @Environment(ProjectStore.self) private var projectStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -247,34 +248,12 @@ private struct SnippetRow: View {
             onRunVariables()
             return
         }
-        guard let projectID = appState.activeProjectID else {
-            ToastState.shared.show("Select a project first")
-            return
-        }
-        appState.dispatch(.createCommandTab(
-            projectID: projectID,
-            areaID: nil,
-            name: runTitle(),
-            command: runCommand(snippet.trimmedCommand)
-        ))
-    }
-
-    private func runTitle() -> String {
-        guard let space = activeRemoteSpace() else { return snippet.displayName }
-        return "\(space.displayName) · \(snippet.displayName)"
-    }
-
-    private func runCommand(_ command: String) -> String {
-        guard let space = activeRemoteSpace()
-        else { return command }
-        return RemoteCommandBuilder.command(command, for: space)
-    }
-
-    private func activeRemoteSpace() -> RemoteSpace? {
-        guard let projectID = appState.activeProjectID,
-              let project = projectStore.projects.first(where: { $0.id == projectID })
-        else { return nil }
-        return RemoteSpacesStore.shared.space(forProjectPath: project.path)
+        SnippetRunner.run(
+            scope: scope,
+            command: snippet.trimmedCommand,
+            title: snippet.displayName,
+            appState: appState
+        )
     }
 
     private func copyCommand() {
@@ -456,7 +435,6 @@ private struct SnippetRunnerView: View {
     let snippet: Snippet
     let onClose: () -> Void
     @Environment(AppState.self) private var appState
-    @Environment(ProjectStore.self) private var projectStore
     @State private var values: [String: String]
 
     init(scope: SnippetScope, snippet: Snippet, onClose: @escaping () -> Void) {
@@ -562,35 +540,13 @@ private struct SnippetRunnerView: View {
     }
 
     private func run() {
-        guard let projectID = appState.activeProjectID else {
-            ToastState.shared.show("Select a project first")
-            return
-        }
-        appState.dispatch(.createCommandTab(
-            projectID: projectID,
-            areaID: nil,
-            name: runTitle(),
-            command: runCommand(resolvedCommand)
-        ))
+        SnippetRunner.run(
+            scope: scope,
+            command: resolvedCommand,
+            title: snippet.displayName,
+            appState: appState
+        )
         onClose()
-    }
-
-    private func runTitle() -> String {
-        guard let space = activeRemoteSpace() else { return snippet.displayName }
-        return "\(space.displayName) · \(snippet.displayName)"
-    }
-
-    private func runCommand(_ command: String) -> String {
-        guard let space = activeRemoteSpace()
-        else { return command }
-        return RemoteCommandBuilder.command(command, for: space)
-    }
-
-    private func activeRemoteSpace() -> RemoteSpace? {
-        guard let projectID = appState.activeProjectID,
-              let project = projectStore.projects.first(where: { $0.id == projectID })
-        else { return nil }
-        return RemoteSpacesStore.shared.space(forProjectPath: project.path)
     }
 
     private func valueBinding(for variable: String) -> Binding<String> {

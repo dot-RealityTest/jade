@@ -1385,21 +1385,12 @@ struct MainWindow: View {
     private func runSnippetFromPalette(_ snippetID: UUID) {
         SnippetsStore.shared.selectScope(activeSnippetScope)
         guard let snippet = SnippetsStore.shared.snippets.first(where: { $0.id == snippetID }) else { return }
-        guard let projectID = appState.activeProjectID else {
-            ToastState.shared.show("Select a project first")
-            return
-        }
-        appState.dispatch(.createCommandTab(
-            projectID: projectID,
-            areaID: nil,
-            name: commandPaletteSnippetTitle(snippet, remoteSpace: activeRemoteSpace),
-            command: activeRemoteSpace.map { RemoteCommandBuilder.command(snippet.trimmedCommand, for: $0) } ?? snippet.trimmedCommand
-        ))
-    }
-
-    private func commandPaletteSnippetTitle(_ snippet: Snippet, remoteSpace: RemoteSpace?) -> String {
-        guard let remoteSpace else { return snippet.displayName }
-        return "\(remoteSpace.displayName) · \(snippet.displayName)"
+        SnippetRunner.run(
+            scope: activeSnippetScope,
+            command: snippet.trimmedCommand,
+            title: snippet.displayName,
+            appState: appState
+        )
     }
 
     private func runNaturalCommandPlan(_ plan: NaturalCommandPlan) {
