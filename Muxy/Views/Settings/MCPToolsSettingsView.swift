@@ -12,10 +12,68 @@ struct MCPToolsSettingsView: View {
     var body: some View {
         SettingsContainer {
             SettingsSection(
+                "Direct Vault Capture",
+                footer: """
+                Send to Obsidian writes markdown directly into your vault when a vault folder is set. \
+                No Python server is required for capture. MCP below is optional for search and palette tools.
+                """,
+                showsDivider: true
+            ) {
+                configurablePathRow(
+                    label: "Vault Path",
+                    path: binding(\.vaultPath),
+                    chooseTitle: "Select Obsidian Vault",
+                    canChooseFiles: false
+                )
+
+                if let vaultWarning = ObsidianVaultPathValidator.validationMessage(for: store.vaultPath) {
+                    validationRow(vaultWarning)
+                }
+
+                SettingsToggleRow(label: "Prefer Direct Vault Write", isOn: binding(\.preferDirectVaultWrite))
+
+                SettingsRow("Default Capture Note") {
+                    TextField("Jade/Inbox/capture.md", text: binding(\.defaultCaptureNotePath))
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: SettingsMetrics.footnoteFontSize, design: .monospaced))
+                        .settingsControlFrame()
+                }
+
+                SettingsRow("Capture Write Mode") {
+                    Picker("", selection: binding(\.captureWriteMode)) {
+                        ForEach(ObsidianCaptureWriteMode.allCases) { mode in
+                            Text(mode.displayName).tag(mode)
+                        }
+                    }
+                    .labelsHidden()
+                    .settingsControlFrame(alignment: .trailing)
+                }
+
+                SettingsToggleRow(label: "Read Only", isOn: binding(\.readOnly))
+
+                SettingsRow("Connection") {
+                    HStack(spacing: 8) {
+                        Button(isTestingConnection ? "Testing…" : "Test Vault") {
+                            testConnection()
+                        }
+                        .disabled(isTestingConnection || !store.snapshot.isVaultConfigured)
+
+                        if let testStatusMessage {
+                            Text(testStatusMessage)
+                                .font(.system(size: SettingsMetrics.footnoteFontSize))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                                .frame(maxWidth: 220, alignment: .leading)
+                        }
+                    }
+                }
+            }
+
+            SettingsSection(
                 "Obsidian MCP",
                 footer: """
-                Uses obsidian-codex-mcp over stdio. Install the server, then point Jade at your vault, Python, and server.py. \
-                Send to Obsidian captures selection, rich input, or clipboard text into your inbox folder.
+                Optional stdio server for command-palette search, tags, and tree tools. \
+                Install obsidian-codex-mcp, then point Jade at Python and server.py.
                 """,
                 showsDivider: true
             ) {
@@ -26,17 +84,6 @@ struct MCPToolsSettingsView: View {
                         Link("obsidian-codex-mcp", destination: repositoryURL)
                             .font(.system(size: SettingsMetrics.footnoteFontSize))
                     }
-                }
-
-                configurablePathRow(
-                    label: "Vault Path",
-                    path: binding(\.vaultPath),
-                    chooseTitle: "Select Obsidian Vault",
-                    canChooseFiles: false
-                )
-
-                if let vaultWarning = ObsidianVaultPathValidator.validationMessage(for: store.vaultPath) {
-                    validationRow(vaultWarning)
                 }
 
                 configurablePathRow(
@@ -65,23 +112,14 @@ struct MCPToolsSettingsView: View {
                         .settingsControlFrame()
                 }
 
-                SettingsToggleRow(label: "Read Only", isOn: binding(\.readOnly))
                 SettingsToggleRow(label: "Backup on Write", isOn: binding(\.backupOnWrite))
 
-                SettingsRow("Connection") {
+                SettingsRow("MCP Connection") {
                     HStack(spacing: 8) {
                         Button(isTestingConnection ? "Testing…" : "Test MCP") {
-                            testConnection()
+                            testMCPConnection()
                         }
                         .disabled(isTestingConnection || !store.snapshot.isServerConfigured)
-
-                        if let testStatusMessage {
-                            Text(testStatusMessage)
-                                .font(.system(size: SettingsMetrics.footnoteFontSize))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(2)
-                                .frame(maxWidth: 220, alignment: .leading)
-                        }
                     }
                 }
             }
@@ -195,7 +233,30 @@ struct MCPToolsSettingsView: View {
                 isTestingConnection = false
                 switch result {
                 case let .success(count):
-                    testStatusMessage = "Connected. \(count) notes in inbox folder."
+                    if store.snapshot.canSendViaDirectVault {
+                        testStatusMessage = "Vault ready. \(count) notes in inbox folder."
+                    } else {
+                        testStatusMessage = "Connected. \(count) notes in inbox folder."
+                    }
+                case let .failure(error):
+                    testStatusMessage = error.localizedDescription
+                }
+            }
+        }
+    }
+
+    func testMCPConnection() {
+        isTestingConnection = true
+        testStatusMessage = nil
+        Task {
+            var settings = store.snapshot
+            settings.preferDirectVaultWrite = false
+            let result = await ObsidianSendService.testConnection(settings: settings)
+            await MainActor.run {
+                isTestingConnection = false
+                switch result {
+                case let .success(count):
+                    testStatusMessage = "MCP connected. \(count) notes in inbox folder."
                 case let .failure(error):
                     testStatusMessage = error.localizedDescription
                 }

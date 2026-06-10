@@ -14,6 +14,9 @@ final class ObsidianMCPSettingsStore {
         static let backupOnWrite = "mcp.obsidian.backupOnWrite"
         static let inboxFolder = "mcp.obsidian.inboxFolder"
         static let defaultTags = "mcp.obsidian.defaultTags"
+        static let preferDirectVaultWrite = "mcp.obsidian.preferDirectVaultWrite"
+        static let defaultCaptureNotePath = "mcp.obsidian.defaultCaptureNotePath"
+        static let captureWriteMode = "mcp.obsidian.captureWriteMode"
     }
 
     var isEnabled: Bool {
@@ -67,6 +70,34 @@ final class ObsidianMCPSettingsStore {
         set { UserDefaults.standard.set(newValue, forKey: Key.defaultTags) }
     }
 
+    var preferDirectVaultWrite: Bool {
+        get { UserDefaults.standard.bool(forKey: Key.preferDirectVaultWrite, fallback: true) }
+        set { UserDefaults.standard.set(newValue, forKey: Key.preferDirectVaultWrite) }
+    }
+
+    var defaultCaptureNotePath: String {
+        get {
+            UserDefaults.standard.string(forKey: Key.defaultCaptureNotePath)
+                ?? ObsidianMCPSettings.defaultCaptureNotePath
+        }
+        set {
+            UserDefaults.standard.set(
+                ObsidianVaultWriter.normalizedRelativePath(newValue),
+                forKey: Key.defaultCaptureNotePath
+            )
+        }
+    }
+
+    var captureWriteMode: ObsidianCaptureWriteMode {
+        get {
+            guard let raw = UserDefaults.standard.string(forKey: Key.captureWriteMode),
+                  let mode = ObsidianCaptureWriteMode(rawValue: raw)
+            else { return .append }
+            return mode
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: Key.captureWriteMode) }
+    }
+
     var snapshot: ObsidianMCPSettings {
         ObsidianMCPSettings(
             isEnabled: isEnabled,
@@ -76,7 +107,10 @@ final class ObsidianMCPSettingsStore {
             readOnly: readOnly,
             backupOnWrite: backupOnWrite,
             inboxFolder: inboxFolder,
-            defaultTags: parsedDefaultTags
+            defaultTags: parsedDefaultTags,
+            preferDirectVaultWrite: preferDirectVaultWrite,
+            defaultCaptureNotePath: defaultCaptureNotePath,
+            captureWriteMode: captureWriteMode
         )
     }
 
@@ -96,5 +130,8 @@ final class ObsidianMCPSettingsStore {
         backupOnWrite = settings.backupOnWrite
         inboxFolder = settings.inboxFolder
         defaultTags = settings.defaultTags.joined(separator: ", ")
+        preferDirectVaultWrite = settings.preferDirectVaultWrite
+        defaultCaptureNotePath = settings.defaultCaptureNotePath
+        captureWriteMode = settings.captureWriteMode
     }
 }

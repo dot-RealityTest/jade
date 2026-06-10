@@ -79,7 +79,7 @@ enum JadeJourneyBootstrapService {
 
         ## Later
 
-        - [ ] 
+        - [ ]
         """
     }
 

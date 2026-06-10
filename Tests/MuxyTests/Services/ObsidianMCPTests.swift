@@ -29,6 +29,24 @@ struct ObsidianNotePathBuilderTests {
 
 @Suite("Obsidian MCP Settings")
 struct ObsidianMCPSettingsTests {
+    @Test("can send via direct vault without MCP server")
+    func canSendViaDirectVaultWithoutMCPServer() {
+        var settings = ObsidianMCPSettings.defaults
+        settings.vaultPath = "/tmp/vault"
+        settings.preferDirectVaultWrite = true
+        #expect(settings.canSendViaDirectVault == false)
+
+        try? FileManager.default.createDirectory(
+            atPath: settings.vaultPath,
+            withIntermediateDirectories: true
+        )
+        defer { try? FileManager.default.removeItem(atPath: settings.vaultPath) }
+
+        #expect(settings.canSendViaDirectVault)
+        #expect(settings.canSendCaptures)
+        #expect(settings.canSendNotes == false)
+    }
+
     @Test("can send requires writable configured server")
     func canSendRequiresWritableConfiguredServer() {
         var settings = ObsidianMCPSettings.defaults

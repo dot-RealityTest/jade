@@ -74,7 +74,7 @@ enum ObsidianMCPToolAction: String, CaseIterable, Identifiable {
         case .openSettings:
             true
         case .sendCapture:
-            settings.canSendNotes
+            settings.canSendCaptures
         default:
             settings.isEnabled && settings.isVaultConfigured && settings.isServerConfigured
         }

@@ -303,7 +303,10 @@ struct ObsidianProjectLogIndexTests {
             readOnly: false,
             backupOnWrite: false,
             inboxFolder: "Jade/Inbox",
-            defaultTags: ["jade"]
+            defaultTags: ["jade"],
+            preferDirectVaultWrite: true,
+            defaultCaptureNotePath: ObsidianMCPSettings.defaultCaptureNotePath,
+            captureWriteMode: .append
         )
 
         #expect(ObsidianProjectLogIndex.exists(projectName: "Demo", settings: settings))

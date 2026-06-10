@@ -75,24 +75,15 @@ struct CapturePathIntegrationTests {
 struct CapturePathLiveObsidianTests {
     private static var liveSettings: ObsidianMCPSettings? {
         guard ProcessInfo.processInfo.environment["JADE_DOGFOOD_OBSIDIAN"] == "1" else { return nil }
-        let vault = ProcessInfo.processInfo.environment["OBSIDIAN_VAULT_PATH"]
-            ?? "/Users/kika_hub/_KIKA_MAIN/Kika's_Obsidian"
-        let python = ProcessInfo.processInfo.environment["OBSIDIAN_PYTHON_PATH"]
-            ?? "/Users/kika_hub/Projects/obsidian-mcp/.venv/bin/python"
-        let server = ProcessInfo.processInfo.environment["OBSIDIAN_SERVER_SCRIPT"]
-            ?? "/Users/kika_hub/Projects/obsidian-mcp/server.py"
-        guard FileManager.default.fileExists(atPath: vault),
-              FileManager.default.isExecutableFile(atPath: python),
-              FileManager.default.fileExists(atPath: server)
-        else { return nil }
+        guard let vault = ProcessInfo.processInfo.environment["OBSIDIAN_VAULT_PATH"],
+              FileManager.default.fileExists(atPath: vault) else { return nil }
 
         var settings = ObsidianMCPSettings.defaults
-        settings.isEnabled = true
         settings.vaultPath = vault
-        settings.pythonPath = python
-        settings.serverScriptPath = server
+        settings.preferDirectVaultWrite = true
         settings.readOnly = false
-        settings.inboxFolder = "Jade/Inbox"
+        settings.defaultCaptureNotePath = "Jade/Inbox/jade-dogfood-capture.md"
+        settings.captureWriteMode = .append
         return settings
     }
 

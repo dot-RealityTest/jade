@@ -24,10 +24,9 @@ section "Unit tests (capture path)"
 swift test --filter 'CapturePathIntegration|ProjectInspectorStore|Jade Journey|Obsidian Note Path|RichInputSubmitter' 2>&1 | tail -5
 pass "Capture-path unit tests"
 
-OBSIDIAN_PY="${OBSIDIAN_PYTHON_PATH:-/Users/kika_hub/Projects/obsidian-mcp/.venv/bin/python}"
-OBSIDIAN_SERVER="${OBSIDIAN_SERVER_SCRIPT:-/Users/kika_hub/Projects/obsidian-mcp/server.py}"
-DEFAULT_OBSIDIAN_VAULT="/Users/kika_hub/_KIKA_MAIN/Kika's_Obsidian"
-OBSIDIAN_VAULT="${OBSIDIAN_VAULT_PATH:-$DEFAULT_OBSIDIAN_VAULT}"
+OBSIDIAN_PY="${OBSIDIAN_PYTHON_PATH:-}"
+OBSIDIAN_SERVER="${OBSIDIAN_SERVER_SCRIPT:-}"
+OBSIDIAN_VAULT="${OBSIDIAN_VAULT_PATH:-}"
 
 if [[ -x "$OBSIDIAN_PY" && -f "$OBSIDIAN_SERVER" && -d "$OBSIDIAN_VAULT" ]]; then
   section "Live Obsidian MCP (vault write + verify)"
