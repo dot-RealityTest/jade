@@ -35,7 +35,7 @@ Jade combines a **Ghostty-powered terminal**, **project tabs and split panes**, 
 
 - Built-in editor, file tree, and VCS tab — quick peek; prefer external IDE for deep work.
 - AI usage panel — Claude Code, Codex CLI, Cursor CLI quotas only.
-- Remote WebSocket server and Moltis — maintenance-only; see [platform freeze](developer/platform-freeze.md).
+- Remote WebSocket server — maintenance-only; see [platform freeze](developer/platform-freeze.md).
 
 ## Platform
 

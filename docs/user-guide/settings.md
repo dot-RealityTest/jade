@@ -76,7 +76,7 @@ See [Integrations](../features/integrations.md) and [AI Usage](../features/ai-us
 
 ## AI Assistant
 
-Commit/PR generation and assistant options for the right-rail Ollama chat (`⌘⌃A`). Optional Moltis inspector settings when bundled at build time.
+Commit/PR generation and assistant options for the right-rail Ollama chat (`⌘⌃A`).
 
 ## Ghostty
 

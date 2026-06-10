@@ -75,10 +75,6 @@ struct AIAssistantSettingsView: View {
                     onReset: { prPrompt = "" }
                 )
             }
-
-            if MoltisAssistantSettings.isExperimentalAvailable {
-                MoltisInspectorSettingsView()
-            }
         }
     }
 

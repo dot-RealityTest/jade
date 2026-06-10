@@ -13,15 +13,9 @@ Until Jade ships a first-party client or documents a committed third-party consu
 
 **Rationale:** Full DTO layer and protocol catalog without a shipped mobile app in `dot-RealityTest/jade`. Upstream [Muxy](https://github.com/muxy-app/muxy) may continue mobile work separately.
 
-## Moltis agent gateway
+## Inspector AI
 
-| Item | Policy |
-| --- | --- |
-| `Muxy/Services/Moltis/*` | No new agent features, tools, or bundled resources |
-| `MUXY_BUNDLE_MOLTIS=1` | Dev-only opt-in at build time; omitted from default release builds |
-| Inspector AI | Production default remains **Ollama direct** |
-
-**Rationale:** Moltis duplicates Ollama-backed chat and adds process/gateway maintenance. Terminal PTYs must stay independent from agent exec.
+Inspector chat is **Ollama direct** only; terminal PTYs stay independent from agent exec.
 
 ## Remote SSH spaces
 

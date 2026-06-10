@@ -3,21 +3,12 @@
 import Foundation
 import PackageDescription
 
-let bundleMoltis = ProcessInfo.processInfo.environment["MUXY_BUNDLE_MOLTIS"] == "1"
-
-var muxyResources: [Resource] = [
+let muxyResources: [Resource] = [
     .process("Resources"),
     .copy("Resources/ghostty"),
     .copy("Resources/terminfo"),
     .copy("Resources/rg"),
 ]
-
-if bundleMoltis {
-    muxyResources.append(contentsOf: [
-        .copy("Resources/moltis"),
-        .copy("Resources/moltis-share"),
-    ])
-}
 
 let package = Package(
     name: "Muxy",
@@ -66,8 +57,6 @@ let package = Package(
                 "Resources/ghostty",
                 "Resources/terminfo",
                 "Resources/rg",
-                "Resources/moltis",
-                "Resources/moltis-share",
             ],
             resources: muxyResources,
             linkerSettings: [

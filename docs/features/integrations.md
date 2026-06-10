@@ -37,8 +37,6 @@ Right-rail chat backed by **Ollama** using URL and model from **Settings → Com
 
 **Settings → AI Assistant** — commit message / PR generation options and assistant behavior.
 
-Moltis gateway is **dev-only** and frozen — see [Platform freeze](../developer/platform-freeze.md).
-
 Only one primary right-rail panel is visible at a time: Snippets or AI.
 
 ## Snippets

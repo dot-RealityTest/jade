@@ -4,7 +4,7 @@
 
 - [Overview (SEO/GEO)](overview.md) — positioning, audience, privacy
 - [Product scope](developer/product-scope.md) — capture path, AI cap, what to delay
-- [Platform freeze](developer/platform-freeze.md) — remote server + Moltis policy
+- [Platform freeze](developer/platform-freeze.md) — remote server policy
 - [llms.txt](../llms.txt) — machine-readable summary for AI systems
 - [Landing page](https://dot-realitytest.github.io/jade/)
 
@@ -48,6 +48,7 @@ flowchart TB
 | [Project Log](features/project-log.md) | `.jade/`, todo/goals, session workflow |
 | [Obsidian MCP](features/obsidian-mcp.md) | Vault capture, session logs, project hub |
 | [Obsidian templates](templates/obsidian/README.md) | Vault note shapes (`project-log`, session, capture) |
+| [Planning templates](templates/README.md) | Decision records, feature specs, status, roadmap |
 | [Voice Recording](features/voice-recording.md) | On-device dictation |
 | [Notifications](features/notifications.md) | Hooks, socket API, attention UX, `jade notify` |
 | [Layouts](features/layouts/README.md) | Declarative `.muxy/layouts/*.yaml` workspaces |

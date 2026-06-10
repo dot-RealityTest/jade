@@ -41,20 +41,7 @@ final class AIAssistantChatService {
     }
 
     func isAvailable() async -> Bool {
-        let settings = MoltisAssistantSettings.shared
-        if settings.usesDirectOllamaOnly {
-            return await isOllamaAvailable()
-        }
-        if settings.usesMoltisFirst {
-            if MoltisChatBackend.isAvailable() {
-                return true
-            }
-            if settings.fallbackToOllama {
-                return await isOllamaAvailable()
-            }
-            return false
-        }
-        return await isOllamaAvailable()
+        await isOllamaAvailable()
     }
 
     func send(context: InspectorChatContext) {
@@ -90,27 +77,10 @@ final class AIAssistantChatService {
 
     func cancel(projectID: UUID) {
         store.cancel(projectID: projectID)
-        Task { await MoltisChatBackend.cancelActiveRun() }
     }
 
     private func streamResponse(context: InspectorChatContext) async throws {
-        let settings = MoltisAssistantSettings.shared
-        if settings.usesMoltisFirst {
-            do {
-                try await streamViaMoltis(context: context)
-                return
-            } catch {
-                guard settings.fallbackToOllama else { throw error }
-                logger.error("Moltis (Ollama) failed, falling back to direct Ollama: \(error.localizedDescription)")
-            }
-        }
         try await streamViaOllama(context: context)
-    }
-
-    private func streamViaMoltis(context: InspectorChatContext) async throws {
-        try await MoltisChatBackend.stream(context: context) { [self] content in
-            store.updateLastAssistantMessage(content: content, projectID: context.projectID)
-        }
     }
 
     private func streamViaOllama(context: InspectorChatContext) async throws {

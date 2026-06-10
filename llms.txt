@@ -27,7 +27,6 @@ Jade is a free, open-source macOS terminal multiplexer. Organize shells by proje
 - Built-in editor, file tree, VCS tab — quick peek; prefer external IDE
 - AI usage panel — Claude Code, Codex CLI, Cursor CLI only
 - WebSocket remote server — disabled by default; protocol frozen until a client ships
-- Moltis agent gateway — dev-only build flag; not default production path
 - Voice dictation, natural-language shell commands, remote SSH spaces
 
 ## Requirements

@@ -26,8 +26,7 @@ Legacy inspector notes/todo panels and `SidePanelPolicy` slots were removed; sho
 
 | Path | Status |
 | --- | --- |
-| **Ollama direct** (inspector chat, natural commands) | Default production path |
-| **Moltis gateway** | Dev-only (`MUXY_BUNDLE_MOLTIS=1`); frozen — see [platform-freeze.md](platform-freeze.md) |
+| **Ollama direct** (inspector chat, natural commands) | Single production path |
 | **AI usage panel** | Read-only quota for **Claude Code, Codex CLI, Cursor CLI** only |
 
 ## IDE surfaces (fallback, not wedge)
@@ -39,4 +38,4 @@ Built-in editor, file tree, and VCS tab remain for quick peeks and small Git act
 - [Integrations](../features/integrations.md) — Rich Input, AI, snippets
 - [Project log](../features/project-log.md) — session workflow
 - [Obsidian MCP](../features/obsidian-mcp.md) — vault layout
-- [Platform freeze](platform-freeze.md) — remote server and Moltis
+- [Platform freeze](platform-freeze.md) — remote server policy

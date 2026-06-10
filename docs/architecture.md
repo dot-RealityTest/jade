@@ -665,7 +665,7 @@ are filtered out so the sidebar stays focused on usage quotas.
 
 ## AI Assistant
 
-A chat-style AI assistant panel is available in the right sidebar (toggled via `⌃⌘A` or Command Palette). Inspector chat defaults to **Ollama direct** (`/api/chat` SSE). In **debug builds**, settings can route through the bundled **Moltis gateway** (WebSocket protocol v4) with Ollama as its LLM provider, falling back to direct Ollama when configured. Commit/PR generation still uses the separate agentic CLI path (`AIAssistantRunner`).
+A chat-style AI assistant panel is available in the right sidebar (toggled via `⌃⌘A` or Command Palette). Inspector chat uses **Ollama direct** (`/api/chat` SSE). Commit/PR generation uses the separate agentic CLI path (`AIAssistantRunner`).
 
 ### Architecture
 
@@ -675,18 +675,12 @@ AIAssistantPanel (SwiftUI)
      ├── AIAssistantStore (@Observable, @MainActor singleton)
      │     └── per-project [AIAssistantMessage] conversation history
      │
-     ├── MoltisProcessManager — spawns Contents/Resources/moltis gateway (debug-only routing)
-     ├── MoltisConfigGenerator — writes moltis.toml with `[providers.ollama]` from Jade Ollama settings
-     ├── MoltisGatewayClient — connect, subscribe, chat.send, chat.abort
-     │
      └── AIAssistantChatService
-           ├── Ask-only chat (agent_max_iterations = 0 when routed through Moltis)
-           ├── Default: Ollama /api/chat (SSE)
-           ├── Optional debug path: Moltis gateway with Ollama fallback
+           ├── Ollama /api/chat (SSE)
            └── Never attaches to Ghostty PTY or terminal cwd
 ```
 
-Messages are keyed by `projectID` with Moltis `sessionKey` `jade-<project-uuid>` when the gateway path is used. Context includes project path, worktree path, and open file. Moltis data lives under `~/Library/Application Support/Muxy/moltis/`. The Moltis binary and share assets are opt-in for local builds (`MUXY_BUNDLE_MOLTIS=1 swift build` after `scripts/setup-moltis.sh`) and are stripped from release app bundles. Run agent and isolated worktrees remain deferred.
+Messages are keyed by `projectID`. Context includes project path, worktree path, and open file. Run agent and isolated worktrees remain deferred.
 
 ### UI
 
