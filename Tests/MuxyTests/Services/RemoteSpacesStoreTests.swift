@@ -32,7 +32,8 @@ struct RemoteSpacesStoreTests {
             colorID: "blue",
             user: "dev",
             host: "203.0.113.20",
-            themeName: "Muxy Zen"
+            themeName: "Muxy Zen",
+            storageKey: "zen"
         )]
         #expect(store.spaces == expected)
         #expect(persistence.savedSpaces == expected)
@@ -72,7 +73,8 @@ struct RemoteSpacesStoreTests {
                 colorID: "green",
                 user: "dev",
                 host: "host",
-                themeName: "Muxy Zen"
+                themeName: "Muxy Zen",
+                storageKey: "zen"
             )
         ])
         #expect(updated == store.spaces[0])
@@ -92,6 +94,22 @@ struct RemoteSpacesStoreTests {
         let space = try #require(store.space(forProjectPath: zen.backingDirectory(create: false).path))
 
         #expect(space.displayName == "Zen")
+    }
+
+    @Test("renaming a space keeps its storage location stable")
+    func renameKeepsStorageStable() throws {
+        let store = RemoteSpacesStore(persistence: InMemoryRemoteSpacesPersistence())
+        let saved = try #require(store.add(RemoteSpace(name: "Alienware", command: "ssh host")))
+        let originalDirectory = saved.backingDirectory(create: false).path
+
+        let renamed = try #require(store.update(RemoteSpace(
+            id: saved.id,
+            name: "Alienware Linux",
+            command: "ssh host"
+        )))
+
+        #expect(renamed.storageKey == saved.storageKey)
+        #expect(renamed.backingDirectory(create: false).path == originalDirectory)
     }
 
     @Test("structured profile saves generated command fields")

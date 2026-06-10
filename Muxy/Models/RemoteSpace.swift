@@ -12,6 +12,7 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
     var jumpHost: String
     var startupCommands: [String]
     var themeName: String
+    var storageKey: String
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -25,6 +26,7 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
         case jumpHost
         case startupCommands
         case themeName
+        case storageKey
     }
 
     init(
@@ -38,7 +40,8 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
         identityFile: String = "",
         jumpHost: String = "",
         startupCommands: [String] = [],
-        themeName: String = ""
+        themeName: String = "",
+        storageKey: String = ""
     ) {
         self.id = id
         self.name = name
@@ -51,6 +54,7 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
         self.jumpHost = jumpHost
         self.startupCommands = startupCommands
         self.themeName = themeName
+        self.storageKey = storageKey
     }
 
     init(from decoder: any Decoder) throws {
@@ -66,6 +70,7 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
         jumpHost = try container.decodeIfPresent(String.self, forKey: .jumpHost) ?? ""
         startupCommands = try container.decodeIfPresent([String].self, forKey: .startupCommands) ?? []
         themeName = try container.decodeIfPresent(String.self, forKey: .themeName) ?? ""
+        storageKey = try container.decodeIfPresent(String.self, forKey: .storageKey) ?? ""
     }
 
     var trimmedName: String {
@@ -160,9 +165,21 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
         return slug.isEmpty ? id.uuidString.lowercased() : slug
     }
 
-    func backingDirectory(create: Bool = true) -> URL {
-        let root = MuxyFileStorage.appSupportDirectory()
+    var resolvedStorageKey: String {
+        storageKey.isEmpty ? storageSlug : storageKey
+    }
+
+    static var remoteSpacesRoot: URL {
+        MuxyFileStorage.appSupportDirectory()
             .appendingPathComponent("remote-spaces", isDirectory: true)
+    }
+
+    func stableStorageKey() -> String {
+        resolvedStorageKey
+    }
+
+    func backingDirectory(create: Bool = true) -> URL {
+        let root = Self.remoteSpacesRoot
         if create {
             try? FileManager.default.createDirectory(
                 at: root,
@@ -170,7 +187,7 @@ struct RemoteSpace: Codable, Equatable, Identifiable {
                 attributes: [.posixPermissions: FilePermissions.privateDirectory]
             )
         }
-        let directory = root.appendingPathComponent(storageSlug, isDirectory: true)
+        let directory = root.appendingPathComponent(resolvedStorageKey, isDirectory: true)
         if create {
             try? FileManager.default.createDirectory(
                 at: directory,

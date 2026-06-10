@@ -5,15 +5,24 @@ import Testing
 
 @Suite("SnippetScopeResolver")
 struct SnippetScopeResolverTests {
-    @Test("general mode always uses shared scope")
+    @Test("general mode uses shared scope for local projects")
     @MainActor
     func generalModeUsesSharedScope() {
         let project = Project(name: "Muxy", path: "/tmp/muxy")
-        let space = RemoteSpace(id: UUID(), name: "Zen", command: "ssh host")
 
-        let scope = SnippetScopeResolver.resolve(mode: .general, project: project, remoteSpace: space)
+        let scope = SnippetScopeResolver.resolve(mode: .general, project: project, remoteSpace: nil)
 
         #expect(scope == .shared)
+    }
+
+    @Test("remote space resolves to its own scope regardless of mode")
+    @MainActor
+    func remoteSpaceResolvesToRemoteScope() {
+        let project = Project(name: "Alien", path: "/tmp/alien")
+        let space = RemoteSpace(id: UUID(), name: "Alien", command: "ssh host")
+
+        #expect(SnippetScopeResolver.resolve(mode: .general, project: project, remoteSpace: space) == .remote(space))
+        #expect(SnippetScopeResolver.resolve(mode: .project, project: project, remoteSpace: space) == .remote(space))
     }
 
     @Test("project mode uses project scope for local projects")

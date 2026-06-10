@@ -34,10 +34,10 @@ enum SnippetScopeResolver {
         project: Project?,
         remoteSpace: RemoteSpace?
     ) -> SnippetScope {
-        guard mode == .project, let project else { return .shared }
         if let remoteSpace {
             return .remote(remoteSpace)
         }
+        guard mode == .project, let project else { return .shared }
         return .project(project)
     }
 
