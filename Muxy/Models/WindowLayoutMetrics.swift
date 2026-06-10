@@ -7,12 +7,12 @@ enum WindowLayoutMetrics {
     static let mainDefaultWidth: CGFloat = 1200
     static let mainDefaultHeight: CGFloat = 800
 
-    static let settingsMinWidth: CGFloat = 480
-    static let settingsIdealWidth: CGFloat = 640
-    static let settingsMaxWidth: CGFloat = 900
-    static let settingsMinHeight: CGFloat = 360
-    static let settingsIdealHeight: CGFloat = 480
-    static let settingsMaxHeight: CGFloat = 720
+    static let settingsMinWidth: CGFloat = 640
+    static let settingsIdealWidth: CGFloat = 760
+    static let settingsMaxWidth: CGFloat = 1100
+    static let settingsMinHeight: CGFloat = 460
+    static let settingsIdealHeight: CGFloat = 600
+    static let settingsMaxHeight: CGFloat = 900
 
     static let settingsSidebarMinWidth: CGFloat = 180
     static let settingsSidebarIdealWidth: CGFloat = 220

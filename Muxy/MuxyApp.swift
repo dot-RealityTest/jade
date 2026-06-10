@@ -162,8 +162,8 @@ struct MuxyApp: App {
         }
         .windowResizability(.contentMinSize)
         .defaultSize(
-            width: WindowLayoutMetrics.settingsMinWidth + WindowLayoutMetrics.settingsSidebarIdealWidth,
-            height: WindowLayoutMetrics.settingsMinHeight + 80
+            width: WindowLayoutMetrics.settingsIdealWidth + WindowLayoutMetrics.settingsSidebarIdealWidth,
+            height: WindowLayoutMetrics.settingsIdealHeight
         )
     }
 }
