@@ -6,7 +6,7 @@
 - [Product scope](developer/product-scope.md) — capture path, AI cap, what to delay
 - [Platform freeze](developer/platform-freeze.md) — remote server policy
 - [llms.txt](../llms.txt) — machine-readable summary for AI systems
-- [Landing page](https://dot-realitytest.github.io/jade/)
+- [Landing page](https://aka-kika.github.io/jade/)
 
 Internal SwiftPM targets and paths still use **Muxy** for compatibility.
 
