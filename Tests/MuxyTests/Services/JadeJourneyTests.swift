@@ -295,17 +295,10 @@ struct ObsidianProjectLogIndexTests {
         let hubFile = hubFolder.appendingPathComponent("project.md")
         try "# Demo log".write(to: hubFile, atomically: true, encoding: .utf8)
 
-        let settings = ObsidianMCPSettings(
-            isEnabled: true,
+        let settings = ObsidianCaptureSettings(
             vaultPath: vault.path,
-            pythonPath: "/usr/bin/python3",
-            serverScriptPath: "/tmp/server.py",
-            readOnly: false,
-            backupOnWrite: false,
             inboxFolder: "Jade/Inbox",
-            defaultTags: ["jade"],
-            preferDirectVaultWrite: true,
-            defaultCaptureNotePath: ObsidianMCPSettings.defaultCaptureNotePath,
+            defaultCaptureNotePath: ObsidianCaptureSettings.defaultCaptureNotePath,
             captureWriteMode: .append
         )
 

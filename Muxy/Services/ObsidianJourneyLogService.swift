@@ -7,13 +7,10 @@ enum ObsidianJourneyLogService {
         projectName: String,
         projectPath: String,
         overriddenBlocker: Bool = false,
-        settings: ObsidianMCPSettings
-    ) async -> Result<String, Error> {
-        guard settings.isEnabled else {
-            return .failure(MCPClientError.notConfigured("Enable Obsidian MCP in Settings"))
-        }
-        guard settings.canSendNotes else {
-            return .failure(MCPClientError.notConfigured("Configure vault, Python, and server.py in Settings"))
+        settings: ObsidianCaptureSettings
+    ) -> Result<String, Error> {
+        guard settings.canSendCaptures else {
+            return .failure(ObsidianCaptureError.notConfigured("Choose a logs folder in Settings first."))
         }
 
         let slug = ObsidianNotePathBuilder.slugify(projectName)
@@ -22,7 +19,7 @@ enum ObsidianJourneyLogService {
         let notePath = "Jade/Logs/\(slug)/sessions/\(timestamp)-\(stepSlug).md"
         let structured = JadeProjectContextReader.loadStructured(projectPath: projectPath)
 
-        if case let .failure(error) = await ObsidianProjectLogIndex.ensure(
+        if case let .failure(error) = ObsidianProjectLogIndex.ensure(
             projectName: projectName,
             projectPath: projectPath,
             settings: settings
@@ -43,29 +40,12 @@ enum ObsidianJourneyLogService {
         )
 
         do {
-            let configuration = MCPStdioSessionConfiguration(
-                pythonPath: settings.pythonPath,
-                serverScriptPath: settings.serverScriptPath,
-                environment: settings.serverEnvironment
+            let savedPath = try ObsidianVaultWriter.writeNote(
+                vaultPath: settings.vaultPath,
+                relativePath: notePath,
+                content: content,
+                append: false
             )
-            var tags = settings.defaultTags
-            tags.append("project-log")
-            tags.append("session-log")
-            tags.append(slug)
-            tags.append(outcome.rawValue)
-
-            let encodedArguments = try JSONSerialization.data(withJSONObject: [
-                "path": notePath,
-                "content": content,
-                "title": proposal.title,
-                "tags": tags,
-            ])
-            let response = try await MCPStdioSession.callTool(
-                configuration: configuration,
-                toolName: "create_note",
-                encodedArguments: encodedArguments
-            )
-            let savedPath = response["path"] as? String ?? notePath
             return .success(savedPath)
         } catch {
             return .failure(error)

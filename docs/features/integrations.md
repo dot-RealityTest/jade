@@ -97,6 +97,6 @@ Live token/cost panels for Claude Code, Codex, Cursor, Copilot, Amp, Factory, Ki
 ## Related
 
 - [Command Palette](../user-guide/command-palette.md)  
-- [Obsidian MCP](obsidian-mcp.md)  
+- [Markdown Logs](markdown-logs.md)  
 - [Project Log](project-log.md)  
 - [Notifications](notifications.md) — hooks and attention UX  

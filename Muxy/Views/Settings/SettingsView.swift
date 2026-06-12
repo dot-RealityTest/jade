@@ -37,16 +37,16 @@ struct SettingsView: View {
         )))
         .background(Color(nsColor: .windowBackgroundColor))
         .resetsSettingsFocusOnOutsideClick()
-        .onAppear(perform: consumeMCPToolsFocusRequest)
-        .onReceive(NotificationCenter.default.publisher(for: .focusMCPToolsSettings)) { _ in
-            page = .mcpTools
-            consumeMCPToolsFocusRequest()
+        .onAppear(perform: consumeLogSettingsFocusRequest)
+        .onReceive(NotificationCenter.default.publisher(for: .focusLogSettings)) { _ in
+            page = .logCapture
+            consumeLogSettingsFocusRequest()
         }
     }
 
-    private func consumeMCPToolsFocusRequest() {
-        guard SettingsFocusCoordinator.shared.consume(.mcpTools) else { return }
-        page = .mcpTools
+    private func consumeLogSettingsFocusRequest() {
+        guard SettingsFocusCoordinator.shared.consume(.logCapture) else { return }
+        page = .logCapture
     }
 
     private func settingsDetail(for page: SettingsPage) -> some View {
@@ -86,8 +86,8 @@ struct SettingsView: View {
             AIAssistantSettingsView()
         case .ghostty:
             GhosttyConfigSettingsView()
-        case .mcpTools:
-            MCPToolsSettingsView()
+        case .logCapture:
+            LogCaptureSettingsView()
         }
     }
 }
@@ -104,7 +104,7 @@ private enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
     case connections
     case aiAssistant
     case ghostty
-    case mcpTools
+    case logCapture
 
     var id: String { rawValue }
 
@@ -121,7 +121,7 @@ private enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .connections: "Connections"
         case .aiAssistant: "AI Assistant"
         case .ghostty: "Ghostty"
-        case .mcpTools: "MCP Tools"
+        case .logCapture: "Logs & Capture"
         }
     }
 
@@ -138,7 +138,7 @@ private enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .connections: "SSH spaces, pairing, usage"
         case .aiAssistant: "Commit and PR generation"
         case .ghostty: "Terminal emulator config"
-        case .mcpTools: "Obsidian and MCP servers"
+        case .logCapture: "Markdown session logs and captures"
         }
     }
 
@@ -155,7 +155,7 @@ private enum SettingsPage: String, CaseIterable, Identifiable, Hashable {
         case .connections: "link"
         case .aiAssistant: "sparkles"
         case .ghostty: "terminal"
-        case .mcpTools: "puzzlepiece.extension"
+        case .logCapture: "folder.badge.gearshape"
         }
     }
 }

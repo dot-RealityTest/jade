@@ -1,6 +1,6 @@
 # Command Palette
 
-The command palette is Jade's primary capture surface: search actions, files, snippets, MCP tools, and project-log steps without leaving the keyboard.
+The command palette is Jade's primary capture surface: search actions, files, snippets, Obsidian capture, and project-log steps without leaving the keyboard.
 
 **Open:** `⌘K` · **File → Command Palette**
 
@@ -15,7 +15,6 @@ Results are grouped. When a **remote space** tab is active, remote commands appe
 | Section | When it appears | Examples |
 | --- | --- | --- |
 | **App** | Always | New tab, Rich Input, project log, local dev commands |
-| **MCP Tools** | Obsidian MCP enabled and configured | Send to Obsidian, search vault, list tags |
 | **Remote Commands** | Active SSH remote-space tab | SSH session, apt upgrade, GPU tools |
 | **Remote Spaces** | You have configured spaces | Switch to another machine |
 | **Snippets** | Current snippet scope | Run saved shell snippets |
@@ -66,9 +65,9 @@ The Ollama model name comes from **Settings → Commands → Natural Commands** 
 
 When **Natural Commands** is enabled and your query looks like a multi-step or destructive shell request, the palette offers **Generate shell command**. Jade drafts a command for review before it runs in a tab. See [Integrations](../features/integrations.md).
 
-## MCP Tools section
+## Obsidian capture
 
-When Obsidian MCP is configured (**Settings → MCP Tools**), the palette lists vault actions: inbox capture, search, tags, folder tree, and settings. See [Obsidian MCP](../features/obsidian-mcp.md).
+When a logs folder is configured (**Settings → Logs & Capture**), the palette offers **Send to Obsidian** and **Open Log Settings**. See [Markdown Logs](../features/markdown-logs.md).
 
 ## Snippets section
 
@@ -85,5 +84,5 @@ Create snippets from the terminal: select text (auto-copied by default), right-c
 
 - [Keyboard Shortcuts](keyboard-shortcuts.md) — full default binding table
 - [Project Log](../features/project-log.md) — Set Up / Confirm / Complete flow
-- [Obsidian MCP](../features/obsidian-mcp.md) — vault capture and session logs
+- [Markdown Logs](../features/markdown-logs.md) — capture and session logs
 - [Voice Recording](../features/voice-recording.md) — on-device dictation

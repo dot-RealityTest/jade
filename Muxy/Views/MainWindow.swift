@@ -248,8 +248,7 @@ struct MainWindow: View {
             onToggleRichInputPreview: toggleRichInputPreview,
             onToggleVoiceRecording: { _ = openVoiceRecorder() },
             onSendToObsidian: sendToObsidian,
-            onRunObsidianMCPTool: performObsidianMCPTool,
-            onPromptObsidianSearch: promptObsidianSearch,
+            onOpenLogSettings: openLogSettings,
             onExplainSelection: handleExplainSelection,
             onApplyAIAssistantCode: handleApplyAIAssistantCode
         )
@@ -1099,8 +1098,8 @@ struct MainWindow: View {
             showLocalPorts = true
         case let .localCommand(action):
             runLocalCommandPaletteAction(action)
-        case let .obsidianMCPTool(action, query):
-            performObsidianMCPTool(action, query: query)
+        case let .obsidianCapture(action):
+            performObsidianCaptureAction(action)
         case .journeyInitialize:
             initializeJourney()
         case .journeyNextStep:
@@ -1221,7 +1220,7 @@ struct MainWindow: View {
                 project: project,
                 worktreePath: path,
                 overrideBlocker: overrideBlocker,
-                settings: ObsidianMCPSettingsStore.shared.snapshot
+                settings: ObsidianCaptureSettingsStore.shared.snapshot
             )
         ) { result, _ in
             switch result {
@@ -1237,73 +1236,18 @@ struct MainWindow: View {
         }
     }
 
-    private func performObsidianMCPTool(_ action: ObsidianMCPToolAction, query: String?) {
+    private func performObsidianCaptureAction(_ action: ObsidianCaptureAction) {
         switch action {
         case .sendCapture:
             sendToObsidian()
         case .openSettings:
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-            SettingsFocusCoordinator.shared.request(.mcpTools)
-        case .listInboxNotes:
-            runObsidianMCPTool(action) { settings in
-                ["folder": settings.inboxFolder]
-            }
-        case .searchNotes:
-            let trimmed = query?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            guard !trimmed.isEmpty else {
-                ToastState.shared.show("Type a search query in the command palette first")
-                return
-            }
-            runObsidianMCPTool(action) { _ in
-                ["query": trimmed]
-            }
-        case .getAllTags:
-            runObsidianMCPTool(action) { _ in [:] }
-        case .getFolderStructure:
-            runObsidianMCPTool(action) { _ in [:] }
+            openLogSettings()
         }
     }
 
-    private func promptObsidianSearch() {
-        let alert = NSAlert()
-        alert.messageText = "Search Obsidian Notes"
-        alert.informativeText = "Search titles, content, and tags in your vault."
-        alert.addButton(withTitle: "Search")
-        alert.addButton(withTitle: "Cancel")
-        let input = NSTextField(frame: NSRect(x: 0, y: 0, width: 320, height: 24))
-        input.placeholderString = "Search query"
-        alert.accessoryView = input
-        alert.window.initialFirstResponder = input
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
-        let trimmed = input.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            ToastState.shared.show("Enter a search query")
-            return
-        }
-        performObsidianMCPTool(.searchNotes, query: trimmed)
-    }
-
-    private func runObsidianMCPTool(
-        _ action: ObsidianMCPToolAction,
-        arguments: @escaping (ObsidianMCPSettings) -> [String: Any]
-    ) {
-        guard let toolName = action.toolName else { return }
-        let settings = ObsidianMCPSettingsStore.shared.snapshot
-        Task {
-            let result = await ObsidianMCPService.runTool(
-                toolName,
-                arguments: arguments(settings),
-                settings: settings
-            )
-            await MainActor.run {
-                switch result {
-                case let .success(response):
-                    ToastState.shared.show(ObsidianMCPService.summaryMessage(for: action, response: response))
-                case let .failure(error):
-                    ToastState.shared.show(error.localizedDescription)
-                }
-            }
-        }
+    private func openLogSettings() {
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        SettingsFocusCoordinator.shared.request(.logCapture)
     }
 
     private func performRemoteCommandPaletteAction(_ action: RemoteCommandPaletteAction) {
@@ -1468,12 +1412,6 @@ struct MainWindow: View {
     }
 
     private func sendToObsidian() {
-        Task {
-            await performSendToObsidian()
-        }
-    }
-
-    private func performSendToObsidian() async {
         guard let content = SendToObsidianContentCapture.capture(
             terminalPaneID: activeTerminalPane?.id,
             richInputText: activeRichInputState?.text,
@@ -1484,7 +1422,7 @@ struct MainWindow: View {
             return
         }
 
-        let result = await ObsidianSendService.send(
+        let result = ObsidianSendService.send(
             content: content,
             projectName: activeProject?.name,
             projectPath: activeProject?.path

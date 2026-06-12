@@ -73,15 +73,13 @@ struct CapturePathIntegrationTests {
 
 @Suite("Capture Path Live Obsidian")
 struct CapturePathLiveObsidianTests {
-    private static var liveSettings: ObsidianMCPSettings? {
+    private static var liveSettings: ObsidianCaptureSettings? {
         guard ProcessInfo.processInfo.environment["JADE_DOGFOOD_OBSIDIAN"] == "1" else { return nil }
         guard let vault = ProcessInfo.processInfo.environment["OBSIDIAN_VAULT_PATH"],
               FileManager.default.fileExists(atPath: vault) else { return nil }
 
-        var settings = ObsidianMCPSettings.defaults
+        var settings = ObsidianCaptureSettings.defaults
         settings.vaultPath = vault
-        settings.preferDirectVaultWrite = true
-        settings.readOnly = false
         settings.defaultCaptureNotePath = "Jade/Inbox/jade-dogfood-capture.md"
         settings.captureWriteMode = .append
         return settings

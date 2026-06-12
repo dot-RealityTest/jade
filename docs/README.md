@@ -27,7 +27,7 @@ flowchart TB
 | Page | What's in it |
 | --- | --- |
 | [Getting Started](user-guide/getting-started.md) | Install, first project, palette tour |
-| [Command Palette](user-guide/command-palette.md) | `⌘K` actions, dev commands, MCP, project log |
+| [Command Palette](user-guide/command-palette.md) | `⌘K` actions, dev commands, capture, project log |
 | [Keyboard Shortcuts](user-guide/keyboard-shortcuts.md) | Default bindings, all remappable |
 | [Settings](user-guide/settings.md) | Every settings tab explained |
 | [Troubleshooting](user-guide/troubleshooting.md) | Logs, common fixes, reset state |
@@ -46,7 +46,7 @@ flowchart TB
 | [Command Palette & dev tools](user-guide/command-palette.md) | Homebrew, Ollama, natural commands, local ports |
 | [Integrations](features/integrations.md) | Rich Input, AI assistant, snippets, home, remote spaces |
 | [Project Log](features/project-log.md) | `.jade/`, todo/goals, session workflow |
-| [Obsidian MCP](features/obsidian-mcp.md) | Vault capture, session logs, project hub |
+| [Markdown Logs](features/markdown-logs.md) | Folder capture, session logs, project hub |
 | [Obsidian templates](templates/obsidian/README.md) | Vault note shapes (`project-log`, session, capture) |
 | [Planning templates](templates/README.md) | Decision records, feature specs, status, roadmap |
 | [Voice Recording](features/voice-recording.md) | On-device dictation |

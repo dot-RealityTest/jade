@@ -33,13 +33,11 @@ struct CommandPaletteItemTests {
             item(title: "z", section: .file),
             item(title: "z", section: .snippet),
             item(title: "z", section: .remote),
-            item(title: "z", section: .mcp),
             item(title: "z", section: .app),
         ]
 
         #expect(CommandPaletteItem.filter(items, query: "").map(\.section) == [
             .app,
-            .mcp,
             .remote,
             .snippet,
             .file,

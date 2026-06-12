@@ -70,9 +70,9 @@ struct MuxyCommands: Commands {
             Divider()
 
             Button {
-                ObsidianMCPMenuTrigger.run(.openSettings)
+                NotificationCenter.default.post(name: .openLogSettings, object: nil)
             } label: {
-                Label("Obsidian MCP Settings...", systemImage: "puzzlepiece.extension")
+                Label("Log Settings...", systemImage: "folder.badge.gearshape")
             }
 
             Divider()

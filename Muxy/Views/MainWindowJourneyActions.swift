@@ -25,15 +25,15 @@ enum MainWindowJourneyActions {
         let project: Project
         let worktreePath: String
         let overrideBlocker: Bool
-        let settings: ObsidianMCPSettings
+        let settings: ObsidianCaptureSettings
     }
 
     static func logSession(
         _ request: SessionLogRequest,
         onComplete: @escaping @MainActor (Result<String, Error>, String?) -> Void
     ) {
-        Task {
-            let result = await ObsidianJourneyLogService.logSession(
+        Task { @MainActor in
+            let result = ObsidianJourneyLogService.logSession(
                 outcome: request.outcome,
                 proposal: request.proposal,
                 projectName: request.project.name,
@@ -41,14 +41,7 @@ enum MainWindowJourneyActions {
                 overriddenBlocker: request.overrideBlocker,
                 settings: request.settings
             )
-            await MainActor.run {
-                switch result {
-                case let .success(notePath):
-                    onComplete(.success(notePath), nil)
-                case let .failure(error):
-                    onComplete(.failure(error), nil)
-                }
-            }
+            onComplete(result, nil)
         }
     }
 }

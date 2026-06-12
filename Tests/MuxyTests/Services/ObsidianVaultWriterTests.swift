@@ -59,12 +59,11 @@ struct ObsidianVaultWriterTests {
         try FileManager.default.createDirectory(at: vault, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: vault) }
 
-        var settings = ObsidianMCPSettings.defaults
+        var settings = ObsidianCaptureSettings.defaults
         settings.vaultPath = vault.path
-        settings.preferDirectVaultWrite = true
         settings.defaultCaptureNotePath = "Jade/Inbox/capture.md"
         settings.captureWriteMode = .append
-        #expect(settings.canSendViaDirectVault)
+        #expect(settings.canSendCaptures)
         #expect(settings.canSendCaptures)
 
         let marker = "direct-vault-\(UUID().uuidString.prefix(8))"

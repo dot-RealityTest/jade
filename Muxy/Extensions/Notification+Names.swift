@@ -37,9 +37,8 @@ extension Notification.Name {
     static let richInputPreviewDidMutateWorkspace = Notification.Name("MuxyRichInputPreviewDidMutateWorkspace")
     static let toggleVoiceRecording = Notification.Name("MuxyToggleVoiceRecording")
     static let sendToObsidian = Notification.Name("MuxySendToObsidian")
-    static let focusMCPToolsSettings = Notification.Name("MuxyFocusMCPToolsSettings")
-    static let runObsidianMCPTool = Notification.Name("MuxyRunObsidianMCPTool")
-    static let promptObsidianSearch = Notification.Name("MuxyPromptObsidianSearch")
+    static let focusLogSettings = Notification.Name("MuxyFocusLogSettings")
+    static let openLogSettings = Notification.Name("MuxyOpenLogSettings")
     static let remoteSpacesDidChange = Notification.Name("MuxyRemoteSpacesDidChange")
     static let homeWorkspacePreferenceDidChange = Notification.Name("MuxyHomeWorkspacePreferenceDidChange")
 }

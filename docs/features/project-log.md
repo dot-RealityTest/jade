@@ -41,11 +41,11 @@ If **`.jade/rules.md`** disagrees with a step (for example “deploy to producti
 | 3 | Work | Terminal, Rich Input, AI, etc. |
 | 4 | **Complete Step** | Mark step done in repo markdown + Obsidian session log |
 
-On confirm, Jade can prefill **Rich Input** and open send mode. Completing a step updates local markdown and writes a structured note to Obsidian when MCP is configured.
+On confirm, Jade can prefill **Rich Input** and open send mode. Completing a step updates local markdown and writes a structured note into your logs folder when one is configured.
 
 ## Obsidian session logs
 
-Session notes are created via MCP **`create_note`** at:
+Session notes are written at:
 
 ```
 Jade/Logs/{project-slug}/sessions/{timestamp}-{step-slug}.md
@@ -64,13 +64,13 @@ Each note includes:
 - **Blockers** — when rules disagreed  
 - **Related** — link to the vault project hub  
 
-On first session or project capture, Jade ensures a vault hub at **`Jade/Logs/{project-slug}/project.md`** (see [Obsidian MCP](obsidian-mcp.md)).
+On first session or project capture, Jade ensures a vault hub at **`Jade/Logs/{project-slug}/project.md`** (see [Markdown Logs](markdown-logs.md)).
 
 Example note shapes: [Obsidian templates](../templates/obsidian/README.md).
 
 ## Settings checklist
 
-1. **Settings → MCP Tools** — enable Obsidian MCP, vault path, Python, `server.py`  
+1. **Settings → Logs & Capture** — choose a logs folder  
 2. Test connection and **Refresh Tools**  
 3. Open a project and run **Set Up Project Log** if `.jade/` is missing  
 4. Use **Confirm Next Step** → **Complete Step** to close the loop  
@@ -78,5 +78,5 @@ Example note shapes: [Obsidian templates](../templates/obsidian/README.md).
 ## Related
 
 - [Command Palette](../user-guide/command-palette.md) — palette entries  
-- [Obsidian MCP](obsidian-mcp.md) — vault paths, capture, MCP palette group  
+- [Markdown Logs](markdown-logs.md) — logs folder and capture  
 - [Integrations](integrations.md) — Rich Input and AI assistant  

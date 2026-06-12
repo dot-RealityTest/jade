@@ -5,7 +5,7 @@ enum ObsidianProjectLogIndex {
         ObsidianNotePathBuilder.projectLogIndexPath(projectName: projectName)
     }
 
-    static func exists(projectName: String, settings: ObsidianMCPSettings) -> Bool {
+    static func exists(projectName: String, settings: ObsidianCaptureSettings) -> Bool {
         let vault = ObsidianVaultPathValidator.normalizedPath(settings.vaultPath)
         guard !vault.isEmpty else { return false }
         let relative = vaultRelativePath(projectName: projectName)
@@ -18,9 +18,9 @@ enum ObsidianProjectLogIndex {
     static func ensure(
         projectName: String,
         projectPath: String,
-        settings: ObsidianMCPSettings
-    ) async -> Result<Void, Error> {
-        guard settings.isEnabled, settings.canSendNotes else {
+        settings: ObsidianCaptureSettings
+    ) -> Result<Void, Error> {
+        guard settings.canSendCaptures else {
             return .success(())
         }
 
@@ -29,7 +29,6 @@ enum ObsidianProjectLogIndex {
         }
 
         let indexPath = vaultRelativePath(projectName: projectName)
-        let slug = ObsidianNotePathBuilder.slugify(projectName)
         let structured = JadeProjectContextReader.loadStructured(projectPath: projectPath)
         let content = JadeJourneyLogFormatter.projectLogIndex(
             projectName: projectName,
@@ -38,27 +37,11 @@ enum ObsidianProjectLogIndex {
         )
 
         do {
-            let configuration = MCPStdioSessionConfiguration(
-                pythonPath: settings.pythonPath,
-                serverScriptPath: settings.serverScriptPath,
-                environment: settings.serverEnvironment
-            )
-            var tags = settings.defaultTags
-            tags.append("project-log")
-            if !slug.isEmpty, !tags.contains(slug) {
-                tags.append(slug)
-            }
-
-            let encodedArguments = try JSONSerialization.data(withJSONObject: [
-                "path": indexPath,
-                "content": content,
-                "title": "\(projectName) — project log",
-                "tags": tags,
-            ])
-            _ = try await MCPStdioSession.callTool(
-                configuration: configuration,
-                toolName: "create_note",
-                encodedArguments: encodedArguments
+            _ = try ObsidianVaultWriter.writeNote(
+                vaultPath: settings.vaultPath,
+                relativePath: indexPath,
+                content: content,
+                append: false
             )
             return .success(())
         } catch {

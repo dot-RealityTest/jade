@@ -107,13 +107,7 @@ struct CommandPaletteOverlay: View {
             query: query,
             sectionOrder: sectionOrder
         )
-        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        let resolved = filtered.map { item in
-            guard case let .obsidianMCPTool(action, _) = item.target, action.requiresSearchQuery else {
-                return item
-            }
-            return item.withObsidianQuery(trimmedQuery)
-        }
+        let resolved = filtered
         let elapsed = start.duration(to: clock.now)
         if elapsed > .milliseconds(20) {
             let elapsedDesc = String(describing: elapsed)
@@ -132,14 +126,13 @@ struct CommandPaletteOverlay: View {
         hasher.combine(worktreeOpenerItems.count)
         hasher.combine(snippetsStore.snippets.count)
         hasher.combine(activeRemoteSpace?.id)
-        hasher.combine(ObsidianMCPSettingsStore.shared.isEnabled)
-        hasher.combine(ObsidianMCPSettingsStore.shared.snapshot.canSendNotes)
+        hasher.combine(ObsidianCaptureSettingsStore.shared.snapshot.canSendCaptures)
         let signature = hasher.finalize()
         if signature == cachedBaseItemsSignature {
             return cachedBaseItems
         }
         let updated = appItems
-            + mcpToolItems()
+            + obsidianCaptureItems()
             + remoteCommandItems()
             + remoteItems()
             + snippetItems()
@@ -150,21 +143,21 @@ struct CommandPaletteOverlay: View {
     }
 
     @MainActor
-    private func mcpToolItems() -> [CommandPaletteItem] {
-        let settings = ObsidianMCPSettingsStore.shared.snapshot
-        return ObsidianMCPToolAction.allCases
+    private func obsidianCaptureItems() -> [CommandPaletteItem] {
+        let settings = ObsidianCaptureSettingsStore.shared.snapshot
+        return ObsidianCaptureAction.allCases
             .filter { $0.isAvailable(for: settings) }
             .enumerated()
             .map { index, action in
                 CommandPaletteItem(
-                    id: "mcp-obsidian-\(action.rawValue)",
+                    id: "obsidian-\(action.rawValue)",
                     title: action.title,
                     subtitle: action.subtitle,
                     symbolName: action.symbolName,
-                    section: .mcp,
+                    section: .app,
                     searchText: action.searchText,
-                    target: .obsidianMCPTool(action, query: nil),
-                    sortPriority: index
+                    target: .obsidianCapture(action),
+                    sortPriority: 40 + index
                 )
             }
     }

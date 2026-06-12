@@ -2,7 +2,6 @@ import Foundation
 
 enum CommandPaletteSection: String, CaseIterable {
     case app = "App"
-    case mcp = "MCP Tools"
     case remoteCommand = "Remote Commands"
     case remote = "Remote Spaces"
     case snippet = "Snippets"
@@ -13,8 +12,8 @@ enum CommandPaletteSection: String, CaseIterable {
         Self.defaultOrder.firstIndex(of: self) ?? Self.defaultOrder.count
     }
 
-    static let defaultOrder: [CommandPaletteSection] = [.app, .mcp, .remote, .remoteCommand, .snippet, .file, .worktree]
-    static let remoteSpaceOrder: [CommandPaletteSection] = [.remoteCommand, .snippet, .remote, .mcp, .app, .file, .worktree]
+    static let defaultOrder: [CommandPaletteSection] = [.app, .remote, .remoteCommand, .snippet, .file, .worktree]
+    static let remoteSpaceOrder: [CommandPaletteSection] = [.remoteCommand, .snippet, .remote, .app, .file, .worktree]
 }
 
 enum CommandPaletteFileSearchPolicy {
@@ -258,7 +257,7 @@ struct CommandPaletteItem: Identifiable, Equatable {
         case naturalCommand(String)
         case localPorts
         case localCommand(LocalCommandPaletteAction)
-        case obsidianMCPTool(ObsidianMCPToolAction, query: String?)
+        case obsidianCapture(ObsidianCaptureAction)
         case journeyInitialize
         case journeyNextStep
         case journeyCompleteStep
@@ -374,22 +373,6 @@ struct CommandPaletteItem: Identifiable, Equatable {
             sortPriority: sortPriority,
             requiresConfirmation: requiresConfirmation,
             showsSectionHeader: isVisible
-        )
-    }
-
-    func withObsidianQuery(_ query: String) -> CommandPaletteItem {
-        guard case let .obsidianMCPTool(action, _) = target else { return self }
-        return CommandPaletteItem(
-            id: id,
-            title: title,
-            subtitle: subtitle,
-            symbolName: symbolName,
-            section: section,
-            searchText: searchText,
-            target: .obsidianMCPTool(action, query: query),
-            sortPriority: sortPriority,
-            requiresConfirmation: requiresConfirmation,
-            showsSectionHeader: showsSectionHeader
         )
     }
 }

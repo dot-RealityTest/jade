@@ -3,7 +3,7 @@
 Jade is a macOS terminal multiplexer built with SwiftUI that uses libghostty for terminal emulation.
 The SwiftPM module and source directory are still named Muxy. **This repo is macOS-only** — there is no Jade iOS app and no `MuxyMobile` target here. Shared protocol types in `MuxyShared/` remain for the optional WebSocket remote server; upstream Muxy maintains separate mobile companion apps.
 
-**User-facing documentation** (command palette, Obsidian MCP, project log, voice, notifications attention, integrations) lives in [docs/README.md](../README.md). This file is the developer service inventory.
+**User-facing documentation** (command palette, markdown logs, project log, voice, notifications attention, integrations) lives in [docs/README.md](../README.md). This file is the developer service inventory.
 
 ## Monorepo Structure
 
@@ -128,18 +128,16 @@ Muxy/
     HomeWorkspace.swift       Ensures a pinned Home sidebar project at the user folder for general-purpose local shells
     RemoteCommandBuilder.swift Wraps selected Linux commands through a remote space's SSH profile for command tabs
     NaturalCommand{Settings,Generator}.swift  Review-first natural-language shell command generation with Apple Intelligence and Ollama backends
-    ObsidianMCPSettingsStore.swift  UserDefaults-backed obsidian-codex-mcp configuration (vault, Python, server.py, inbox folder)
+    ObsidianCaptureSettingsStore.swift  UserDefaults-backed logs/capture configuration (logs folder, inbox folder, capture note, write mode)
     ObsidianProjectLogIndex.swift  Ensures `Jade/Logs/{slug}/project.md` vault hub exists before session logs or project captures
-    ObsidianSendService.swift  Send-to-Obsidian via MCP `create_note`; inbox when no project, else `Jade/Logs/{slug}/notes/` with `type: project-capture`
-    ObsidianJourneyLogService.swift  Project session logs via MCP `create_note` at `Jade/Logs/{slug}/sessions/` (`type: project-session-log`) using `JadeJourneyLogFormatter`
+    ObsidianSendService.swift  Send-to-Obsidian via direct markdown writes; inbox when no project, else `Jade/Logs/{slug}/notes/` with `type: project-capture`
+    ObsidianJourneyLogService.swift  Project session logs written directly at `Jade/Logs/{slug}/sessions/` (`type: project-session-log`) using `JadeJourneyLogFormatter`
     JadeJourneyBootstrapService.swift  Creates `.jade/` plus optional project-root `goals.md`, `todo.md`, `project-map.md` scaffolds
     JadeProjectContextFiles.swift  Locates project markdown context files in the repo root
     JadeProjectContextReader.swift  Parses structured context from todo, goals, AGENTS, project-map markdown
     JadeJourneyReader.swift  Next-step proposals from `todo.md`, then `goals.md`, then `.jade/journey.md`
     JadeJourneyRuleChecker.swift  Soft blockers from `.jade/rules.md` Not yet section
     JadeJourneyProgressService.swift  Completes a journey step and appends achievements
-    MCP/MCPJSONRPC.swift      JSON-RPC line encoding/decoding for MCP stdio sessions
-    MCP/MCPStdioSession.swift One-shot MCP stdio client (initialize → tools/call)
     ShellCommandSafetyClassifier.swift  Deterministic safety guard for generated shell commands and inspect-first destructive intents
     ProjectStore.swift        @Observable store for projects list
     ProjectPersistence.swift  JSON persistence for projects
@@ -201,7 +199,7 @@ Muxy/
       UUIDFramePreferenceKey.swift  Generic PreferenceKey for frame tracking
       NotificationBadge.swift Unread count badge for sidebar project icons
       QuickOpenOverlay.swift  Cmd+P file search overlay (name substring match via find)
-      CommandPaletteOverlay.swift  Cmd+K unified command palette for app actions, Obsidian MCP tools, project log commands (set up, confirm step, complete), remote commands, remote spaces, snippets, files, worktrees, and natural-language command generation with accessible rows and inline confirmation states
+      CommandPaletteOverlay.swift  Cmd+K unified command palette for app actions, Obsidian capture, project log commands (set up, confirm step, complete), remote commands, remote spaces, snippets, files, worktrees, and natural-language command generation with accessible rows and inline confirmation states
       NaturalCommandReviewView.swift  Palette-style review surface for generated shell commands with Run, Copy, and Save as Snippet actions
       AppBundleIconView.swift Renders and caches installed app bundle icons for menus and launcher controls
       OpenInIDEControl.swift  Split button for opening the active project or editor file in the remembered or selected IDE
@@ -258,7 +256,7 @@ Muxy/
       AIAssistantSettingsView.swift  AI Assistant backend config (Ollama base URL + model picker with fetch)
       MobileSettingsView.swift  Mobile server and approved devices tab
       RemoteSpacesSettingsView.swift  Remote machine profile add/edit/delete tab with generated SSH command preview and theme selection
-      MCPToolsSettingsView.swift  MCP Tools tab (Obsidian MCP vault/server paths, read-only and backup toggles, connection test)
+      LogCaptureSettingsView.swift  Logs & Capture tab (logs folder, capture note path, write mode, folder test)
       ShortcutRecorderView.swift  Shortcut capture field
       ShortcutBadge.swift     Shortcut label display
 ```
