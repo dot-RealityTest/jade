@@ -9,9 +9,9 @@
 <p align="center"><a href="https://dot-realitytest.github.io/jade/">Website</a> · <a href="docs/overview.md">Overview</a> · <a href="llms.txt">llms.txt</a> · <a href="docs/README.md">Docs</a></p>
 
 <div align="center">
-  <img src="https://img.shields.io/github/v/release/dot-RealityTest/jade" />
-  <img src="https://img.shields.io/github/license/dot-RealityTest/jade" />
-  <img src="https://img.shields.io/github/commit-activity/m/dot-RealityTest/jade" />
+  <img src="https://img.shields.io/github/v/release/aka-kika/jade" />
+  <img src="https://img.shields.io/github/license/aka-kika/jade" />
+  <img src="https://img.shields.io/github/commit-activity/m/aka-kika/jade" />
 </div>
 
 ## Screenshots
@@ -90,7 +90,7 @@ Full documentation: [docs/README.md](docs/README.md) — command palette, Obsidi
 A native macOS terminal workspace that organizes shells by project — tabs, splits, Git worktrees, a command palette, local Ollama AI, and optional Obsidian capture. Not a cloud IDE; everything runs on your Mac.
 
 **Is Jade free and open source?**  
-Yes. MIT license. Build from source (see [Local Development](#local-development)); packaged [Releases](https://github.com/dot-RealityTest/jade/releases) when published.
+Yes. MIT license. Build from source (see [Local Development](#local-development)); packaged [Releases](https://github.com/aka-kika/jade/releases) when published.
 
 **What platforms does Jade support?**  
 macOS 14+ only. This repo does not ship an iOS or Android app under the Jade name.
@@ -112,10 +112,10 @@ See [llms.txt](llms.txt) and [docs/overview.md](docs/overview.md).
 
 ## Install
 
-Build locally (see [Local Development](#local-development)) — there is no packaged download on [Releases](https://github.com/dot-RealityTest/jade/releases) yet.
+Build locally (see [Local Development](#local-development)) — there is no packaged download on [Releases](https://github.com/aka-kika/jade/releases) yet.
 
 ```bash
-git clone https://github.com/dot-RealityTest/jade.git
+git clone https://github.com/aka-kika/jade.git
 cd jade && ./scripts/setup.sh && ./scripts/run-jade.sh
 ```
 
@@ -151,7 +151,7 @@ jade /path/to/project
 
 Feedback, bug reports, ideas, and pull requests are welcome.
 
-- **Something broken or missing?** [Open an issue](https://github.com/dot-RealityTest/jade/issues/new/choose)
+- **Something broken or missing?** [Open an issue](https://github.com/aka-kika/jade/issues/new/choose)
 - **Want to contribute code?** See [CONTRIBUTING.md](CONTRIBUTING.md) — fork, branch from `main`, run `scripts/checks.sh --fix --fast`, and open a PR
 
 ## License

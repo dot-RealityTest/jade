@@ -44,7 +44,7 @@ Jade combines a **Ghostty-powered terminal**, **project tabs and split panes**, 
 
 ## Install
 
-Download from [GitHub Releases](https://github.com/dot-RealityTest/jade/releases) when published, or build with `./scripts/run-jade.sh` after `scripts/setup.sh`.
+Download from [GitHub Releases](https://github.com/aka-kika/jade/releases) when published, or build with `./scripts/run-jade.sh` after `scripts/setup.sh`.
 
 ## Documentation
 
