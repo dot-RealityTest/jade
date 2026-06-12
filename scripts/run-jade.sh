@@ -3,26 +3,16 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-BUILD_DIR="$PROJECT_ROOT/.build/arm64-apple-macosx/debug"
+
+echo "==> Building debug Muxy"
+(cd "$PROJECT_ROOT" && swift build)
+
+BUILD_DIR="$(cd "$PROJECT_ROOT" && swift build --show-bin-path)"
 APP="$BUILD_DIR/Jade.app"
 BIN="$BUILD_DIR/Muxy"
 RESOURCE_BUNDLE="$BUILD_DIR/Muxy_Muxy.bundle"
 SOURCE_ICON="$PROJECT_ROOT/Muxy/Resources/AppIcon.png"
 SPARKLE="$PROJECT_ROOT/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
-
-needs_build=false
-if [[ ! -x "$BIN" ]]; then
-    needs_build=true
-elif [[ ! -d "$RESOURCE_BUNDLE" ]]; then
-    needs_build=true
-elif [[ -f "$SOURCE_ICON" && "$SOURCE_ICON" -nt "$RESOURCE_BUNDLE/AppIcon.png" ]]; then
-    needs_build=true
-fi
-
-if [[ "$needs_build" == true ]]; then
-    echo "==> Building debug Muxy"
-    (cd "$PROJECT_ROOT" && swift build)
-fi
 
 if [[ ! -d "$SPARKLE" ]]; then
     echo "==> Fetching Sparkle (swift package resolve)"
