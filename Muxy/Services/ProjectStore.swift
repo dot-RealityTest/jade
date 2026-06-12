@@ -8,15 +8,18 @@ private let logger = Logger(subsystem: "app.muxy", category: "ProjectStore")
 final class ProjectStore {
     private(set) var projects: [Project] = []
     private let persistence: any ProjectPersisting
+    private let saveDebounce: Duration
+    @ObservationIgnored private var pendingSaveTask: Task<Void, Never>?
 
-    init(persistence: any ProjectPersisting) {
+    init(persistence: any ProjectPersisting, saveDebounce: Duration = .milliseconds(300)) {
         self.persistence = persistence
+        self.saveDebounce = saveDebounce
         load()
     }
 
     func add(_ project: Project) {
         projects.append(project)
-        save()
+        scheduleSave()
     }
 
     func remove(id: UUID) {
@@ -24,13 +27,13 @@ final class ProjectStore {
             VCSPersistedSettings.clearSettings(repoPath: project.path)
         }
         projects.removeAll { $0.id == id }
-        save()
+        scheduleSave()
     }
 
     func rename(id: UUID, to newName: String) {
         guard let index = projects.firstIndex(where: { $0.id == id }) else { return }
         projects[index].name = newName
-        save()
+        scheduleSave()
     }
 
     func setLogo(id: UUID, to logo: String?) {
@@ -39,31 +42,31 @@ final class ProjectStore {
             ProjectLogoStorage.remove(forProjectID: id)
         }
         projects[index].logo = logo
-        save()
+        scheduleSave()
     }
 
     func setIconColor(id: UUID, to color: String?) {
         guard let index = projects.firstIndex(where: { $0.id == id }) else { return }
         projects[index].iconColor = color
-        save()
+        scheduleSave()
     }
 
     func setPreferredWorktreeParentPath(id: UUID, to path: String?) {
         guard let index = projects.firstIndex(where: { $0.id == id }) else { return }
         projects[index].preferredWorktreeParentPath = WorktreeLocationResolver.normalizedPath(path)
-        save()
+        scheduleSave()
     }
 
     func reorder(fromOffsets source: IndexSet, toOffset destination: Int) {
         projects.move(fromOffsets: source, toOffset: destination)
         normalizeSortOrders()
-        save()
+        scheduleSave()
     }
 
     func insertAtTop(_ project: Project) {
         projects.insert(project, at: 0)
         normalizeSortOrders()
-        save()
+        scheduleSave()
     }
 
     func pinToTop(id: UUID) {
@@ -71,12 +74,33 @@ final class ProjectStore {
         let project = projects.remove(at: index)
         projects.insert(project, at: 0)
         normalizeSortOrders()
-        save()
+        scheduleSave()
     }
 
     private func normalizeSortOrders() {
         for index in projects.indices {
             projects[index].sortOrder = index
+        }
+    }
+
+    func flushPendingSave() {
+        guard pendingSaveTask != nil else { return }
+        pendingSaveTask?.cancel()
+        pendingSaveTask = nil
+        save()
+    }
+
+    private func scheduleSave() {
+        pendingSaveTask?.cancel()
+        let debounce = saveDebounce
+        pendingSaveTask = Task { [weak self] in
+            try? await Task.sleep(for: debounce)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard let self else { return }
+                self.pendingSaveTask = nil
+                self.save()
+            }
         }
     }
 

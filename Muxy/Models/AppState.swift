@@ -159,7 +159,7 @@ final class AppState {
         performWorkspaceSave()
     }
 
-    private func scheduleWorkspaceSave() {
+    func scheduleWorkspaceSave() {
         pendingWorkspaceSaveTask?.cancel()
         let debounce = workspaceSaveDebounce
         pendingWorkspaceSaveTask = Task { [weak self] in

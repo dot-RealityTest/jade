@@ -39,14 +39,27 @@ final class MuxyConfig {
         ghosttyConfigURL.path
     }
 
+    @ObservationIgnored private var cachedConfig: (content: String, modificationDate: Date?)?
+
     func readGhosttyConfig() -> String {
-        (try? String(contentsOf: ghosttyConfigURL, encoding: .utf8)) ?? ""
+        let modificationDate = configModificationDate()
+        if let cachedConfig, cachedConfig.modificationDate == modificationDate {
+            return cachedConfig.content
+        }
+        let content = (try? String(contentsOf: ghosttyConfigURL, encoding: .utf8)) ?? ""
+        cachedConfig = (content, modificationDate)
+        return content
     }
 
     func writeGhosttyConfig(_ content: String) throws {
         let data = Data(content.utf8)
         try data.write(to: ghosttyConfigURL, options: .atomic)
         Self.restrictFilePermissions(ghosttyConfigURL)
+        cachedConfig = (content, configModificationDate())
+    }
+
+    private func configModificationDate() -> Date? {
+        try? FileManager.default.attributesOfItem(atPath: ghosttyConfigURL.path)[.modificationDate] as? Date
     }
 
     func updateConfigValue(_ key: String, value: String) {

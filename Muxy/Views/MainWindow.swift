@@ -683,11 +683,11 @@ struct MainWindow: View {
                 },
                 onSetCustomTitle: { tabID, title in
                     area.setCustomTitle(tabID, title: title)
-                    appState.saveWorkspaces()
+                    appState.scheduleWorkspaceSave()
                 },
                 onSetColorID: { tabID, colorID in
                     area.setColorID(tabID, colorID: colorID)
-                    appState.saveWorkspaces()
+                    appState.scheduleWorkspaceSave()
                 },
                 onReorderTab: { fromOffsets, toOffset in
                     area.reorderTab(fromOffsets: fromOffsets, toOffset: toOffset)
@@ -2168,21 +2168,22 @@ struct MainWindow: View {
         return keys
     }
 
-    private var vcsPruneSignature: [String] {
-        var result: [String] = []
+    private var vcsPruneSignature: Int {
+        var hasher = Hasher()
         for project in projectStore.projects {
-            result.append(project.id.uuidString)
+            hasher.combine(project.id)
             for worktree in worktreeStore.list(for: project.id) {
-                result.append(worktree.id.uuidString)
+                hasher.combine(worktree.id)
             }
         }
-        return result
+        return hasher.finalize()
     }
 
-    private var vcsEnsureSignature: String {
-        let projectID = appState.activeProjectID?.uuidString ?? ""
-        let worktreeID = appState.activeProjectID.flatMap { appState.activeWorktreeID[$0] }?.uuidString ?? ""
-        return "\(projectID):\(worktreeID)"
+    private var vcsEnsureSignature: Int {
+        var hasher = Hasher()
+        hasher.combine(appState.activeProjectID)
+        hasher.combine(appState.activeProjectID.flatMap { appState.activeWorktreeID[$0] })
+        return hasher.finalize()
     }
 
     private func presentCloseConfirmation(_ kind: CloseConfirmationKind) {

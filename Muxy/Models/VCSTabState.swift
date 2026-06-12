@@ -56,7 +56,10 @@ final class VCSTabState {
     }
 
     let projectPath: String
-    var files: [GitStatusFile] = []
+    var files: [GitStatusFile] = [] {
+        didSet { rebuildFileCaches() }
+    }
+
     var mode: ViewMode = .unified
     var fileListMode: FileListMode = .flat {
         didSet {
@@ -66,8 +69,14 @@ final class VCSTabState {
     }
 
     var expandedFilePaths: Set<String> = []
-    var expandedStagedFolderPaths: Set<String> = []
-    var expandedUnstagedFolderPaths: Set<String> = []
+    var expandedStagedFolderPaths: Set<String> = [] {
+        didSet { rebuildStagedTreeRows() }
+    }
+
+    var expandedUnstagedFolderPaths: Set<String> = [] {
+        didSet { rebuildUnstagedTreeRows() }
+    }
+
     var isLoadingFiles = false
     var errorMessage: String?
     let diffCache = DiffCache()
@@ -139,13 +148,10 @@ final class VCSTabState {
     var pullRequestAutoSyncMinutes: Int = 0
     var checkingOutPRNumber: Int?
 
-    var stagedFiles: [GitStatusFile] {
-        files.filter(\.isStaged)
-    }
-
-    var unstagedFiles: [GitStatusFile] {
-        files.filter(\.isUnstaged)
-    }
+    private(set) var stagedFiles: [GitStatusFile] = []
+    private(set) var unstagedFiles: [GitStatusFile] = []
+    private(set) var stagedTreeRows: [VCSFileTree.Row] = []
+    private(set) var unstagedTreeRows: [VCSFileTree.Row] = []
 
     var hasStagedChanges: Bool {
         !stagedFiles.isEmpty
@@ -507,12 +513,19 @@ final class VCSTabState {
         isStaged ? expandedStagedFolderPaths.contains(folderPath) : expandedUnstagedFolderPaths.contains(folderPath)
     }
 
-    var stagedTreeRows: [VCSFileTree.Row] {
-        VCSFileTree.rows(files: stagedFiles, expandedFolders: expandedStagedFolderPaths)
+    private func rebuildFileCaches() {
+        stagedFiles = files.filter(\.isStaged)
+        unstagedFiles = files.filter(\.isUnstaged)
+        rebuildStagedTreeRows()
+        rebuildUnstagedTreeRows()
     }
 
-    var unstagedTreeRows: [VCSFileTree.Row] {
-        VCSFileTree.rows(files: unstagedFiles, expandedFolders: expandedUnstagedFolderPaths)
+    private func rebuildStagedTreeRows() {
+        stagedTreeRows = VCSFileTree.rows(files: stagedFiles, expandedFolders: expandedStagedFolderPaths)
+    }
+
+    private func rebuildUnstagedTreeRows() {
+        unstagedTreeRows = VCSFileTree.rows(files: unstagedFiles, expandedFolders: expandedUnstagedFolderPaths)
     }
 
     func loadFullDiff(filePath: String) {

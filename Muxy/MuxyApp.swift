@@ -76,9 +76,10 @@ struct MuxyApp: App {
                     NotificationStore.shared.markAllAsRead()
                     MemoryDiagnostics.shared.configure(appState: appState)
                     TerminalProgressStore.shared.appState = appState
-                    appDelegate.onTerminate = { [appState] in
+                    appDelegate.onTerminate = { [appState, projectStore] in
                         appState.saveTerminalSessions()
                         appState.flushPendingWorkspaceSave()
+                        projectStore.flushPendingSave()
                     }
                     appDelegate.hasUnsavedEditorTabs = { [appState] in
                         appState.unsavedEditorTabs()
