@@ -194,6 +194,8 @@ final class VCSTabState {
     @ObservationIgnored nonisolated(unsafe) private var remoteChangeObserver: NSObjectProtocol?
     @ObservationIgnored private var isRefreshing = false
     @ObservationIgnored private var pendingRefresh = false
+    @ObservationIgnored private var pendingRefreshForcesPRFetch = false
+    @ObservationIgnored private var suppressCacheRebuilds = false
     @ObservationIgnored private var refreshAndWaitTask: Task<Void, Never>?
     @ObservationIgnored private var lastFetchedHeadSha: String?
     @ObservationIgnored private var pendingPRFetchBranch: String?
@@ -256,17 +258,22 @@ final class VCSTabState {
                   notifiedPath == path
             else { return }
             MainActor.assumeIsolated {
-                self?.performRefresh(incremental: true, forcePRFetch: true)
+                self?.requestIncrementalRefresh(forcePRFetch: true)
             }
         }
     }
 
     private func watcherDidFire() {
+        requestIncrementalRefresh()
+    }
+
+    private func requestIncrementalRefresh(forcePRFetch: Bool = false) {
         guard !isRefreshing else {
             pendingRefresh = true
+            pendingRefreshForcesPRFetch = pendingRefreshForcesPRFetch || forcePRFetch
             return
         }
-        performRefresh(incremental: true)
+        performRefresh(incremental: true, forcePRFetch: forcePRFetch)
     }
 
     func refresh() {
@@ -364,7 +371,9 @@ final class VCSTabState {
                 GitSignpost.end("performRefresh", refreshSignpost)
                 if self.pendingRefresh {
                     self.pendingRefresh = false
-                    self.performRefresh(incremental: true)
+                    let forcePRFetch = self.pendingRefreshForcesPRFetch
+                    self.pendingRefreshForcesPRFetch = false
+                    self.performRefresh(incremental: true, forcePRFetch: forcePRFetch)
                 }
             }
             do {
@@ -376,17 +385,8 @@ final class VCSTabState {
                 let validPaths = Set(newFiles.map(\.path))
                 let removedPaths = Set(oldFilesByPath.keys).subtracting(validPaths)
 
-                if !removedPaths.isEmpty {
-                    expandedFilePaths = expandedFilePaths.intersection(validPaths)
-                    expandedStagedFolderPaths = expandedStagedFolderPaths.filter { folderPath in
-                        validPaths.contains(where: { $0.hasPrefix(folderPath + "/") })
-                    }
-                    expandedUnstagedFolderPaths = expandedUnstagedFolderPaths.filter { folderPath in
-                        validPaths.contains(where: { $0.hasPrefix(folderPath + "/") })
-                    }
-                    for path in removedPaths {
-                        diffCache.evict(path)
-                    }
+                for path in removedPaths {
+                    diffCache.evict(path)
                 }
 
                 var changedPaths: Set<String> = []
@@ -402,8 +402,21 @@ final class VCSTabState {
                 }
 
                 let listChanged = files.map(\.path) != newFiles.map(\.path) || !changedPaths.isEmpty
-                if listChanged {
-                    files = newFiles
+                if !removedPaths.isEmpty || listChanged {
+                    batchFileStateUpdates {
+                        if !removedPaths.isEmpty {
+                            expandedFilePaths = expandedFilePaths.intersection(validPaths)
+                            expandedStagedFolderPaths = expandedStagedFolderPaths.filter { folderPath in
+                                validPaths.contains(where: { $0.hasPrefix(folderPath + "/") })
+                            }
+                            expandedUnstagedFolderPaths = expandedUnstagedFolderPaths.filter { folderPath in
+                                validPaths.contains(where: { $0.hasPrefix(folderPath + "/") })
+                            }
+                        }
+                        if listChanged {
+                            files = newFiles
+                        }
+                    }
                 }
                 isLoadingFiles = false
                 hasCompletedInitialLoad = true
@@ -421,10 +434,12 @@ final class VCSTabState {
                 }
             } catch {
                 guard !Task.isCancelled else { return }
-                files = []
-                expandedFilePaths = []
-                expandedStagedFolderPaths = []
-                expandedUnstagedFolderPaths = []
+                batchFileStateUpdates {
+                    files = []
+                    expandedFilePaths = []
+                    expandedStagedFolderPaths = []
+                    expandedUnstagedFolderPaths = []
+                }
                 diffCache.clearAll()
                 errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                 isLoadingFiles = false
@@ -513,7 +528,15 @@ final class VCSTabState {
         isStaged ? expandedStagedFolderPaths.contains(folderPath) : expandedUnstagedFolderPaths.contains(folderPath)
     }
 
+    private func batchFileStateUpdates(_ updates: () -> Void) {
+        suppressCacheRebuilds = true
+        updates()
+        suppressCacheRebuilds = false
+        rebuildFileCaches()
+    }
+
     private func rebuildFileCaches() {
+        guard !suppressCacheRebuilds else { return }
         stagedFiles = files.filter(\.isStaged)
         unstagedFiles = files.filter(\.isUnstaged)
         rebuildStagedTreeRows()
@@ -521,10 +544,12 @@ final class VCSTabState {
     }
 
     private func rebuildStagedTreeRows() {
+        guard !suppressCacheRebuilds else { return }
         stagedTreeRows = VCSFileTree.rows(files: stagedFiles, expandedFolders: expandedStagedFolderPaths)
     }
 
     private func rebuildUnstagedTreeRows() {
+        guard !suppressCacheRebuilds else { return }
         unstagedTreeRows = VCSFileTree.rows(files: unstagedFiles, expandedFolders: expandedUnstagedFolderPaths)
     }
 

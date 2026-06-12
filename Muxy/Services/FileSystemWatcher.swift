@@ -2,6 +2,9 @@ import CoreServices
 import Foundation
 
 final class FileSystemWatcher: @unchecked Sendable {
+    private static let eventLatency: CFTimeInterval = 0.15
+    private static let debounceInterval: TimeInterval = 0.15
+
     private let queue = DispatchQueue(label: "app.muxy.fs-watcher", qos: .utility)
     private var stream: FSEventStreamRef?
     private var debounceWork: DispatchWorkItem?
@@ -37,7 +40,7 @@ final class FileSystemWatcher: @unchecked Sendable {
             &context,
             paths,
             FSEventStreamEventId(kFSEventStreamEventIdSinceNow),
-            0.3,
+            Self.eventLatency,
             FSEventStreamCreateFlags(kFSEventStreamCreateFlagFileEvents | kFSEventStreamCreateFlagUseCFTypes)
         )
         else { return nil }
@@ -62,6 +65,6 @@ final class FileSystemWatcher: @unchecked Sendable {
             self?.handler?()
         }
         debounceWork = work
-        queue.asyncAfter(deadline: .now() + 0.3, execute: work)
+        queue.asyncAfter(deadline: .now() + Self.debounceInterval, execute: work)
     }
 }
