@@ -34,12 +34,19 @@ struct WorktreeConfig: Codable {
         setup = []
     }
 
+    static let preferredConfigFolder = ".jade"
+    static let legacyConfigFolder = ".muxy"
+
     static func load(fromProjectPath projectPath: String) -> WorktreeConfig? {
-        let url = URL(fileURLWithPath: projectPath)
-            .appendingPathComponent(".muxy")
-            .appendingPathComponent("worktree.json")
-        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
-        guard let data = try? Data(contentsOf: url) else { return nil }
-        return try? JSONDecoder().decode(WorktreeConfig.self, from: data)
+        for folder in [preferredConfigFolder, legacyConfigFolder] {
+            let url = URL(fileURLWithPath: projectPath)
+                .appendingPathComponent(folder)
+                .appendingPathComponent("worktree.json")
+            guard FileManager.default.fileExists(atPath: url.path),
+                  let data = try? Data(contentsOf: url)
+            else { continue }
+            return try? JSONDecoder().decode(WorktreeConfig.self, from: data)
+        }
+        return nil
     }
 }

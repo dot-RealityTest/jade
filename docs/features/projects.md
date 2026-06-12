@@ -29,7 +29,7 @@ flowchart TB
 | --- | --- |
 | Sidebar | Click **+** at the bottom |
 | Menu | **File → Open Project…** (`⌘O`) |
-| Dock | Drag a folder onto the Muxy icon |
+| Dock | Drag a folder onto the Jade icon |
 | Shell | `jade /path/to/project` after **Jade → Install CLI** |
 | URL | `muxy://open?path=/path/to/project` |
 
@@ -42,7 +42,7 @@ Right‑click a project in the sidebar:
 - **Rename** — display name only; doesn't move the folder.
 - **Change icon** — emoji logo or letter badge.
 - **Change color** — preset palette.
-- **Remove** — removes from Muxy; folder on disk is left alone.
+- **Remove** — removes from Jade; folder on disk is left alone.
 
 ## Switching projects
 
@@ -56,7 +56,7 @@ Each project keeps its own tabs, splits, and active tab in memory while the app 
 
 ## Open in IDE
 
-Muxy auto‑discovers IDE‑like apps installed on your Mac (VS Code, Zed, Sublime, JetBrains IDEs, Cursor, …). The **Open in IDE** topbar button and **File → Open in IDE** menu show what was found and remember your last choice. If an editor tab is active, the IDE is launched at that file's line and column when supported.
+Jade auto‑discovers IDE‑like apps installed on your Mac (VS Code, Zed, Sublime, JetBrains IDEs, Cursor, …). The **Open in IDE** topbar button and **File → Open in IDE** menu show what was found and remember your last choice. If an editor tab is active, the IDE is launched at that file's line and column when supported.
 
 ## Persistence
 

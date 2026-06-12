@@ -61,7 +61,7 @@ struct GhosttyConfigSettingsView: View {
         SettingsSection("Appearance", showsDivider: false) {
             SettingsRow("Theme") {
                 HStack(spacing: 6) {
-                    Text(themeName.isEmpty ? "Default" : themeName)
+                    Text(themeName.isEmpty ? "Default" : AppIdentity.themeDisplayName(themeName))
                         .font(.system(size: SettingsMetrics.labelFontSize))
                         .foregroundStyle(themeName.isEmpty ? .secondary : .primary)
                         .lineLimit(1)

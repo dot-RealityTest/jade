@@ -4,14 +4,14 @@
 
 Jade embeds a WebSocket server that lets external clients connect to the desktop app over the local network — for custom dashboards, automation, and third-party integrations.
 
-There is **no Jade iOS app** in this repo. Upstream Muxy ships separate mobile companions; pairing docs below describe the wire protocol the Mac server implements.
+There is **no Jade iOS app** in this repo. Upstream Jade ships separate mobile companions; pairing docs below describe the wire protocol the Mac server implements.
 
 ```mermaid
 flowchart TB
   Client[Mobile / dashboard client]
-  Client <-->|WebSocket / JSON| Muxy[Muxy.app]
-  Muxy --> Settings[Mobile settings]
-  Muxy --> Approved[Approved devices]
+  Client <-->|WebSocket / JSON| Jade[Jade.app]
+  Jade --> Settings[Mobile settings]
+  Jade --> Approved[Approved devices]
 ```
 
 ## Pages

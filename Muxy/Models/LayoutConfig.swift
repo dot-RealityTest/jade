@@ -25,24 +25,31 @@ struct LayoutConfig: Equatable {
 
     let root: Pane
 
-    static func directory(forProjectPath projectPath: String) -> URL {
-        URL(fileURLWithPath: projectPath)
-            .appendingPathComponent(".muxy")
-            .appendingPathComponent("layouts")
+    static func directories(forProjectPath projectPath: String) -> [URL] {
+        [WorktreeConfig.preferredConfigFolder, WorktreeConfig.legacyConfigFolder].map { folder in
+            URL(fileURLWithPath: projectPath)
+                .appendingPathComponent(folder)
+                .appendingPathComponent("layouts")
+        }
     }
 
     static func discover(projectPath: String) -> [LayoutDescriptor] {
-        let directory = directory(forProjectPath: projectPath)
         let allowed: Set = ["yaml", "yml", "json"]
-        guard let entries = try? FileManager.default.contentsOfDirectory(
-            at: directory,
-            includingPropertiesForKeys: nil,
-            options: [.skipsHiddenFiles]
-        )
-        else { return [] }
-        return entries
-            .filter { allowed.contains($0.pathExtension.lowercased()) }
-            .map { LayoutDescriptor(name: $0.deletingPathExtension().lastPathComponent, url: $0) }
+        var descriptorsByName: [String: LayoutDescriptor] = [:]
+        for directory in directories(forProjectPath: projectPath) {
+            guard let entries = try? FileManager.default.contentsOfDirectory(
+                at: directory,
+                includingPropertiesForKeys: nil,
+                options: [.skipsHiddenFiles]
+            )
+            else { continue }
+            for url in entries where allowed.contains(url.pathExtension.lowercased()) {
+                let name = url.deletingPathExtension().lastPathComponent
+                guard descriptorsByName[name] == nil else { continue }
+                descriptorsByName[name] = LayoutDescriptor(name: name, url: url)
+            }
+        }
+        return descriptorsByName.values
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 

@@ -1,6 +1,6 @@
 # Editor
 
-Muxy includes a lightweight built-in code editor that opens files as tabs. Designed for quick edits in the same workspace as your terminals — not as a replacement for a full IDE.
+Jade includes a lightweight built-in code editor that opens files as tabs. Designed for quick edits in the same workspace as your terminals — not as a replacement for a full IDE.
 
 ## Opening files
 
@@ -52,4 +52,4 @@ Opt-in line wrapping is available in the editor toolbar. The editor uses a virtu
 
 If you prefer your own editor, **Settings → Editor** lets you set a default external editor command. Quick Open and file-tree double-click then route to that command instead of the built-in editor.
 
-Terminal Command launches through the user's login interactive shell, matching commands typed into a normal Muxy terminal tab.
+Terminal Command launches through the user's login interactive shell, matching commands typed into a normal Jade terminal tab.

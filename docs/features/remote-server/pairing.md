@@ -11,7 +11,7 @@ Each client should generate and persist:
 ```mermaid
 sequenceDiagram
   participant C as Client
-  participant S as Server (Muxy)
+  participant S as Server (Jade)
   participant U as User on Mac
 
   C->>S: WS connect

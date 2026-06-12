@@ -36,7 +36,7 @@ jade hooks setup
 
 ## Socket API (custom integrations)
 
-Muxy listens on a Unix domain socket:
+Jade listens on a Unix domain socket:
 
 ```
 ~/Library/Application Support/Muxy/muxy.sock

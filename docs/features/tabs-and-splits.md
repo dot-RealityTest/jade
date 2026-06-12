@@ -1,6 +1,6 @@
 # Tabs & Splits
 
-Every Muxy worktree owns a tree of split panes; each leaf pane holds a stack of tabs.
+Every Jade worktree owns a tree of split panes; each leaf pane holds a stack of tabs.
 
 ```mermaid
 flowchart TB

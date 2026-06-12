@@ -1,6 +1,6 @@
 # Layout Examples
 
-These examples mirror the files in `.muxy/layouts/` in this repo. Each diagram shows the resulting window with panes drawn as boxes; tabs are listed at the top of their pane.
+These examples mirror the files in `.jade/layouts/` in this repo. Each diagram shows the resulting window with panes drawn as boxes; tabs are listed at the top of their pane.
 
 ## `single.yaml` — one pane, multiple tabs
 

@@ -1,6 +1,6 @@
 # Layout Schema
 
-A Muxy workspace is a tree of panes inside a single window. Each leaf pane is a stack of tabs (one tab visible at a time). Panes can be nested with horizontal or vertical splits.
+A Jade workspace is a tree of panes inside a single window. Each leaf pane is a stack of tabs (one tab visible at a time). Panes can be nested with horizontal or vertical splits.
 
 A node is either a **leaf** (`tabs:`) or a **branch** (`layout:` + `panes:`). Branches may be nested arbitrarily.
 
@@ -72,7 +72,7 @@ tabs:
 
 ## JSON form
 
-The same schema works as JSON at `.muxy/layouts/<name>.json`:
+The same schema works as JSON at `.jade/layouts/<name>.json`:
 
 ```json
 {

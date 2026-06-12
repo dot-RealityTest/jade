@@ -30,7 +30,7 @@ Files are colored by git status: modified, added, untracked, deleted. Folders in
 | New File / New Folder | Inline text field on the parent folder |
 | Rename | Double-click, or right-click → Rename |
 | Delete | Moves to Trash via `NSWorkspace.recycle` (so OS handles Undo) |
-| Cut / Copy / Paste | System pasteboard with a Muxy cut marker |
+| Cut / Copy / Paste | System pasteboard with a Jade cut marker |
 | Reveal in Finder | Right-click |
 | Open in Terminal | New terminal tab rooted at that directory |
 
@@ -38,7 +38,7 @@ Multi-select with `⌘`-click and `⇧`-click. Drag and drop moves; hold `⌥` w
 
 ## External changes
 
-A FSEvents watcher picks up changes made outside Muxy — no manual refresh needed.
+A FSEvents watcher picks up changes made outside Jade — no manual refresh needed.
 
 ## Resizing
 

@@ -47,7 +47,7 @@ The branch dropdown switches branches (refused if there are uncommitted changes)
 
 ## Pull requests
 
-If `origin` is on GitHub and `gh` is authenticated, Muxy shows:
+If `origin` is on GitHub and `gh` is authenticated, Jade shows:
 
 - **PR pill** in the header (state, base, mergeability).
 - **Pull Requests** section with search, state filter (Open/Closed/Merged/All), and manual or interval-based auto-sync (Off / 5m / 15m / 30m / 1h).

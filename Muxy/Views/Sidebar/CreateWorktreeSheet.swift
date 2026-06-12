@@ -154,7 +154,7 @@ struct CreateWorktreeSheet: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: UIMetrics.fontCaption))
                     .foregroundStyle(MuxyTheme.diffRemoveFg)
-                Text("Setup commands from .muxy/worktree.json")
+                Text("Setup commands from .jade/worktree.json")
                     .font(.system(size: UIMetrics.fontFootnote, weight: .semibold))
                     .foregroundStyle(MuxyTheme.fg)
             }
@@ -190,11 +190,11 @@ struct CreateWorktreeSheet: View {
                     .font(.system(size: UIMetrics.fontFootnote, weight: .semibold))
                     .foregroundStyle(MuxyTheme.fg)
             }
-            Text("To run setup commands after creating a worktree, add .muxy/worktree.json in this repository.")
+            Text("To run setup commands after creating a worktree, add .jade/worktree.json in this repository.")
                 .font(.system(size: UIMetrics.fontCaption))
                 .foregroundStyle(MuxyTheme.fgMuted)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("\(project.path)/.muxy/worktree.json")
+            Text("\(project.path)/.jade/worktree.json")
                 .font(.system(size: UIMetrics.fontCaption, design: .monospaced))
                 .foregroundStyle(MuxyTheme.fg)
                 .textSelection(.enabled)

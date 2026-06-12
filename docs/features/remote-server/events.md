@@ -7,7 +7,7 @@ Server-pushed events go to authenticated clients. Treat `workspaceChanged` as th
 | `workspaceChanged` | `workspace` | Full workspace tree for one project. Pushed when tabs, splits, focus, titles, or pin/color state change. One event per active project per change burst (debounced ~80 ms). |
 | `terminalOutput` | `terminalOutput` | Raw PTY bytes for a pane the client owns. Pushed as the shell/TUI writes. |
 | `terminalSnapshot` | `terminalCells` | Full grid snapshot for a pane the client just took over. |
-| `notificationReceived` | `notification` | New notification emitted by Muxy |
+| `notificationReceived` | `notification` | New notification emitted by Jade |
 | `projectsChanged` | `projects` | Updated project list. Pushed when projects are added, removed, renamed, reordered, or have their icon/logo/color updated. |
 | `paneOwnershipChanged` | `paneOwnership` | Pane control changed between Mac and remote clients |
 | `themeChanged` | `deviceTheme` | Updated terminal foreground/background colors |

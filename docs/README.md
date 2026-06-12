@@ -51,7 +51,7 @@ flowchart TB
 | [Planning templates](templates/README.md) | Decision records, feature specs, status, roadmap |
 | [Voice Recording](features/voice-recording.md) | On-device dictation |
 | [Notifications](features/notifications.md) | Hooks, socket API, attention UX, `jade notify` |
-| [Layouts](features/layouts/README.md) | Declarative `.muxy/layouts/*.yaml` workspaces |
+| [Layouts](features/layouts/README.md) | Declarative `.jade/layouts/*.yaml` workspaces |
 | [AI Usage](features/ai-usage.md) | Claude Code, Codex CLI, Cursor CLI (read-only quotas) |
 | [Themes](features/themes.md) | Theme picker and Ghostty config |
 | [Remote Server](features/remote-server/README.md) | WebSocket API (macOS server; no Jade mobile app) |
