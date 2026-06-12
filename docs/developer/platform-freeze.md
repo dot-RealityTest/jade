@@ -11,7 +11,7 @@ Until Jade ships a first-party client or documents a committed third-party consu
 | [Remote server docs](../features/remote-server/README.md) | Marked maintenance-only |
 | Pairing, QR, approved devices | No new UX; no Jade iOS target in this repo |
 
-**Rationale:** Full DTO layer and protocol catalog without a shipped mobile app in `dot-RealityTest/jade`. Upstream [Muxy](https://github.com/muxy-app/muxy) may continue mobile work separately.
+**Rationale:** Full DTO layer and protocol catalog without a shipped mobile app in `aka-kika/jade`. Upstream [Muxy](https://github.com/muxy-app/muxy) may continue mobile work separately.
 
 ## Inspector AI
 
